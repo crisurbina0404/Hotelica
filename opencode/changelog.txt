@@ -1,0 +1,25 @@
+
+---
+
+## 📄 ARCHIVO 2 · `CHANGELOG.md` (seguimiento académico)
+
+```markdown
+# 📈 CHANGELOG — Seguimiento de Hotelica
+
+> Formato: cada avance se registra aquí con fecha y lo que se hizo.
+
+## [v0.3.0] - 2026-07-31
+### Agregado
+- Estructura de carpetas del proyecto.
+- Carpeta /historias-usuario con plantilla e índice.
+- Base de datos inicial hotelica.sql.
+
+## [v0.2.0] - 2026-07-30
+### Agregado
+- Rebrand de HotelConnect a Hotelica.
+- Pantalla de éxito con llave y comprobante.
+
+## [v0.1.0] - 2026-07-28
+### Agregado
+- Maqueta funcional con los 3 roles.
+- Flujo de reserva con cálculo de IVA 15%.

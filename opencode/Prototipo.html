@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0B3540">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Hotelica">
+<link rel="icon" type="image/svg+xml" href="assets/img/logo-mark.svg">
+<title>Hotelica · Donde Nicaragua te recibe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..900;1,9..144,400..900&family=Outfit:wght@300..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B3540; --ink2:#51686F; --paper:#F8F6F0; --card:#FFFFFF;
+  --gold:#F7A81B; --gold-d:#E08E0B; --flame:#F4502C; --flame-d:#D93F1E;
+  --teal:#177E8C; --line:#E6E1D4; --shadow:0 14px 34px rgba(11,53,64,.13);
+  --r:14px; --display:'Fraunces',serif; --body:'Outfit',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--body);color:var(--ink);background:var(--paper);line-height:1.55}
+h1,h2,h3,h4,.display{font-family:var(--display)}
+button{font-family:var(--body)}
+::selection{background:var(--gold);color:var(--ink)}
+
+/* cinta de rebrand */
+.ribbon{background:var(--gold);color:var(--ink);text-align:center;font-weight:700;font-size:.82rem;letter-spacing:.04em;padding:.5rem 1rem}
+.ribbon b{font-family:var(--display);font-style:italic}
+
+/* header */
+header{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;box-shadow:0 2px 16px rgba(11,53,64,.25);padding-top:env(safe-area-inset-top)}
+.hwrap{max-width:1200px;margin:auto;padding:.75rem 1.2rem;display:flex;align-items:center;gap:1.2rem 1.2rem;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:.65rem;text-decoration:none}
+.brand .logo{width:40px;height:40px;display:block;object-fit:contain;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.brand:hover .logo{transform:rotate(-14deg) scale(1.06)}
+.brand .wm{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:-.01em;color:#FBF7EE}
+.brand .wm em{font-style:italic;color:var(--gold)}
+nav.mainnav{display:flex;gap:1.2rem;margin-left:.4rem}
+nav.mainnav a{color:#BFD3D6;text-decoration:none;font-weight:600;font-size:.92rem;position:relative;padding:.2rem 0}
+nav.mainnav a::after{content:'';position:absolute;left:0;bottom:-2px;width:0;height:2px;background:var(--gold);transition:width .25s}
+nav.mainnav a:hover{color:#fff} nav.mainnav a:hover::after{width:100%}
+.hright{margin-left:auto;display:flex;align-items:center;gap:.8rem}
+.favpill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:999px;padding:.38rem .85rem;font-weight:600;font-size:.85rem;cursor:pointer;transition:.2s}
+.favpill:hover{background:rgba(255,255,255,.2)}
+.roles{display:flex;background:rgba(0,0,0,.28);border-radius:11px;padding:3px;gap:3px}
+.roles button{border:0;background:transparent;color:#AFC6CA;padding:.44rem .85rem;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer;transition:.2s;white-space:nowrap}
+.roles button:hover{color:#fff}
+.roles button.on{background:var(--gold);color:var(--ink);box-shadow:0 3px 10px rgba(247,168,27,.4)}
+.menu-toggle{display:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1.2rem;line-height:1;align-items:center;justify-content:center}
+.menu-toggle:hover{background:rgba(255,255,255,.2)}
+
+/* hero */
+.hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#FCF8EE 0%,#EDF1E8 100%);padding:3.4rem 1.2rem 0}
+.hero::before{content:'';position:absolute;top:-120px;left:-80px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(247,168,27,.22),transparent 70%);pointer-events:none}
+.hero-inner{max-width:1200px;margin:auto;position:relative;z-index:3;padding-bottom:150px}
+.eyebrow{display:inline-flex;align-items:center;gap:.45rem;font-size:.75rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ink);background:rgba(247,168,27,.16);border:1px solid rgba(247,168,27,.5);padding:.4rem .85rem;border-radius:999px}
+.hero h1{font-size:clamp(2rem,8vw,4.4rem);font-weight:600;line-height:1.03;letter-spacing:-.02em;margin:1rem 0 .8rem;max-width:660px}
+.hero h1 em{font-style:italic;color:var(--gold-d)}
+.hero p.sub{color:var(--ink2);font-size:1.1rem;max-width:540px;font-weight:400}
+.hero-stats{display:flex;gap:1.8rem;margin-top:1.2rem;flex-wrap:wrap}
+.hero-stats b{font-family:var(--display);font-size:1.35rem;font-weight:700;display:block}
+.hero-stats span{font-size:.8rem;color:var(--ink2)}
+.search-card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:1.15rem;margin-top:1.9rem;display:grid;grid-template-columns:1.3fr 1fr 1fr .9fr auto;gap:.9rem;align-items:end;max-width:990px}
+.field label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin-bottom:.32rem}
+.field input,.field select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:.64rem .72rem;font:600 .95rem var(--body);color:var(--ink);background:#FDFCF9;transition:.2s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(23,126,140,.16)}
+.btn{font:700 .95rem var(--body);padding:.74rem 1.3rem;border-radius:11px;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;transition:.2s;text-decoration:none}
+.btn-flame{background:var(--flame);color:#fff;box-shadow:0 6px 18px rgba(244,80,44,.35)}
+.btn-flame:hover{background:var(--flame-d);transform:translateY(-2px);box-shadow:0 10px 24px rgba(244,80,44,.42)}
+.btn-flame:active{transform:translateY(0)}
+.btn-ink{background:var(--ink);color:#FBF7EE}
+.btn-ink:hover{background:#0E4450;transform:translateY(-2px)}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.btn-ghost:hover{border-color:var(--teal);transform:translateY(-2px)}
+.btn-danger{background:#FBE3DC;color:#B3341C}
+.btn-danger:hover{background:#F8CFC2}
+.btn-sm{padding:.44rem .82rem;font-size:.83rem;border-radius:9px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.hero-land{position:absolute;left:0;right:0;bottom:-2px;width:100%;height:230px;z-index:1;pointer-events:none}
+.cloud{animation:drift 22s ease-in-out infinite alternate}
+.cloud.c2{animation-duration:30s;animation-delay:-8s}
+@keyframes drift{from{transform:translateX(-30px)}to{transform:translateX(50px)}}
+.rays{transform-box:fill-box;transform-origin:center;animation:spin 50s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* marquee */
+.marquee{background:var(--ink);color:var(--gold);overflow:hidden;padding:.7rem 0;font-family:var(--display);font-style:italic;font-weight:600;font-size:1rem;letter-spacing:.06em;white-space:nowrap}
+.marquee .track{display:inline-block;animation:mq 28s linear infinite}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* secciones */
+section.block{max-width:1200px;margin:auto;padding:3.6rem 1.2rem}
+.sec-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.7rem}
+.sec-head h2{font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;letter-spacing:-.015em}
+.sec-head h2 em{font-style:italic;color:var(--gold-d)}
+.live{display:inline-flex;align-items:center;gap:.45rem;font-size:.82rem;font-weight:600;color:var(--ink2)}
+.dot{width:9px;height:9px;border-radius:50%;background:#2FB56B;box-shadow:0 0 0 0 rgba(47,181,107,.5);animation:pulse 1.8s infinite}
+@keyframes pulse{70%{box-shadow:0 0 0 9px rgba(47,181,107,0)}100%{box-shadow:0 0 0 0 rgba(47,181,107,0)}}
+
+/* filtros + grid */
+.results{display:grid;grid-template-columns:250px 1fr;gap:1.6rem;align-items:start}
+.filters{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.2rem;position:sticky;top:96px}
+.filters h3{font-size:1.15rem;font-weight:700;margin-bottom:1rem}
+.filters .fgroup{margin-bottom:1.2rem;padding-bottom:1.1rem;border-bottom:1px dashed var(--line)}
+.filters .fgroup:last-child{border:0;margin:0;padding:0}
+.filters .flabel{font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);margin-bottom:.55rem;display:block}
+.filters label.chk{display:flex;align-items:center;gap:.5rem;font-size:.9rem;font-weight:500;padding:.22rem 0;cursor:pointer}
+.filters input[type=checkbox],.filters input[type=range]{accent-color:var(--teal)}
+.filters input[type=range]{width:100%}
+.pval{font-family:var(--display);font-weight:700;font-size:1.25rem;color:var(--teal)}
+.chip{display:inline-flex;align-items:center;gap:.3rem;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:.38rem .9rem;font-weight:600;font-size:.83rem;cursor:pointer;transition:.2s}
+.chip:hover{border-color:var(--flame)}
+.chip.on{background:var(--flame);border-color:var(--flame);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:1.4rem}
+.hcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;transition:transform .3s,box-shadow .3s;animation:pop .5s both;position:relative}
+.hcard:hover{transform:translateY(-6px);box-shadow:var(--shadow)}
+@keyframes pop{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+.ph{height:172px;overflow:hidden;position:relative;background:#DDE8E4}
+.ph svg{width:100%;height:100%;display:block;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.hcard:hover .ph svg{transform:scale(1.08)}
+.flag{position:absolute;top:12px;left:12px;background:var(--gold);color:var(--ink);font-size:.7rem;font-weight:800;letter-spacing:.07em;padding:.3rem .62rem;border-radius:7px;text-transform:uppercase;z-index:2}
+.heart{position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.94);border:0;font-size:1.15rem;color:#B9C4C0;cursor:pointer;display:grid;place-items:center;transition:.2s;z-index:2;line-height:1}
+.heart:hover{transform:scale(1.15)}
+.heart.on{color:var(--flame);animation:beat .4s}
+@keyframes beat{40%{transform:scale(1.35)}}
+.hbody{padding:1rem 1.1rem 1.15rem}
+.hloc{font-size:.76rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em}
+.hname{font-family:var(--display);font-weight:700;font-size:1.3rem;letter-spacing:-.01em;margin:.18rem 0 .3rem}
+.hrate{font-size:.88rem;font-weight:600;color:var(--ink2)}
+.hrate b{color:var(--gold-d);font-size:1.05rem}
+.htags{display:flex;flex-wrap:wrap;gap:.35rem;margin:.55rem 0 .7rem}
+.tag{background:#EFF3EC;border:1px solid var(--line);font-size:.72rem;font-weight:600;padding:.2rem .55rem;border-radius:6px;color:var(--ink2)}
+.hfoot{display:flex;align-items:center;justify-content:space-between;gap:.6rem;border-top:1px dashed var(--line);padding-top:.78rem}
+.price{font-family:var(--display)}
+.price b{font-size:1.55rem;font-weight:700}
+.price span{font-size:.78rem;color:var(--ink2)}
+.empty{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--ink2)}
+.empty .big{font-size:2.6rem}
+
+/* descubrí */
+.descubre{background:var(--ink);color:#fff;position:relative;overflow:hidden}
+.descubre::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(247,168,27,.09) 1.5px,transparent 1.5px);background-size:26px 26px}
+.descubre .inner{max-width:1200px;margin:auto;padding:3.8rem 1.2rem;position:relative}
+.descubre .eyebrow{background:rgba(247,168,27,.14);border-color:rgba(247,168,27,.45);color:var(--gold)}
+.descubre h2{font-size:clamp(1.9rem,3.6vw,2.7rem);font-weight:700;margin:.85rem 0 .4rem}
+.descubre h2 em{font-style:italic;color:var(--gold)}
+.descubre p.sub{color:#BFD3D6;max-width:560px}
+.dscroll{display:flex;gap:1.1rem;overflow-x:auto;padding:1.7rem .2rem 1.2rem;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+.dcard{min-width:255px;max-width:255px;background:#fff;color:var(--ink);border-radius:var(--r);overflow:hidden;scroll-snap-align:start;transition:transform .3s;flex-shrink:0}
+.dcard:hover{transform:translateY(-6px) rotate(-.6deg)}
+.dcard .ph{height:120px}
+.dbody{padding:.9rem 1rem 1.1rem}
+.dchip{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:.24rem .58rem;border-radius:6px}
+.dchip.dest{background:#DCEEF0;color:#0E5A66}.dchip.act{background:#E2F3E6;color:#1B7A3D}.dchip.food{background:#FDEBD2;color:#A35A00}
+.dbody h4{font-size:1.12rem;font-weight:700;margin:.45rem 0 .25rem}
+.dbody p{font-size:.85rem;color:var(--ink2)}
+
+/* mis reservas */
+.res-card{background:#fff;border:1px solid var(--line);border-radius:var(--r);display:grid;grid-template-columns:150px 1fr auto;overflow:hidden;margin-bottom:1rem;transition:.25s;animation:pop .5s both}
+.res-card:hover{box-shadow:var(--shadow);transform:translateY(-3px)}
+.res-card .ph{height:100%;min-height:120px}
+.res-info{padding:1rem 1.2rem}
+.res-info h4{font-size:1.18rem;font-weight:700}
+.res-meta{font-size:.85rem;color:var(--ink2);margin:.25rem 0 .5rem}
+.res-side{padding:1rem 1.2rem;display:flex;flex-direction:column;align-items:end;justify-content:center;gap:.5rem;border-left:1px dashed var(--line)}
+.res-total{font-family:var(--display);font-weight:700;font-size:1.35rem}
+.badge{font-size:.72rem;font-weight:800;letter-spacing:.04em;padding:.3rem .7rem;border-radius:999px;text-transform:uppercase}
+.b-pend{background:#FDF0D8;color:#9A6A00}.b-conf{background:#DCF3E4;color:#1B7A3D}
+.b-in{background:#D9EDF2;color:#0E5A66}.b-out{background:#E9EAE5;color:#55605A}.b-cancel{background:#FBE3DC;color:#B3341C}
+.stars{display:inline-flex;gap:.15rem;font-size:1.35rem;cursor:pointer}
+.stars span{color:#DADFD8;transition:.15s}
+.stars span:hover,.stars span.lit{color:var(--gold);transform:scale(1.15)}
+.stars.static{cursor:default}
+
+/* paneles */
+.panel-band{background:var(--ink);color:#fff;padding:2.7rem 1.2rem 4.2rem;position:relative;overflow:hidden}
+.panel-band::after{content:'';position:absolute;right:-60px;bottom:-90px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(247,168,27,.22),transparent 70%)}
+.panel-band .inner{max-width:1200px;margin:auto}
+.panel-band h2{font-size:clamp(1.8rem,3.4vw,2.5rem);font-weight:700}
+.panel-band p{color:#BFD3D6}
+.panel{max-width:1200px;margin:-2.6rem auto 3rem;padding:0 1.2rem;position:relative;z-index:2}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.6rem}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.2rem;animation:pop .5s both}
+.kpi .lab{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--ink2)}
+.kpi .num{font-family:var(--display);font-weight:700;font-size:2.05rem;letter-spacing:-.01em;margin:.15rem 0}
+.kpi .delta{font-size:.78rem;font-weight:700;color:var(--teal)}
+.tabs{display:flex;gap:.4rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.tabs button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:.5rem 1.1rem;font-weight:700;font-size:.88rem;cursor:pointer;transition:.2s;color:var(--ink2)}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--gold)}
+.pane{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.4rem;animation:pop .4s both}
+.pane h3{font-size:1.25rem;font-weight:700;margin-bottom:1rem}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:720px}
+th{text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink2);padding:.55rem .7rem;border-bottom:2px solid var(--line)}
+td{padding:.7rem;border-bottom:1px solid #EEF0EA;vertical-align:middle}
+tbody tr{transition:background .2s} tbody tr:hover{background:#F8FAF6}
+@media(max-width:720px){
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl-wrap::-webkit-scrollbar{height:6px}
+  .tbl-wrap::-webkit-scrollbar-thumb{background:var(--line);border-radius:9px}
+}
+.room-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem}
+.room-card{border:1.5px solid var(--line);border-radius:12px;padding:1rem;transition:.2s;background:#FDFCF9}
+.room-card:hover{border-color:var(--teal);transform:translateY(-3px)}
+.room-card h4{font-size:1.05rem;font-weight:700}
+.occ-bar{height:8px;background:#E9ECE5;border-radius:99px;overflow:hidden;margin:.5rem 0}
+.occ-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--ink));border-radius:99px;transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.chart{display:flex;gap:12px;align-items:flex-end;height:190px;padding-top:1.4rem}
+.bar{flex:1;background:linear-gradient(180deg,var(--gold),var(--flame));border-radius:9px 9px 4px 4px;height:0;transition:height 1.1s cubic-bezier(.2,.8,.2,1);position:relative;min-width:26px}
+.bar:hover{filter:brightness(1.1)}
+.bar b{position:absolute;top:-1.5rem;left:50%;transform:translateX(-50%);font-size:.78rem;font-family:var(--display)}
+.bar-labs{display:flex;gap:12px;margin-top:.5rem}
+.bar-labs span{flex:1;text-align:center;font-size:.72rem;color:var(--ink2);font-weight:600}
+.dbar{display:grid;grid-template-columns:110px 1fr 44px;align-items:center;gap:.8rem;margin-bottom:.7rem;font-size:.88rem;font-weight:600}
+.dbar .track{height:12px;background:#EEF0EA;border-radius:99px;overflow:hidden}
+.dbar .track i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--flame));border-radius:99px;width:0;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.approve-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.1rem}
+.apr-card{border:1.5px dashed var(--gold);border-radius:var(--r);overflow:hidden;background:#FFFDF6;animation:pop .5s both}
+.apr-card .ph{height:120px}
+.apr-body{padding:1rem}
+.apr-body .owner{font-size:.8rem;color:var(--ink2);margin:.2rem 0 .8rem}
+input.inline{border:1.5px solid var(--line);border-radius:8px;padding:.35rem .5rem;font:700 .9rem var(--body);width:86px}
+.addform{display:grid;grid-template-columns:1.4fr .8fr .7fr auto;gap:.8rem;align-items:end;margin-top:1.2rem;padding-top:1.2rem;border-top:1px dashed var(--line)}
+
+/* modales */
+.overlay{position:fixed;inset:0;background:rgba(8,32,40,.66);z-index:100;display:none;align-items:center;justify-content:center;padding:1.2rem}
+.overlay.show{display:flex;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.modal{background:#fff;border-radius:18px;max-width:760px;width:100%;max-height:92vh;overflow-y:auto;animation:mpop .35s cubic-bezier(.2,.9,.3,1.2);position:relative}
+@keyframes mpop{from{opacity:0;transform:translateY(30px) scale(.97)}}
+.modal .close{position:absolute;top:14px;right:14px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.94);font-size:1.1rem;cursor:pointer;z-index:5;transition:.2s}
+.modal .close:hover{transform:rotate(90deg);background:#fff}
+.m-banner{height:230px;overflow:hidden;position:relative}
+.m-banner svg{width:100%;height:100%;display:block}
+.m-body{padding:1.6rem 1.8rem 1.8rem}
+.m-body h2{font-size:1.8rem;font-weight:700;letter-spacing:-.015em}
+.thumbs{display:flex;gap:.6rem;margin:1rem 0}
+.thumb{width:86px;height:60px;border-radius:9px;overflow:hidden;border:2px solid transparent;cursor:pointer;transition:.2s}
+.thumb:hover{border-color:var(--gold);transform:scale(1.06)}
+.thumb svg{width:100%;height:100%;display:block}
+.amen{display:flex;flex-wrap:wrap;gap:.45rem;margin:.8rem 0 1.2rem}
+.amen span{background:#EFF3EC;border:1px solid var(--line);border-radius:8px;padding:.35rem .7rem;font-size:.82rem;font-weight:600}
+.room-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;border:1.5px solid var(--line);border-radius:12px;padding:.9rem 1.1rem;margin-bottom:.7rem;transition:.2s;flex-wrap:wrap}
+.room-row:hover{border-color:var(--teal)}
+.room-row .rt{font-weight:700;font-family:var(--display);font-size:1.05rem}
+.room-row .rm{font-size:.82rem;color:var(--ink2)}
+.bk-modal{max-width:540px}
+.bk-steps{display:flex;gap:.4rem;margin-bottom:1.4rem}
+.bk-steps i{flex:1;height:5px;border-radius:99px;background:#E9ECE5;transition:.3s}
+.bk-steps i.on{background:var(--gold)}
+.bk-sum{background:#F8FAF6;border:1px dashed var(--line);border-radius:12px;padding:1rem 1.2rem;font-size:.92rem;margin-bottom:1.2rem}
+.bk-sum .tot{display:flex;justify-content:space-between;font-family:var(--display);font-weight:700;font-size:1.25rem;border-top:1px solid var(--line);margin-top:.5rem;padding-top:.5rem}
+.bk-field{margin-bottom:.9rem}
+.bk-field label{display:block;font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink2);margin-bottom:.3rem}
+.bk-field input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:.65rem .8rem;font:600 .95rem var(--body)}
+.bk-field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(23,126,140,.16)}
+.bk-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.success{text-align:center;padding:1.5rem 0 .5rem}
+.success .check{width:82px;height:82px;margin:0 auto 1rem;border-radius:50%;background:#FDEBD2;display:grid;place-items:center;font-size:2.4rem;animation:beat .6s}
+.success h3{font-size:1.6rem;font-weight:700}
+.folio{font-family:var(--display);font-weight:700;font-size:1.25rem;background:#F8F6F0;border:1px dashed var(--line);border-radius:10px;display:inline-block;padding:.4rem 1.1rem;margin:.7rem 0}
+.rc-modal{max-width:420px}
+.receipt{font-size:.9rem}
+.receipt .rhead{text-align:center;border-bottom:2px dashed var(--line);padding-bottom:1rem;margin-bottom:1rem}
+.receipt .rhead .display{font-weight:700;font-size:1.4rem}
+.receipt .rhead .display em{font-style:italic;color:var(--gold-d)}
+.rrow{display:flex;justify-content:space-between;padding:.28rem 0}
+.rrow.total{border-top:2px dashed var(--line);margin-top:.6rem;padding-top:.7rem;font-family:var(--display);font-weight:700;font-size:1.2rem}
+.qr{width:88px;height:88px;border:1px solid var(--line);border-radius:8px;margin:1rem auto 0;display:block}
+.rnote{text-align:center;font-size:.75rem;color:var(--ink2);margin-top:.8rem}
+
+/* toasts */
+#toasts{position:fixed;bottom:1.2rem;right:1.2rem;z-index:200;display:flex;flex-direction:column;gap:.6rem;max-width:340px}
+.toast{background:var(--ink);color:#FBF7EE;padding:.85rem 1.1rem;border-radius:12px;font-weight:600;font-size:.9rem;box-shadow:0 12px 30px rgba(11,53,64,.3);display:flex;gap:.6rem;align-items:flex-start;animation:tin .4s cubic-bezier(.2,.9,.3,1.2);border-left:4px solid var(--gold)}
+.toast.out{animation:tout .35s forwards}
+@keyframes tin{from{opacity:0;transform:translateX(60px)}}
+@keyframes tout{to{opacity:0;transform:translateX(60px)}}
+
+/* guía */
+#guide{position:fixed;left:1.2rem;bottom:1.2rem;z-index:150;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);width:272px;overflow:hidden}
+#guide .ghead{width:100%;background:var(--ink);color:var(--gold);border:0;padding:.72rem 1rem;font:700 .9rem var(--body);display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+#guide .gbar{height:5px;background:#E9ECE5}
+#guide .gbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--flame));transition:width .5s}
+#guide ul{list-style:none;padding:.7rem .9rem;max-height:250px;overflow-y:auto}
+#guide li{font-size:.82rem;font-weight:600;color:var(--ink2);padding:.28rem 0;display:flex;gap:.5rem;align-items:baseline}
+#guide li::before{content:'○';color:#C6CEC8}
+#guide li.done{color:var(--teal);text-decoration:line-through}
+#guide li.done::before{content:'●';color:var(--teal)}
+#guide.done .ghead{background:var(--teal);color:#fff}
+#guide.collapsed ul{display:none}
+
+/* footer */
+footer{background:var(--ink);color:#BFD3D6;margin-top:2rem}
+.fwrap{max-width:1200px;margin:auto;padding:2.9rem 1.2rem;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:2rem}
+footer h4{color:var(--gold);font-size:1.05rem;margin-bottom:.7rem}
+footer a{color:#BFD3D6;text-decoration:none;display:block;padding:.18rem 0;font-size:.9rem}
+footer a:hover{color:var(--gold)}
+.tech{display:flex;flex-wrap:wrap;gap:.4rem}
+.tech span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:7px;padding:.3rem .6rem;font-size:.75rem;font-weight:600}
+.fbottom{border-top:1px solid rgba(255,255,255,.12);text-align:center;font-size:.78rem;padding:1.1rem;color:#7E969B}
+.fbottom em{font-family:var(--display);color:var(--gold)}
+
+.reveal{opacity:0;transform:translateY(26px);transition:.7s cubic-bezier(.2,.8,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+@media(max-width:960px){
+  .results{grid-template-columns:1fr}
+  .filters{position:static}
+  .search-card{grid-template-columns:1fr 1fr}
+  .search-card .btn{grid-column:1/-1;justify-content:center}
+  .fwrap{grid-template-columns:1fr}
+  .menu-toggle{display:flex}
+  nav.mainnav{display:none}
+  nav.mainnav.open{display:flex;flex-direction:column;gap:.2rem;width:100%;margin:.2rem 0 .4rem;order:3;background:rgba(0,0,0,.18);border-radius:12px;padding:.6rem .8rem}
+  nav.mainnav.open a{padding:.6rem .4rem;border-bottom:1px solid rgba(255,255,255,.08)}
+  nav.mainnav.open a:last-child{border-bottom:0}
+  .hright{margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+  .res-card{grid-template-columns:120px 1fr;grid-template-areas:"ph info" "side side"}
+  .res-card .ph{grid-area:ph;min-height:120px}
+  .res-info{grid-area:info}
+  .res-side{grid-area:side;border-left:0;border-top:1px dashed var(--line);align-items:stretch;flex-direction:row;justify-content:space-between;flex-wrap:wrap;gap:.6rem}
+  .res-side .res-total{align-self:flex-end}
+}
+@media(max-width:640px){
+  .hero{padding:2.2rem 1rem 0}
+  section.block{padding:2.4rem 1rem}
+  .panel-band{padding:2rem 1rem 3rem}
+  .panel{margin-top:-2rem;padding:0 1rem 0}
+  .search-card{grid-template-columns:1fr;padding:1rem}
+  .search-card .field{min-width:0}
+  .res-card{grid-template-columns:1fr;grid-template-areas:"ph" "info" "side"}
+  .res-card .ph{min-height:130px}
+  .addform{grid-template-columns:1fr 1fr}
+  .addform .btn{grid-column:1/-1;justify-content:center}
+  .hwrap{gap:.7rem;padding:.6rem 1rem;padding-bottom:.6rem}
+  .brand .wm{font-size:1.3rem}
+  .roles{font-size:.78rem}
+  .roles button{padding:.4rem .6rem;font-size:.78rem}
+  .favpill{padding:.34rem .7rem;font-size:.78rem}
+  .hero-inner{padding-bottom:120px}
+  .hero-land{height:170px}
+  .hero-stats{gap:1.1rem}
+  .hero-stats b{font-size:1.15rem}
+  .m-body{padding:1.2rem 1rem 1.4rem}
+  .m-body h2{font-size:1.5rem}
+  .thumbs{flex-wrap:wrap}
+  .thumb{width:72px;height:50px}
+  .room-row{flex-direction:column;align-items:stretch;gap:.7rem}
+  .room-row>div:last-child{text-align:left;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+  .bk-row{grid-template-columns:1fr}
+  .kpi .num{font-size:1.7rem}
+  .dscroll{padding:1.2rem .2rem .8rem}
+  #guide{width:calc(100% - 2rem);left:1rem;bottom:env(safe-area-inset-bottom)}
+  .dbar{grid-template-columns:80px 1fr 38px;font-size:.82rem}
+  .ribbon{font-size:.74rem;padding:.45rem .8rem}
+  .marquee{font-size:.9rem}
+  .tabs button{padding:.45rem .85rem;font-size:.82rem}
+  .row-room{min-width:0}
+  .grid{grid-template-columns:1fr;gap:1rem}
+  .sec-head h2{font-size:1.7rem}
+  .descubre h2{font-size:1.6rem}
+  .fbottom{padding:1rem}
+  .modal{max-width:100%;max-height:100dvh;border-radius:0}
+  .overlay{padding:0}
+  .overlay.show{align-items:stretch;justify-content:stretch}
+  .m-banner{height:170px}
+}
+@media(max-width:480px){
+  .hero h1{font-size:1.95rem}
+  .hero p.sub{font-size:.98rem}
+  .ribbon{font-size:.7rem;letter-spacing:.02em;padding:.4rem .6rem}
+  .brand .wm{font-size:1.2rem}
+  .brand .logo{width:34px;height:34px}
+  .hwrap{padding:.55rem .8rem}
+  .search-card{padding:.9rem}
+  .section.block,.panel-band{padding-left:.9rem;padding-right:.9rem}
+  .hbody{padding:.9rem .95rem 1rem}
+  .hname{font-size:1.2rem}
+  .price b{font-size:1.35rem}
+  .toast{font-size:.85rem;padding:.75rem .9rem;max-width:calc(100vw - 1.6rem)}
+  .eye.ant{font-size:.7rem}
+  .btn{padding:.7rem 1rem;font-size:.9rem}
+  .btn-sm{padding:.42rem .72rem;font-size:.8rem}
+  .search-card .field input,.search-card .field select{font-size:1rem;min-height:44px}
+  .kpi{padding:.9rem 1rem}
+  .kpi .num{font-size:1.5rem}
+  .tabs button{padding:.4rem .7rem;font-size:.78rem}
+  .addform{grid-template-columns:1fr}
+  .addform .btn{grid-column:1/-1;justify-content:center}
+}
+@media(max-width:380px){
+  .hero h1{font-size:1.75rem}
+  .hwrap{flex-wrap:wrap;gap:.6rem}
+  .roles{order:2}
+  .favpill{order:1}
+  .hero-stats{gap:.9rem}
+  .hero-stats b{font-size:1.1rem}
+  .hero-stats span{font-size:.72rem}
+}
+@media (pointer:coarse){
+  .hcard:hover,.dcard:hover,.res-card:hover{transform:none}
+  .hcard:hover .ph svg{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="ribbon">✨ Presentamos <b>Hotelica</b> — la evolución de HotelConnect · Donde Nicaragua te recibe 🗝️</div>
+
+<header>
+  <div class="hwrap">
+    <a class="brand" href="#">
+      <img class="logo" src="assets/img/logo-mark.svg" alt="Hotelica" width="40" height="40" onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex'">
+      <span id="logoFallback" class="logo" style="display:none;width:40px;height:40px"><svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><rect width="48" height="48" rx="13" fill="#F7A81B"/><circle cx="24" cy="16" r="7" fill="none" stroke="#0B3540" stroke-width="3.5"/><line x1="24" y1="23" x2="24" y2="38" stroke="#0B3540" stroke-width="3.5" stroke-linecap="round"/><line x1="24" y1="32" x2="31" y2="32" stroke="#0B3540" stroke-width="3.5" stroke-linecap="round"/><line x1="24" y1="38" x2="29" y2="38" stroke="#0B3540" stroke-width="3.5" stroke-linecap="round"/><circle cx="24" cy="16" r="2.2" fill="#F4502C"/></svg></span>
+      <span class="wm">Hotel<em>ica</em></span>
+    </a>
+    <nav class="mainnav" id="mainnav">
+      <a href="#hoteles">Hoteles</a>
+      <a href="#descubre">Descubrí</a>
+      <a href="#misreservas">Mis reservas</a>
+    </nav>
+    <div class="hright">
+      <button class="favpill" onclick="toggleSoloFavs()">♥ <span id="favcount">0</span> favoritos</button>
+      <div class="roles" id="roles">
+        <button class="on" data-role="turista" onclick="setRole('turista')">👤 Turista</button>
+        <button data-role="hotel" onclick="setRole('hotel')">🏨 Hotel</button>
+        <button data-role="admin" onclick="setRole('admin')">🛡️ Admin</button>
+      </div>
+      <button class="menu-toggle" id="menuToggle" aria-label="Menú" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="view-turista">
+  <div class="hero">
+    <div class="hero-inner">
+      <span class="eyebrow">🗝️ Boutique de reservas · Hecho en Nicaragua</span>
+      <h1>Donde Nicaragua <em>te recibe</em>.</h1>
+      <p class="sub">Hotelica reúne los hoteles con más alma del país — del Pacífico al Caribe — para que reservés en segundos y viajés para siempre.</p>
+      <div class="hero-stats">
+        <div><b id="stat-hoteles">8</b><span>hoteles con alma</span></div>
+        <div><b>8</b><span>departamentos</span></div>
+        <div><b>4.6 ★</b><span>calificación promedio</span></div>
+      </div>
+      <form class="search-card" onsubmit="buscar(event)">
+        <div class="field"><label>📍 Destino</label><select id="f-dept"><option>Todos</option></select></div>
+        <div class="field"><label>Llegada</label><input type="date" id="f-in" value="2026-08-14"></div>
+        <div class="field"><label>Salida</label><input type="date" id="f-out" value="2026-08-16"></div>
+        <div class="field"><label>Huéspedes</label><select id="f-guests"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></div>
+        <button class="btn btn-flame" type="submit">🔍 Buscar hoteles</button>
+      </form>
+    </div>
+    <svg class="hero-land" viewBox="0 0 1440 320" preserveAspectRatio="xMidYMax slice">
+      <g class="rays" stroke="#F7A81B" stroke-width="4" opacity=".5">
+        <line x1="1150" y1="40" x2="1150" y2="62"/><line x1="1150" y1="178" x2="1150" y2="200"/>
+        <line x1="1070" y1="120" x2="1092" y2="120"/><line x1="1208" y1="120" x2="1230" y2="120"/>
+        <line x1="1094" y1="64" x2="1110" y2="80"/><line x1="1190" y1="160" x2="1206" y2="176"/>
+        <line x1="1206" y1="64" x2="1190" y2="80"/><line x1="1110" y1="160" x2="1094" y2="176"/>
+      </g>
+      <circle cx="1150" cy="120" r="46" fill="#F7A81B"/>
+      <g class="cloud c1" fill="#fff" opacity=".9"><ellipse cx="260" cy="70" rx="52" ry="16"/><ellipse cx="300" cy="60" rx="38" ry="13"/></g>
+      <g class="cloud c2" fill="#fff" opacity=".75"><ellipse cx="760" cy="46" rx="60" ry="15"/><ellipse cx="806" cy="36" rx="40" ry="12"/></g>
+      <path d="M-60 320 L250 92 L560 320 Z" fill="#177E8C" opacity=".9"/>
+      <path d="M180 320 L470 150 L760 320 Z" fill="#0E5A66"/>
+      <path d="M700 320 Q1050 190 1440 296 L1440 320 Z" fill="#0B3540"/>
+      <path d="M250 84 q10 -18 20 0" stroke="#FBF7EE" stroke-width="3" fill="none" opacity=".7" stroke-linecap="round"/>
+      <rect y="296" width="1440" height="24" fill="#177E8C"/>
+      <path d="M100 308 h60 M400 306 h40 M900 308 h70 M1250 306 h50" stroke="#9FE0E8" stroke-width="3" stroke-linecap="round" opacity=".7"/>
+    </svg>
+  </div>
+
+  <div class="marquee"><span class="track" id="mq"></span></div>
+
+  <section class="block" id="hoteles">
+    <div class="sec-head reveal">
+      <div>
+        <span class="eyebrow">Disponibilidad en tiempo real</span>
+        <h2>Hoteles con <em>alma</em> en Nicaragua</h2>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <span class="live"><span class="dot"></span> Actualizado hoy, 31 jul 2026</span>
+        <select id="sort" style="border:1.5px solid var(--line);border-radius:10px;padding:.5rem .7rem;font:600 .85rem var(--body);background:#fff" onchange="renderHotels()">
+          <option value="recomendados">Recomendados</option>
+          <option value="precio-asc">Precio: menor a mayor</option>
+          <option value="precio-desc">Precio: mayor a menor</option>
+          <option value="rating">Mejor calificación</option>
+        </select>
+      </div>
+    </div>
+    <div class="results">
+      <aside class="filters reveal">
+        <h3>Filtros</h3>
+        <div class="fgroup">
+          <span class="flabel">Precio máximo por noche</span>
+          <span class="pval" id="pval">$170</span>
+          <input type="range" id="fprice" min="20" max="170" step="5" value="170" oninput="state.maxPrice=+this.value;$('#pval').textContent='$'+this.value;renderHotels()">
+        </div>
+        <div class="fgroup"><span class="flabel">Departamento</span><div id="fdept"></div></div>
+        <div class="fgroup"><span class="flabel">Servicios</span><div id="famen"></div></div>
+        <div class="fgroup">
+          <button type="button" class="chip" id="chipfav" onclick="toggleSoloFavs()">♥ Solo favoritos</button>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-top:.6rem" onclick="limpiarFiltros()">Limpiar filtros</button>
+        </div>
+      </aside>
+      <div>
+        <p style="font-weight:600;color:var(--ink2);margin-bottom:1rem" id="rescount"></p>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="descubre" id="descubre">
+    <div class="inner">
+      <span class="eyebrow">✨ El valor agregado</span>
+      <h2 class="reveal">No solo reservés: <em>descubrí</em></h2>
+      <p class="sub reveal">Cada destino trae consigo actividades, gastronomía y lugares cercanos. Hotelica convierte tu reserva en un itinerario.</p>
+      <div class="dscroll" id="dscroll"></div>
+    </div>
+  </section>
+
+  <section class="block" id="misreservas">
+    <div class="sec-head reveal">
+      <div>
+        <span class="eyebrow">Tu historial</span>
+        <h2>Mis <em>reservas</em></h2>
+      </div>
+      <span class="live"><span class="dot"></span> Sesión: María José López</span>
+    </div>
+    <div id="misreservas-list"></div>
+  </section>
+</section>
+
+<section id="view-hotel" hidden>
+  <div class="panel-band">
+    <div class="inner">
+      <span class="eyebrow" style="background:rgba(247,168,27,.14);border-color:rgba(247,168,27,.45);color:var(--gold)">Portal del hotelero</span>
+      <h2 style="margin-top:.7rem">🏨 Hotel Plaza Colón · Granada</h2>
+      <p>Administrá habitaciones, reservas, check-ins y reportes de ocupación.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="kpis" id="h-kpis"></div>
+    <div class="tabs">
+      <button class="on" onclick="hTab(this,'h-reservas')">📋 Reservas</button>
+      <button onclick="hTab(this,'h-habs')">🛏️ Habitaciones</button>
+      <button onclick="hTab(this,'h-reportes')">📊 Reportes</button>
+    </div>
+    <div class="pane" id="h-reservas"></div>
+    <div class="pane" id="h-habs" style="display:none"></div>
+    <div class="pane" id="h-reportes" style="display:none"></div>
+  </div>
+</section>
+
+<section id="view-admin" hidden>
+  <div class="panel-band">
+    <div class="inner">
+      <span class="eyebrow" style="background:rgba(247,168,27,.14);border-color:rgba(247,168,27,.45);color:var(--gold)">Consola de administración</span>
+      <h2 style="margin-top:.7rem">🛡️ Administración de Hotelica</h2>
+      <p>Aprobación de hoteles, usuarios, estadísticas y reportes globales.</p>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="kpis" id="a-kpis"></div>
+    <div class="tabs">
+      <button class="on" onclick="aTab(this,'a-apr')">✅ Hoteles pendientes <span id="pendbadge"></span></button>
+      <button onclick="aTab(this,'a-stats')">📊 Estadísticas</button>
+      <button onclick="aTab(this,'a-users')">👥 Usuarios</button>
+    </div>
+    <div class="pane" id="a-apr"></div>
+    <div class="pane" id="a-stats" style="display:none"></div>
+    <div class="pane" id="a-users" style="display:none"></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="fwrap">
+    <div>
+      <div class="brand" style="margin-bottom:.6rem">
+        <img src="assets/img/logo-vertical.svg" alt="Hotelica" width="160" style="height:auto;display:block" onerror="this.remove();document.getElementById('logoFooterFallback').style.display='inline'">
+        <span id="logoFooterFallback" class="wm" style="display:none;font-size:1.6rem">Hotel<em>ica</em></span>
+      </div>
+      <p style="font-size:.9rem;max-width:300px">Donde Nicaragua te recibe. Plataforma integral de turismo y reservación de hoteles. Proyecto académico de Ingeniería de Software.</p>
+    </div>
+    <div>
+      <h4>Plataforma</h4>
+      <a href="#hoteles">Buscar hoteles</a><a href="#descubre">Destinos turísticos</a><a href="#misreservas">Mis reservas</a><a href="#" onclick="setRole('hotel');return false">Portal de hoteles</a>
+    </div>
+    <div>
+      <h4>Stack tecnológico</h4>
+      <div class="tech"><span>HTML · CSS · JS</span><span>React (siguiente fase)</span><span>Node.js + Express</span><span>MySQL</span><span>VS Code</span></div>
+    </div>
+  </div>
+  <div class="fbottom"><em>Hotelica</em> © 2026 · Donde Nicaragua te recibe · Antes <b>HotelConnect</b> · Managua, Nicaragua 🇳🇮</div>
+</footer>
+
+<div class="overlay" id="m-hotel"><div class="modal" id="m-hotel-body"></div></div>
+<div class="overlay" id="m-booking"><div class="modal bk-modal" id="m-booking-body"></div></div>
+<div class="overlay" id="m-receipt"><div class="modal rc-modal" id="m-receipt-body"></div></div>
+
+<div id="guide">
+  <button class="ghead" onclick="document.getElementById('guide').classList.toggle('collapsed')">🗝️ Recorrido Hotelica <span id="gprog">0/8</span></button>
+  <div class="gbar"><i id="gbarfill"></i></div>
+  <ul id="glist">
+    <li data-k="buscar">Buscá un destino en el buscador</li>
+    <li data-k="favorito">Marcá un hotel como favorito ♥</li>
+    <li data-k="reserva">Completá una reserva de habitación</li>
+    <li data-k="pdf">Descargá el comprobante de reserva</li>
+    <li data-k="confirmar">Como Hotel: confirmá una reserva</li>
+    <li data-k="checkin">Como Hotel: registrá un check-in</li>
+    <li data-k="aprobar">Como Admin: aprobá un hotel nuevo</li>
+    <li data-k="calificar">Calificá tu estadía pasada ★</li>
+  </ul>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let uid=0;
+const AMEN={wifi:['📶','Wifi'],piscina:['🏊','Piscina'],desayuno:['🍳','Desayuno'],parqueo:['🅿️','Parqueo'],ac:['❄️','Aire acond.'],bar:['🍸','Bar'],restaurante:['🍽️','Restaurante'],spa:['🧖','Spa'],senderos:['🥾','Senderos'],gym:['🏋️','Gimnasio']};
+function scene(type){
+  const u='sg'+(uid++);
+  const S={
+  beach:`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${u}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD79A"/><stop offset="1" stop-color="#FF8A5E"/></linearGradient><linearGradient id="${u}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2AA5B5"/><stop offset="1" stop-color="#0E6E86"/></linearGradient></defs><rect width="400" height="150" fill="url(#${u}a)"/><circle cx="298" cy="92" r="44" fill="#FFF4D6" opacity=".35"/><circle cx="298" cy="92" r="28" fill="#FFF4D6"/><rect y="140" width="400" height="100" fill="url(#${u}b)"/><path d="M0 154 Q50 148 100 154 T200 154 T300 154 T400 154" stroke="#BFF0F2" stroke-width="3" fill="none" opacity=".7"/><path d="M0 174 Q50 168 100 174 T200 174 T300 174 T400 174" stroke="#BFF0F2" stroke-width="3" fill="none" opacity=".4"/><path d="M0 240 L0 206 Q90 186 190 215 L400 240 Z" fill="#F2D9A6"/><path d="M60 212 C64 180 58 162 70 134" stroke="#5A3A22" stroke-width="7" fill="none" stroke-linecap="round"/><g fill="#1E7A4E"><path d="M70 134 Q40 120 18 130 Q44 110 72 124 Z"/><path d="M70 134 Q100 116 124 124 Q96 108 68 122 Z"/><path d="M70 134 Q60 106 40 100 Q68 102 76 128 Z"/><path d="M70 134 Q84 106 106 102 Q80 106 66 130 Z"/></g><path d="M248 62 q6 -8 12 0 M268 54 q6 -8 12 0" stroke="#7A4A2B" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  colonial:`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${u}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CDE9E2"/><stop offset="1" stop-color="#F7E8C3"/></linearGradient></defs><rect width="400" height="240" fill="url(#${u}a)"/><circle cx="52" cy="42" r="20" fill="#FFD79A"/><rect x="40" y="72" width="320" height="140" fill="#F6E8C9" stroke="#D9BE8C" stroke-width="2"/><rect x="28" y="50" width="344" height="24" fill="#C4552F"/><path d="M28 62 h344" stroke="#A33E20" stroke-width="3"/><rect x="58" y="96" width="284" height="9" fill="#B98A54"/><path d="M90 212 v-58 a30 30 0 0 1 60 0 v58 z" fill="#7A4A2B"/><path d="M170 212 v-58 a30 30 0 0 1 60 0 v58 z" fill="#8A5636"/><path d="M250 212 v-58 a30 30 0 0 1 60 0 v58 z" fill="#7A4A2B"/><rect x="188" y="168" width="24" height="44" fill="#4A2E1E"/><circle cx="120" cy="128" r="4" fill="#F5A623"/><circle cx="280" cy="128" r="4" fill="#F5A623"/><rect y="212" width="400" height="28" fill="#C9B08A"/><path d="M30 226 h20 M90 232 h16 M160 226 h22 M240 232 h18 M320 226 h20" stroke="#A98F66" stroke-width="3" stroke-linecap="round"/><circle cx="66" cy="200" r="12" fill="#2F7355"/><circle cx="336" cy="200" r="12" fill="#2F7355"/><rect x="61" y="204" width="10" height="10" fill="#A33E20"/><rect x="331" y="204" width="10" height="10" fill="#A33E20"/></svg>`,
+  volcano:`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${u}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CBE7F5"/><stop offset="1" stop-color="#EDF8E6"/></linearGradient></defs><rect width="400" height="240" fill="url(#${u}a)"/><circle cx="340" cy="48" r="22" fill="#FFD79A"/><ellipse cx="132" cy="46" rx="17" ry="7" fill="#fff" opacity=".9"/><ellipse cx="146" cy="34" rx="11" ry="5" fill="#fff" opacity=".7"/><path d="M-30 200 L132 56 L294 200 Z" fill="#3E6B52"/><path d="M118 68 L132 56 L148 68 L140 74 L128 72 Z" fill="#2C4F3C"/><path d="M180 200 L302 94 L434 200 Z" fill="#2F5544"/><rect y="192" width="400" height="48" fill="#2E8FA3"/><path d="M40 206 h50 M150 214 h40 M260 206 h56 M340 216 h34" stroke="#9FE0E8" stroke-width="3" stroke-linecap="round" opacity=".8"/><path d="M0 240 L0 226 Q200 214 400 228 L400 240 Z" fill="#24584A"/><path d="M230 60 q6 -8 12 0 M252 50 q6 -8 12 0" stroke="#4A5F56" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`,
+  city:`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${u}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#35507A"/><stop offset="1" stop-color="#FF9E6D"/></linearGradient></defs><rect width="400" height="240" fill="url(#${u}a)"/><circle cx="330" cy="52" r="16" fill="#FDF3D8" opacity=".95"/><rect x="20" y="110" width="52" height="110" fill="#22304A"/><rect x="84" y="80" width="60" height="140" fill="#1B2740"/><rect x="156" y="126" width="46" height="94" fill="#22304A"/><rect x="214" y="66" width="66" height="154" fill="#1B2740"/><rect x="292" y="104" width="54" height="116" fill="#22304A"/><rect x="356" y="140" width="44" height="80" fill="#1B2740"/><g fill="#FFC868"><rect x="94" y="94" width="9" height="9"/><rect x="116" y="94" width="9" height="9"/><rect x="94" y="116" width="9" height="9"/><rect x="226" y="80" width="9" height="9"/><rect x="250" y="80" width="9" height="9"/><rect x="226" y="104" width="9" height="9"/><rect x="250" y="128" width="9" height="9"/><rect x="302" y="118" width="9" height="9"/><rect x="324" y="140" width="9" height="9"/><rect x="32" y="126" width="9" height="9"/><rect x="52" y="148" width="9" height="9"/><rect x="166" y="140" width="9" height="9"/></g><rect y="218" width="400" height="22" fill="#141D30"/><path d="M20 229 h30 M90 229 h30 M160 229 h30 M230 229 h30 M300 229 h30 M370 229 h20" stroke="#F5A623" stroke-width="3" stroke-linecap="round" opacity=".8"/></svg>`,
+  island:`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${u}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BDEDF2"/><stop offset="1" stop-color="#EAFBF3"/></linearGradient></defs><rect width="400" height="240" fill="url(#${u}a)"/><circle cx="70" cy="52" r="24" fill="#FFD79A"/><rect y="128" width="400" height="112" fill="#18A7BC"/><path d="M0 140 Q100 134 200 140 T400 140" stroke="#BFF0F2" stroke-width="3" fill="none" opacity=".7"/><path d="M110 150 Q200 108 290 150 Z" fill="#F2D9A6"/><path d="M196 132 C198 116 194 106 200 92" stroke="#5A3A22" stroke-width="5" fill="none" stroke-linecap="round"/><g fill="#1E7A4E"><path d="M200 92 Q180 82 166 88 Q184 74 202 84 Z"/><path d="M200 92 Q220 80 236 86 Q216 74 198 84 Z"/><path d="M200 92 Q196 72 182 68 Q200 70 204 88 Z"/></g><path d="M300 176 q22 14 44 0 l-6 12 h-32 z" fill="#7A4A2B"/><path d="M322 176 v-30 l20 26 h-20 z" fill="#fff"/><path d="M320 176 v-24 l-14 20 h14 z" fill="#F6E8C9"/><path d="M60 190 h40 M140 206 h30 M330 210 h36" stroke="#9FE0E8" stroke-width="3" stroke-linecap="round" opacity=".8"/></svg>`,
+  eco:`<svg viewBox="0 0 400 240" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="${u}a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8F4E4"/><stop offset="1" stop-color="#FDF6E3"/></linearGradient></defs><rect width="400" height="240" fill="url(#${u}a)"/><circle cx="320" cy="50" r="20" fill="#FFD79A" opacity=".8"/><path d="M0 130 L90 66 L180 130 Z" fill="#A8CDB4"/><path d="M120 138 L230 58 L340 138 Z" fill="#8FBFA0"/><path d="M250 142 L350 78 L450 142 Z" fill="#A8CDB4"/><rect y="128" width="400" height="14" fill="#fff" opacity=".5"/><path d="M0 240 L0 160 Q120 120 240 164 Q330 194 400 172 L400 240 Z" fill="#3E7D5F"/><path d="M60 190 l14 -30 l14 30 z M100 200 l12 -26 l12 26 z M300 196 l13 -28 l13 28 z" fill="#24584A"/><rect x="196" y="182" width="52" height="34" fill="#7A4A2B"/><path d="M190 184 L222 162 L254 184 Z" fill="#5A3A22"/><rect x="214" y="194" width="16" height="22" fill="#FFC868"/><path d="M150 84 q6 -8 12 0 M170 76 q6 -8 12 0" stroke="#4A5F56" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>`
+  };
+  return S[type]||S.eco;
+}
+const HOTELS=[
+ {id:1,name:'Hotel Plaza Colón',dept:'Granada',city:'Granada',scene:'colonial',rating:4.7,reviews:214,featured:true,tags:['Centro histórico','Colonial','Piscina'],amenities:['wifi','piscina','desayuno','parqueo','ac','restaurante'],status:'aprobado',desc:'Casona colonial de 1890 restaurada, a dos cuadras del Parque Central de Granada. Patios con fuentes, piscina y desayuno nica incluido.',rooms:[{tipo:'Sencilla Estándar',cap:1,precio:65,total:6,ocupadas:2,mant:false},{tipo:'Doble Deluxe',cap:3,precio:85,total:10,ocupadas:6,mant:false},{tipo:'Suite Colonial',cap:2,precio:100,total:4,ocupadas:3,mant:false},{tipo:'Familiar con Terraza',cap:5,precio:120,total:3,ocupadas:1,mant:true}]},
+ {id:2,name:'Selina Maderas',dept:'Rivas',city:'San Juan del Sur',scene:'beach',rating:4.5,reviews:389,tags:['Surf','Frente al mar','Coworking'],amenities:['wifi','bar','ac','piscina'],status:'aprobado',desc:'Hostal boutique frente a la bahía, meca del surf con coworking, piscina infinita y clases de surf diarias.',rooms:[{tipo:'Dormitorio Compartido Surf',cap:1,precio:22,total:8,ocupadas:3,mant:false},{tipo:'Doble Frente al Mar',cap:2,precio:45,total:8,ocupadas:4,mant:false},{tipo:'Suite Vista Bahía',cap:2,precio:68,total:3,ocupadas:1,mant:false}]},
+ {id:3,name:'Totoco Plantation',dept:'Rivas',city:'Ometepe',scene:'volcano',rating:4.9,reviews:96,tags:['Eco-lodge','Vista al volcán','Yoga'],amenities:['wifi','desayuno','spa','senderos'],status:'aprobado',desc:'Eco-lodge de lujo a los pies del volcán Concepción. Yoga al amanecer, senderos privados y cocina de la finca.',rooms:[{tipo:'Doble Jardín',cap:2,precio:88,total:5,ocupadas:2,mant:false},{tipo:'Cabaña Vista Volcán',cap:3,precio:110,total:6,ocupadas:2,mant:false},{tipo:'Yurt Ecológico',cap:2,precio:95,total:3,ocupadas:3,mant:false}]},
+ {id:4,name:'Hotel Los Robles',dept:'Managua',city:'Managua',scene:'city',rating:4.3,reviews:512,tags:['Negocios','Céntrico','Aeropuerto'],amenities:['wifi','parqueo','ac','restaurante','gym'],status:'aprobado',desc:'Hotel urbano en el corazón de Managua, ideal para viajes de negocios: salas de reunión, gimnasio y transporte al aeropuerto.',rooms:[{tipo:'Sencilla Business',cap:1,precio:58,total:12,ocupadas:5,mant:false},{tipo:'Doble Estándar',cap:2,precio:70,total:15,ocupadas:8,mant:false},{tipo:'Suite Ejecutiva',cap:3,precio:95,total:5,ocupadas:2,mant:false}]},
+ {id:5,name:'La Posada de Doña Inés',dept:'León',city:'León',scene:'colonial',rating:4.6,reviews:178,tags:['Colonial','Rooftop','Arte'],amenities:['wifi','desayuno','bar','ac'],status:'aprobado',desc:'Posada familiar en el casco histórico de León, con rooftop frente a la Catedral y galería de arte local.',rooms:[{tipo:'Sencilla Patio',cap:1,precio:42,total:5,ocupadas:1,mant:false},{tipo:'Doble Patio',cap:2,precio:55,total:7,ocupadas:3,mant:false},{tipo:'Suite Terraza',cap:2,precio:72,total:2,ocupadas:0,mant:false}]},
+ {id:6,name:'Arenas Beach Resort',dept:'RACCS',city:'Corn Island',scene:'island',rating:4.8,reviews:143,featured:true,tags:['Caribe','Buceo','Todo incluido'],amenities:['wifi','desayuno','bar','spa','ac'],status:'aprobado',desc:'Resort caribeño sobre arena blanca en Little Corn Island. Buceo en arrecifes, rondón fresco y hamacas frente al mar.',rooms:[{tipo:'Doble Playa',cap:2,precio:118,total:8,ocupadas:5,mant:false},{tipo:'Cabaña Caribeña',cap:3,precio:130,total:5,ocupadas:4,mant:false},{tipo:'Suite Luna de Miel',cap:2,precio:165,total:2,ocupadas:1,mant:false}]},
+ {id:7,name:'Selva Negra Mountain Lodge',dept:'Matagalpa',city:'Matagalpa',scene:'eco',rating:4.4,reviews:203,tags:['Bosque nuboso','Senderos','Familiar'],amenities:['wifi','desayuno','senderos','restaurante'],status:'aprobado',desc:'Lodge de montaña entre pinos y neblina, con senderos de bosque nuboso y tour de café de altura.',rooms:[{tipo:'Doble Bosque',cap:2,precio:58,total:6,ocupadas:3,mant:false},{tipo:'Cabaña Pino',cap:4,precio:65,total:6,ocupadas:2,mant:false}]},
+ {id:8,name:'Eco-Lodge Miraflor',dept:'Estelí',city:'Estelí',scene:'eco',rating:0,reviews:0,owner:'Cooperativa Miraflor R.L.',tags:['Montaña','Café','Comunitario'],amenities:['desayuno','senderos'],status:'pendiente',desc:'Turismo comunitario en la reserva Miraflor: cabañas rústicas, orquídeas y café de especialidad.',rooms:[{tipo:'Cabaña Montaña',cap:3,precio:40,total:4,ocupadas:0,mant:false},{tipo:'Dormitorio Rural',cap:1,precio:18,total:2,ocupadas:0,mant:false}]},
+ {id:9,name:'Hostal Coyotepe',dept:'Masaya',city:'Masaya',scene:'colonial',rating:0,reviews:0,owner:'Familia Toribio',tags:['Laguna','Artesanías'],amenities:['wifi','desayuno','parqueo'],status:'pendiente',desc:'Hostal familiar cerca de la Laguna de Apoyo y del mercado de artesanías de Masaya.',rooms:[{tipo:'Sencilla',cap:1,precio:22,total:4,ocupadas:0,mant:false},{tipo:'Doble',cap:2,precio:30,total:5,ocupadas:0,mant:false}]}
+];
+const pbase=h=>Math.min(...h.rooms.map(r=>r.precio));
+let RESERVAS=[
+ {folio:'HC-2417',hotelId:1,guest:'María Fernández',tipo:'Doble Deluxe',in:'2026-08-01',out:'2026-08-03',total:196,estado:'Confirmada',huespedes:2},
+ {folio:'HC-2422',hotelId:1,guest:'John Miller',tipo:'Suite Colonial',in:'2026-08-02',out:'2026-08-06',total:483,estado:'Pendiente',huespedes:2},
+ {folio:'HC-2430',hotelId:1,guest:'Ana Sofía Ruiz',tipo:'Sencilla Estándar',in:'2026-07-31',out:'2026-08-01',total:75,estado:'Check-in',huespedes:1},
+ {folio:'HC-2398',hotelId:1,guest:'Carlos Vega',tipo:'Doble Deluxe',in:'2026-07-24',out:'2026-07-27',total:294,estado:'Completada',huespedes:3},
+ {folio:'HC-2405',hotelId:1,guest:'Luisa Pérez',tipo:'Suite Colonial',in:'2026-07-28',out:'2026-07-30',total:230,estado:'Cancelada',huespedes:2},
+ {folio:'HC-2361',hotelId:3,guest:'María José López',tipo:'Cabaña Vista Volcán',in:'2026-07-10',out:'2026-07-13',total:379,estado:'Completada',huespedes:2,calificacion:0},
+ {folio:'HC-2440',hotelId:2,guest:'María José López',tipo:'Doble Frente al Mar',in:'2026-08-14',out:'2026-08-16',total:104,estado:'Confirmada',huespedes:2}
+];
+const DESCUBRE=[
+ {t:'Destino',c:'dest',e:'📍',n:'Isletas de Granada',d:'365 isletas en el Lago Cocibolca: botes, monos y atardeceres.',s:'volcano'},
+ {t:'Actividad',c:'act',e:'🌋',n:'Volcano boarding · Cerro Negro',d:'Deslizate en tabla por las laderas de ceniza de un volcán activo.',s:'volcano'},
+ {t:'Sabor',c:'food',e:'🍽️',n:'Rondón en Corn Island',d:'Cocina caribeña: pescado, leche de coco y especias frente al mar.',s:'island'},
+ {t:'Destino',c:'dest',e:'📍',n:'Cañón de Somoto',d:'Nado y rappel entre paredes de roca de 120 metros.',s:'eco'},
+ {t:'Actividad',c:'act',e:'🏄',n:'Surf en Popoyo',d:'Olas constantes los 365 días del año, ideal para aprender.',s:'beach'},
+ {t:'Sabor',c:'food',e:'☕',n:'Ruta del café · Matagalpa',d:'Fincas, catación y caminatas entre nebliselva.',s:'eco'},
+ {t:'Destino',c:'dest',e:'📍',n:'León Viejo',d:'Ruinas de la primera capital, Patrimonio de la UNESCO.',s:'colonial'},
+ {t:'Actividad',c:'act',e:'🦥',n:'Canopy · Volcán Mombacho',d:'Tirolesas sobre bosque nuboso y vistas al lago.',s:'eco'}
+];
+const state={dept:'Todos',maxPrice:170,amenities:new Set(),favs:new Set(),soloFavs:false};
+let role='turista', bk={}, lastReserva=null;
+const F=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const fdate=iso=>{const d=new Date(iso+'T12:00');return d.getDate()+' '+F[d.getMonth()]};
+const nochesDe=(a,b)=>{let n=Math.round((new Date(b)-new Date(a))/864e5);return n>0?n:1};
+const BCLASS={Pendiente:'b-pend',Confirmada:'b-conf','Check-in':'b-in',Completada:'b-out',Cancelada:'b-cancel'};
+function toast(msg,icon='✅'){const t=document.createElement('div');t.className='toast';t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;$('#toasts').appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),380)},3400);}
+function openM(id){$(id).classList.add('show');document.body.style.overflow='hidden';}
+function closeM(id){$(id).classList.remove('show');if(!$$('.overlay.show').length)document.body.style.overflow='';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$$('.overlay.show').forEach(o=>closeM('#'+o.id));});
+$$('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)closeM('#'+o.id);}));
+const CHECKS={};
+function check(k){if(CHECKS[k])return;CHECKS[k]=1;const li=$(`#glist li[data-k="${k}"]`);if(li)li.classList.add('done');const n=Object.keys(CHECKS).length;$('#gprog').textContent=n+'/8';$('#gbarfill').style.width=(n/8*100)+'%';if(n===8){$('#guide').classList.add('done');toast('¡Recorrido completo! Hotelica está lista para tu presentación. 🎉','🏆');}}
+function cardHTML(h,i){
+  const disp=h.rooms.reduce((a,r)=>a+Math.max(0,r.total-r.ocupadas-(r.mant?r.total:0)),0);
+  return `<article class="hcard" style="animation-delay:${i*60}ms">
+    <div class="ph">${h.featured?'<span class="flag">🗝️ Destacado</span>':''}${scene(h.scene)}
+      <button class="heart ${state.favs.has(h.id)?'on':''}" onclick="toggleFav(${h.id},this)" title="Guardar en favoritos">♥</button>
+    </div>
+    <div class="hbody">
+      <div class="hloc">📍 ${h.city}, ${h.dept}</div>
+      <h3 class="hname">${h.name}</h3>
+      <div class="hrate">${h.rating?`<b>★ ${h.rating}</b> · ${h.reviews} reseñas`:'<span style="color:var(--teal);font-weight:700">✦ Nuevo en Hotelica</span>'}</div>
+      <div class="htags">${h.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      <div class="hfoot">
+        <div class="price"><b>$${pbase(h)}</b> <span>/noche<br>desde</span></div>
+        <button class="btn btn-ink btn-sm" onclick="openHotel(${h.id})">Ver habitaciones →</button>
+      </div>
+      <div style="font-size:.75rem;font-weight:700;margin-top:.5rem;color:${disp>0?'var(--teal)':'#B3341C'}">${disp>0?disp+' habitaciones disponibles esta semana':'Sin disponibilidad esta semana'}</div>
+    </div>
+  </article>`;
+}
+function renderHotels(){
+  let list=HOTELS.filter(h=>h.status==='aprobado');
+  if(state.dept!=='Todos')list=list.filter(h=>h.dept===state.dept);
+  list=list.filter(h=>pbase(h)<=state.maxPrice);
+  if(state.amenities.size)list=list.filter(h=>[...state.amenities].every(a=>h.amenities.includes(a)));
+  if(state.soloFavs)list=list.filter(h=>state.favs.has(h.id));
+  const s=$('#sort').value;
+  if(s==='precio-asc')list.sort((a,b)=>pbase(a)-pbase(b));
+  if(s==='precio-desc')list.sort((a,b)=>pbase(b)-pbase(a));
+  if(s==='rating')list.sort((a,b)=>b.rating-a.rating);
+  if(s==='recomendados')list.sort((a,b)=>(b.featured-a.featured)||(b.rating-a.rating));
+  $('#grid').innerHTML=list.length?list.map(cardHTML).join(''):`<div class="empty"><div class="big">🦜</div><h3 style="font-family:var(--display);margin:.4rem 0">No encontramos hoteles con esos filtros</h3><p>Probá ampliar el precio o quitar servicios.</p></div>`;
+  $('#rescount').textContent=`${list.length} hotel${list.length!==1?'es':''} ${state.dept!=='Todos'?'en '+state.dept:'disponibles'} · ${nochesDe($('#f-in').value,$('#f-out').value)} noches`;
+  $('#stat-hoteles').textContent=HOTELS.filter(h=>h.status==='aprobado').length;
+}
+function toggleFav(id,btn){
+  if(state.favs.has(id)){state.favs.delete(id);btn.classList.remove('on');toast('Quitado de favoritos','💔');}
+  else{state.favs.add(id);btn.classList.add('on');toast('Guardado en tus favoritos','❤️');check('favorito');}
+  $('#favcount').textContent=state.favs.size;
+  if(state.soloFavs)renderHotels();
+}
+function toggleSoloFavs(){state.soloFavs=!state.soloFavs;$('#chipfav').classList.toggle('on',state.soloFavs);renderHotels();}
+function limpiarFiltros(){
+  state.dept='Todos';state.maxPrice=170;state.amenities.clear();state.soloFavs=false;
+  $('#fprice').value=170;$('#pval').textContent='$170';$('#chipfav').classList.remove('on');
+  $$('#fdept input,#famen input').forEach(c=>c.checked=false);renderHotels();toast('Filtros restablecidos','🧹');
+}
+function buscar(e){
+  e.preventDefault();
+  state.dept=$('#f-dept').value;
+  $$('#fdept input').forEach(c=>c.checked=(c.value===state.dept&&state.dept!=='Todos'));
+  renderHotels();
+  document.getElementById('hoteles').scrollIntoView({behavior:'smooth'});
+  const n=$('#grid').querySelectorAll('.hcard').length;
+  toast(`${n} hoteles encontrados${state.dept!=='Todos'?' en '+state.dept:''} para tus fechas`,'🔍');
+  check('buscar');
+}
+function openHotel(id){
+  const h=HOTELS.find(x=>x.id===id);
+  const hues=+$('#f-guests').value;
+  $('#m-hotel-body').innerHTML=`
+    <button class="close" onclick="closeM('#m-hotel')">✕</button>
+    <div class="m-banner">${scene(h.scene)}</div>
+    <div class="m-body">
+      <div class="hloc">📍 ${h.city}, ${h.dept} · ${h.tags.join(' · ')}</div>
+      <h2>${h.name}</h2>
+      <div class="hrate" style="margin:.2rem 0 .6rem">${h.rating?`<b style="color:var(--gold-d);font-size:1.05rem">★ ${h.rating}</b> · ${h.reviews} reseñas verificadas`:'✦ Nuevo en Hotelica'}</div>
+      <p style="color:var(--ink2);font-size:.95rem">${h.desc}</p>
+      <div class="thumbs">${[0,25,-35,160].map(v=>`<div class="thumb" style="filter:hue-rotate(${v}deg) saturate(1.15)">${scene(h.scene)}</div>`).join('')}</div>
+      <div class="amen">${h.amenities.map(a=>`<span>${AMEN[a][0]} ${AMEN[a][1]}</span>`).join('')}</div>
+      <h3 style="font-size:1.2rem;font-weight:700;margin-bottom:.7rem">Habitaciones · ${fdate($('#f-in').value)} → ${fdate($('#f-out').value)} · ${hues} huésped${hues>1?'es':''}</h3>
+      ${h.rooms.map((r,i)=>{
+        const disp=r.mant?0:Math.max(0,r.total-r.ocupadas);
+        const ok=disp>0&&r.cap>=hues;
+        return `<div class="room-row">
+          <div><div class="rt">🛏️ ${r.tipo}</div><div class="rm">Hasta ${r.cap} huéspedes · ${r.mant?'En mantenimiento':disp+' de '+r.total+' disponibles'}</div></div>
+          <div style="text-align:right"><div class="price"><b>$${r.precio}</b> <span>/noche</span></div>
+          <button class="btn btn-flame btn-sm" style="margin-top:.35rem" ${ok?`onclick="openBooking(${h.id},${i})"`:'disabled'}>${ok?'Reservar':(disp===0?'Agotado':'No cabe')}</button></div>
+        </div>`;}).join('')}
+    </div>`;
+  openM('#m-hotel');
+}
+function openBooking(hid,ri){
+  closeM('#m-hotel');
+  const h=HOTELS.find(x=>x.id===hid), r=h.rooms[ri];
+  const n=nochesDe($('#f-in').value,$('#f-out').value);
+  const sub=r.precio*n, imp=Math.round(sub*.15), tot=sub+imp;
+  bk={h,r,n,sub,imp,tot};
+  bkStep(1);openM('#m-booking');
+}
+function bkStep(s){
+  const dots=[1,2,3].map(i=>`<i class="${i<=s?'on':''}"></i>`).join('');
+  let body='';
+  if(s===1)body=`
+    <h3 style="font-size:1.45rem;font-weight:700;margin-bottom:1rem">Tu estadía en ${bk.h.name}</h3>
+    <div class="bk-sum">
+      <div class="rrow"><span>🛏️ ${bk.r.tipo}</span><b>$${bk.r.precio}/noche</b></div>
+      <div class="rrow"><span>📅 ${fdate($('#f-in').value)} → ${fdate($('#f-out').value)}</span><b>${bk.n} noche${bk.n>1?'s':''}</b></div>
+      <div class="rrow"><span>Subtotal</span><span>$${bk.sub}</span></div>
+      <div class="rrow"><span>Impuestos y servicio (15%)</span><span>$${bk.imp}</span></div>
+      <div class="tot"><span>Total</span><span>$${bk.tot}</span></div>
+    </div>
+    <button class="btn btn-flame" style="width:100%;justify-content:center" onclick="bkStep(2)">Continuar con mis datos →</button>`;
+  if(s===2)body=`
+    <h3 style="font-size:1.45rem;font-weight:700;margin-bottom:1rem">Datos del huésped</h3>
+    <div class="bk-field"><label>Nombre completo</label><input id="bk-name" value="María José López"></div>
+    <div class="bk-row">
+      <div class="bk-field"><label>Correo</label><input id="bk-mail" value="maria.lopez@mail.com"></div>
+      <div class="bk-field"><label>Teléfono</label><input id="bk-tel" value="+505 8888 7777"></div>
+    </div>
+    <div style="display:flex;gap:.7rem;margin-top:.4rem">
+      <button class="btn btn-ghost" onclick="bkStep(1)">← Atrás</button>
+      <button class="btn btn-flame" style="flex:1;justify-content:center" onclick="bkStep(3)">Ir al pago →</button>
+    </div>`;
+  if(s===3)body=`
+    <h3 style="font-size:1.45rem;font-weight:700;margin-bottom:1rem">Pago seguro 🔒</h3>
+    <div class="bk-field"><label>Número de tarjeta</label><input id="bk-card" value="4242 4242 4242 4242"></div>
+    <div class="bk-row">
+      <div class="bk-field"><label>Vencimiento</label><input value="08/28"></div>
+      <div class="bk-field"><label>CVV</label><input value="•••"></div>
+    </div>
+    <div class="bk-sum"><div class="tot"><span>Total a pagar</span><span>$${bk.tot}</span></div></div>
+    <div style="display:flex;gap:.7rem">
+      <button class="btn btn-ghost" onclick="bkStep(2)">← Atrás</button>
+      <button class="btn btn-flame" id="bk-pay" style="flex:1;justify-content:center" onclick="pagar()">Pagar $${bk.tot} ahora</button>
+    </div>`;
+  $('#m-booking-body').innerHTML=`<button class="close" onclick="closeM('#m-booking')">✕</button><div class="m-body"><div class="bk-steps">${dots}</div>${body}</div>`;
+}
+function pagar(){
+  const b=$('#bk-pay');b.disabled=true;b.textContent='⏳ Procesando pago…';
+  setTimeout(()=>{
+    const folio='HC-'+(2500+Math.floor(Math.random()*400));
+    lastReserva={folio,hotelId:bk.h.id,guest:$('#bk-name')?$('#bk-name').value:'María José López',tipo:bk.r.tipo,in:$('#f-in').value,out:$('#f-out').value,total:bk.tot,estado:'Pendiente',huespedes:+$('#f-guests').value};
+    RESERVAS.push(lastReserva);
+    bk.r.ocupadas=Math.min(bk.r.total,bk.r.ocupadas+1);
+    $('#m-booking-body').innerHTML=`<div class="m-body"><div class="success">
+      <div class="check">🗝️</div>
+      <h3>¡Reserva creada con éxito!</h3>
+      <p style="color:var(--ink2)">Tu reserva quedó <b>pendiente de confirmación</b> por parte del hotel. Recibirás un correo con el detalle.</p>
+      <div class="folio">Folio: ${folio}</div>
+      <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-top:.6rem">
+        <button class="btn btn-ink" onclick="verRecibo('${folio}')">📄 Ver comprobante</button>
+        <button class="btn btn-ghost" onclick="closeM('#m-booking');renderMisReservas();document.getElementById('misreservas').scrollIntoView({behavior:'smooth'})">Ver mis reservas</button>
+      </div></div></div>`;
+    renderMisReservas();renderHotels();
+    toast(`Reserva ${folio} registrada. ¡El hotel ya la puede ver en su portal!`,'🎉');
+    check('reserva');
+  },950);
+}
+function qr(){
+  let c='';for(let r=0;r<9;r++)for(let k=0;k<9;k++)if(Math.random()>.52)c+=`<rect x="${8+k*6.2}" y="${8+r*6.2}" width="5" height="5" fill="#0B3540"/>`;
+  const f=(x,y)=>`<rect x="${x}" y="${y}" width="15" height="15" fill="none" stroke="#0B3540" stroke-width="3"/><rect x="${x+4.5}" y="${y+4.5}" width="6" height="6" fill="#0B3540"/>`;
+  return `<svg viewBox="0 0 76 76" class="qr"><rect width="76" height="76" fill="#fff"/>${c}${f(4,4)}${f(57,4)}${f(4,57)}</svg>`;
+}
+function verRecibo(folio){
+  const r=RESERVAS.find(x=>x.folio===folio);const h=HOTELS.find(x=>x.id===r.hotelId);
+  const n=nochesDe(r.in,r.out),sub=Math.round(r.total/1.15);
+  $('#m-receipt-body').innerHTML=`<button class="close" onclick="closeM('#m-receipt')">✕</button>
+   <div class="m-body receipt">
+    <div class="rhead"><div class="display">🗝️ Hotel<em>ica</em></div><div style="font-size:.75rem;color:var(--ink2)">Comprobante de reserva · ${new Date().toLocaleDateString('es-NI')}</div></div>
+    <div class="rrow"><span>Folio</span><b>${r.folio}</b></div>
+    <div class="rrow"><span>Hotel</span><b>${h.name}</b></div>
+    <div class="rrow"><span>Huésped</span><b>${r.guest}</b></div>
+    <div class="rrow"><span>Habitación</span><b>${r.tipo}</b></div>
+    <div class="rrow"><span>Fechas</span><b>${fdate(r.in)} → ${fdate(r.out)} (${n} n.)</b></div>
+    <div class="rrow"><span>Estado</span><span class="badge ${BCLASS[r.estado]}">${r.estado}</span></div>
+    <div class="rrow" style="margin-top:.5rem"><span>Subtotal</span><span>$${sub}</span></div>
+    <div class="rrow"><span>Impuestos (15%)</span><span>$${r.total-sub}</span></div>
+    <div class="rrow total"><span>Total pagado</span><span>$${r.total}</span></div>
+    ${qr()}
+    <p class="rnote">Presentá este código en recepción al llegar.<br>¡Buen viaje! 🇳🇮</p>
+    <button class="btn btn-flame" style="width:100%;justify-content:center;margin-top:1rem" onclick="toast('Comprobante ${r.folio}.pdf descargado (demo)','📄');check('pdf')">⬇️ Descargar PDF</button>
+   </div>`;
+  openM('#m-receipt');
+}
+function renderMisReservas(){
+  const mias=RESERVAS.filter(r=>r.guest==='María José López');
+  $('#misreservas-list').innerHTML=mias.length?mias.map((r,i)=>{
+    const h=HOTELS.find(x=>x.id===r.hotelId);
+    let accion='';
+    if(['Pendiente','Confirmada'].includes(r.estado))accion=`<button class="btn btn-danger btn-sm" onclick="cancelarMia('${r.folio}')">Cancelar reserva</button>`;
+    else if(r.estado==='Completada'&&!r.calificacion)accion=`<div style="font-size:.75rem;font-weight:700;color:var(--ink2);text-align:right">¿Cómo estuvo tu estadía?<div class="stars" id="st-${r.folio}">${[1,2,3,4,5].map(n=>`<span onclick="calificar('${r.folio}',${n})">★</span>`).join('')}</div></div>`;
+    else if(r.calificacion)accion=`<div style="font-size:.78rem;font-weight:700;color:var(--ink2)">Tu calificación<br><span style="color:var(--gold-d);font-size:1.1rem">${'★'.repeat(r.calificacion)}${'☆'.repeat(5-r.calificacion)}</span></div>`;
+    return `<div class="res-card" style="animation-delay:${i*70}ms">
+      <div class="ph">${scene(h.scene)}</div>
+      <div class="res-info">
+        <h4>${h.name}</h4>
+        <div class="res-meta">📍 ${h.city}, ${h.dept} · 🛏️ ${r.tipo} · Folio <b>${r.folio}</b></div>
+        <div class="res-meta">📅 ${fdate(r.in)} → ${fdate(r.out)} · ${r.huespedes} huésped${r.huespedes>1?'es':''}</div>
+        <span class="badge ${BCLASS[r.estado]}">${r.estado}</span>
+      </div>
+      <div class="res-side"><div class="res-total">$${r.total}</div>
+        <button class="btn btn-ghost btn-sm" onclick="verRecibo('${r.folio}')">📄 Comprobante</button>${accion}
+      </div></div>`;
+  }).join(''):'<p style="color:var(--ink2)">Aún no tenés reservas. ¡Buscá tu próximo destino arriba! 🧳</p>';
+}
+function cancelarMia(folio){
+  const r=RESERVAS.find(x=>x.folio===folio);const h=HOTELS.find(x=>x.id===r.hotelId);
+  const room=h.rooms.find(x=>x.tipo===r.tipo);if(room)room.ocupadas=Math.max(0,room.ocupadas-1);
+  r.estado='Cancelada';renderMisReservas();renderHotels();
+  toast(`Reserva ${folio} cancelada. El hotel fue notificado.`,'↩️');
+}
+function calificar(folio,n){
+  const r=RESERVAS.find(x=>x.folio===folio);r.calificacion=n;
+  const h=HOTELS.find(x=>x.id===r.hotelId);
+  h.rating=Math.round(((h.rating*h.reviews)+n)/(h.reviews+1)*10)/10;h.reviews++;
+  renderMisReservas();renderHotels();
+  toast(`¡Gracias! Calificaste ${h.name} con ${n} ★`,'⭐');check('calificar');
+}
+function setRole(r){
+  role=r;
+  $$('#roles button').forEach(b=>b.classList.toggle('on',b.dataset.role===r));
+  $('#view-turista').hidden=r!=='turista';$('#view-hotel').hidden=r!=='hotel';$('#view-admin').hidden=r!=='admin';
+  $('#mainnav').classList.remove('open');
+  $('#menuToggle').setAttribute('aria-expanded','false');
+  $('#mainnav').style.visibility=r==='turista'?'visible':'hidden';
+  if(r==='hotel')renderHotelPanel();
+  if(r==='admin')renderAdmin();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function hTab(btn,id){$$('#view-hotel .tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['h-reservas','h-habs','h-reportes'].forEach(p=>$('#'+p).style.display=p===id?'block':'none');if(id==='h-reportes')animChart();}
+const OCC=[{d:'Vie 31',v:78},{d:'Sáb 1',v:92},{d:'Dom 2',v:85},{d:'Lun 3',v:64},{d:'Mar 4',v:58},{d:'Mié 5',v:61},{d:'Jue 6',v:70}];
+function renderHotelPanel(){
+  const h=HOTELS[0];
+  const rs=RESERVAS.filter(r=>r.hotelId===1);
+  const pend=rs.filter(r=>r.estado==='Pendiente').length;
+  const enCasa=rs.filter(r=>r.estado==='Check-in').length;
+  const ing=rs.filter(r=>!['Cancelada'].includes(r.estado)).reduce((a,r)=>a+r.total,0);
+  const occTotal=h.rooms.reduce((a,r)=>a+r.total,0),occ=h.rooms.reduce((a,r)=>a+r.ocupadas,0);
+  $('#h-kpis').innerHTML=[
+    ['Ocupación actual',Math.round(occ/occTotal*100)+'%','▲ 12% vs semana pasada'],
+    ['Reservas pendientes',pend,'requieren confirmación'],
+    ['Huéspedes en casa',enCasa,'check-in activo'],
+    ['Ingresos del mes','$'+ing.toLocaleString(),'▲ 8% vs julio']
+  ].map((k,i)=>`<div class="kpi" style="animation-delay:${i*80}ms"><div class="lab">${k[0]}</div><div class="num">${k[1]}</div><div class="delta">${k[2]}</div></div>`).join('');
+  $('#h-reservas').innerHTML=`<h3>Gestión de reservas</h3><div class="tbl-wrap"><table><thead><tr><th>Folio</th><th>Huésped</th><th>Habitación</th><th>Fechas</th><th>Total</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>
+   ${rs.map(r=>`<tr><td><b>${r.folio}</b></td><td>${r.guest}<br><span style="font-size:.75rem;color:var(--ink2)">${r.huespedes} huésp.</span></td><td>${r.tipo}</td><td>${fdate(r.in)} → ${fdate(r.out)}</td><td><b>$${r.total}</b></td><td><span class="badge ${BCLASS[r.estado]}">${r.estado}</span></td><td>${accionesHotel(r)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+  $('#h-habs').innerHTML=`<h3>Inventario de habitaciones</h3><div class="room-grid">${h.rooms.map((r,i)=>{
+    const disp=r.mant?0:Math.max(0,r.total-r.ocupadas);
+    return `<div class="room-card"><h4>🛏️ ${r.tipo}</h4>
+      <div style="font-size:.8rem;color:var(--ink2)">Capacidad: ${r.cap} · ${r.total} unidades</div>
+      <div class="occ-bar"><i style="width:${Math.round(r.ocupadas/r.total*100)}%"></i></div>
+      <div style="font-size:.8rem;font-weight:700;color:${r.mant?'#B3341C':'var(--teal)'}">${r.mant?'🔧 En mantenimiento':disp+' libres · '+Math.round(r.ocupadas/r.total*100)+'% ocupado'}</div>
+      <div style="display:flex;gap:.5rem;align-items:center;margin-top:.7rem;flex-wrap:wrap">
+        <label style="font-size:.78rem;font-weight:700">$<input type="number" class="inline" value="${r.precio}" onchange="cambiarPrecio(${i},this.value)"></label>
+        <button class="btn btn-ghost btn-sm" onclick="toggleMant(${i})">${r.mant?'✔ Liberar':'🔧 Mantenim.'}</button>
+      </div></div>`;}).join('')}</div>
+   <form class="addform" onsubmit="agregarHab(event)">
+     <div class="field"><label>Tipo de habitación</label><input id="nh-tipo" placeholder="Ej: Doble con Vista" required></div>
+     <div class="field"><label>Precio/noche</label><input id="nh-precio" type="number" value="75" min="10"></div>
+     <div class="field"><label>Unidades</label><input id="nh-total" type="number" value="2" min="1"></div>
+     <button class="btn btn-flame">+ Agregar</button>
+   </form>`;
+  $('#h-reportes').innerHTML=`<h3>Ocupación · próximos 7 días</h3>
+   <div class="chart">${OCC.map(o=>`<div class="bar" data-v="${o.v}"><b>${o.v}%</b></div>`).join('')}</div>
+   <div class="bar-labs">${OCC.map(o=>`<span>${o.d}</span>`).join('')}</div>
+   <div style="display:flex;gap:.7rem;margin-top:1.6rem;flex-wrap:wrap">
+     <button class="btn btn-ink btn-sm" onclick="toast('Reporte de ocupación generado y enviado a tu correo','📊')">📊 Generar reporte de ocupación</button>
+     <button class="btn btn-ghost btn-sm" onclick="toast('Reporte de ingresos exportado a Excel (demo)','📁')">📁 Exportar ingresos</button>
+   </div>`;
+}
+function accionesHotel(r){
+  const b=(txt,cls,fn)=>`<button class="btn ${cls} btn-sm" onclick="${fn}">${txt}</button>`;
+  if(r.estado==='Pendiente')return b('Confirmar','btn-ink',`setEstado('${r.folio}','Confirmada'`)+`')`+b('Rechazar','btn-danger',`setEstado('${r.folio}','Cancelada')`);
+  if(r.estado==='Confirmada')return b('Check-in','btn-ink',`setEstado('${r.folio}','Check-in')`)+b('Cancelar','btn-danger',`setEstado('${r.folio}','Cancelada')`);
+  if(r.estado==='Check-in')return b('Check-out','btn-ink',`setEstado('${r.folio}','Completada')`);
+  return '<span style="font-size:.8rem;color:var(--ink2)">—</span>';
+}
+function setEstado(folio,estado){
+  const r=RESERVAS.find(x=>x.folio===folio);
+  if(estado==='Cancelada'){const h=HOTELS.find(x=>x.id===r.hotelId);const rm=h.rooms.find(x=>x.tipo===r.tipo);if(rm)rm.ocupadas=Math.max(0,rm.ocupadas-1);}
+  r.estado=estado;renderHotelPanel();renderMisReservas();renderHotels();
+  const msgs={Confirmada:['Reserva '+folio+' confirmada. El turista fue notificado. 📩','confirmar'],'Check-in':['Check-in registrado. ¡Bienvenido huésped! 🧳','checkin'],Completada:['Check-out completado. La estadía pasó al historial. 👋',null],Cancelada:['Reserva '+folio+' cancelada desde el hotel. ↩️',null]};
+  const m=msgs[estado];toast(m[0],'🏨');if(m[1])check(m[1]);
+}
+function cambiarPrecio(i,v){HOTELS[0].rooms[i].precio=+v;renderHotels();toast('Precio actualizado a $'+v+'/noche en toda la plataforma','💵');}
+function toggleMant(i){const r=HOTELS[0].rooms[i];r.mant=!r.mant;renderHotelPanel();toast(r.mant?'Habitación marcada en mantenimiento 🔧':'Habitación liberada para reservas ✔️','🛠️');}
+function agregarHab(e){e.preventDefault();HOTELS[0].rooms.push({tipo:$('#nh-tipo').value,cap:2,precio:+$('#nh-precio').value,total:+$('#nh-total').value,ocupadas:0,mant:false});renderHotelPanel();renderHotels();toast('Nueva habitación publicada: '+$('#nh-tipo').value,'🛏️');}
+function animChart(){requestAnimationFrame(()=>requestAnimationFrame(()=>{$$('#h-reportes .bar').forEach(b=>b.style.height=b.dataset.v+'%');}));}
+let USERS=[{n:'María José López',r:'Turista',e:true,m:'maria.lopez@mail.com'},{n:'Hotel Plaza Colón',r:'Hotel',e:true,m:'gerencia@plazacolon.ni'},{n:'Eco-Lodge Miraflor',r:'Hotel',e:false,m:'coop@miraflores.ni'},{n:'Randall Zamora',r:'Admin',e:true,m:'randall@hotelica.ni'},{n:'Kevin Blandón',r:'Turista',e:false,m:'kevin.b@mail.com'}];
+function aTab(btn,id){$$('#view-admin .tabs button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');['a-apr','a-stats','a-users'].forEach(p=>$('#'+p).style.display=p===id?'block':'none');if(id==='a-stats')animAdmin();}
+function renderAdmin(){
+  const pend=HOTELS.filter(h=>h.status==='pendiente');
+  const act=HOTELS.filter(h=>h.status==='aprobado').length;
+  $('#pendbadge').textContent=pend.length?`(${pend.length})`:'';
+  $('#a-kpis').innerHTML=[['Hoteles activos',act,'en la plataforma'],['Usuarios registrados',1248,'▲ 96 este mes'],['Reservas del mes',342+RESERVAS.length-7,'▲ 12% vs junio'],['Ingresos del mes','$28,450','comisiones incluidas']].map((k,i)=>`<div class="kpi" style="animation-delay:${i*80}ms"><div class="lab">${k[0]}</div><div class="num" data-target="${String(k[1]).replace(/[$,]/g,'')}" data-pre="${String(k[1]).startsWith('$')?'$':''}">0</div><div class="delta">${k[2]}</div></div>`).join('');
+  $$('#a-kpis .num').forEach(animateCount);
+  $('#a-apr').innerHTML=`<h3>Solicitudes de registro de hoteles</h3>`+(pend.length?`<div class="approve-grid">${pend.map((h,i)=>`
+    <div class="apr-card" style="animation-delay:${i*90}ms"><div class="ph">${scene(h.scene)}</div>
+     <div class="apr-body"><div class="hloc">📍 ${h.city}, ${h.dept}</div><h4 style="font-family:var(--display);font-weight:700">${h.name}</h4>
+     <div class="owner">Solicitante: ${h.owner||'—'} · Desde $${pbase(h)}/noche</div>
+     <p style="font-size:.83rem;color:var(--ink2);margin-bottom:.8rem">${h.desc}</p>
+     <div style="display:flex;gap:.5rem"><button class="btn btn-ink btn-sm" onclick="aprobar(${h.id})">✔ Aprobar y publicar</button><button class="btn btn-danger btn-sm" onclick="rechazar(${h.id})">✕ Rechazar</button></div>
+    </div></div>`).join('')}</div>`:'<p style="color:var(--ink2)">No hay hoteles pendientes de revisión. ✅</p>');
+  const depts=[['Granada',32],['Rivas',26],['León',14],['Managua',12],['RACCS',9],['Otros',7]];
+  $('#a-stats').innerHTML=`<h3>Reservas por departamento</h3>${depts.map(d=>`<div class="dbar"><span>${d[0]}</span><div class="track"><i data-w="${d[0]}"></i></div><b>${d[1]}%</b></div>`).join('')}
+   <div style="display:flex;gap:.7rem;margin-top:1.4rem;flex-wrap:wrap">
+     <button class="btn btn-ink btn-sm" onclick="toast('Reporte global generado y enviado a administración','📄')">📄 Reporte mensual PDF</button>
+     <button class="btn btn-ghost btn-sm" onclick="toast('Base de hoteles exportada (demo)','📁')">📁 Exportar datos</button></div>`;
+  $('#a-users').innerHTML=`<h3>Gestión de usuarios</h3><div class="tbl-wrap"><table><thead><tr><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
+   ${USERS.map((u,i)=>`<tr><td><b>${u.n}</b></td><td>${u.m}</td><td><span class="badge ${u.r==='Admin'?'b-in':u.r==='Hotel'?'b-pend':'b-conf'}">${u.r}</span></td><td style="font-weight:700;color:${u.e?'var(--teal)':'#B3341C'}">${u.e?'● Activo':'○ Inactivo'}</td><td><button class="btn ${u.e?'btn-danger':'btn-ink'} btn-sm" onclick="toggleUser(${i})">${u.e?'Desactivar':'Activar'}</button></td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+function animateCount(el){const t=+el.dataset.target,pre=el.dataset.pre||'',st=performance.now();(function f(now){const p=Math.min(1,(now-st)/950),e=1-Math.pow(1-p,3);el.textContent=pre+Math.round(t*e).toLocaleString();if(p<1)requestAnimationFrame(f);})(st);}
+function animAdmin(){requestAnimationFrame(()=>requestAnimationFrame(()=>{$$('#a-stats .track i').forEach(i=>i.style.width=i.dataset.w+'%');}));}
+function aprobar(id){const h=HOTELS.find(x=>x.id===id);h.status='aprobado';renderAdmin();renderHotels();toast(`"${h.name}" aprobado y publicado en Hotelica`,'✅');check('aprobar');}
+function rechazar(id){const h=HOTELS.find(x=>x.id===id);h.status='rechazado';renderAdmin();toast(`Solicitud de "${h.name}" rechazada. Se notificó al solicitante.`,'🚫');}
+function toggleUser(i){USERS[i].e=!USERS[i].e;renderAdmin();toast(`Usuario ${USERS[i].e?'activado':'desactivado'}`,'👥');}
+(function init(){
+  const dest='GRANADA ✦ LEÓN ✦ OMETEPE ✦ SAN JUAN DEL SUR ✦ CORN ISLAND ✦ MATAGALPA ✦ ESTELÍ ✦ MASAYA ✦ SOMOTO ✦ RESERVA INDIO MAÍZ ✦ ';
+  $('#mq').textContent=dest+dest;
+  $('#menuToggle').addEventListener('click',()=>{
+    const nav=$('#mainnav');
+    const open=nav.classList.toggle('open');
+    nav.style.visibility='visible';
+    $('#menuToggle').setAttribute('aria-expanded',open?'true':'false');
+    $('#menuToggle').textContent=open?'✕':'☰';
+  });
+  $$('#mainnav a').forEach(a=>a.addEventListener('click',()=>{
+    $('#mainnav').classList.remove('open');
+    $('#menuToggle').setAttribute('aria-expanded','false');
+    $('#menuToggle').textContent='☰';
+  }));
+  const depts=[...new Set(HOTELS.map(h=>h.dept))];
+  $('#f-dept').innerHTML='<option>Todos</option>'+depts.map(d=>`<option>${d}</option>`).join('');
+  $('#fdept').innerHTML=depts.map(d=>`<label class="chk"><input type="checkbox" value="${d}" onchange="state.dept=this.checked?this.value:'Todos';$$('#fdept input').forEach(c=>{if(c!==this)c.checked=false});if(!this.checked)state.dept='Todos';renderHotels()"> ${d}</label>`).join('');
+  $('#famen').innerHTML=Object.keys(AMEN).slice(0,8).map(a=>`<label class="chk"><input type="checkbox" value="${a}" onchange="this.checked?state.amenities.add('${a}'):state.amenities.delete('${a}');renderHotels()"> ${AMEN[a][0]} ${AMEN[a][1]}</label>`).join('');
+  $('#dscroll').innerHTML=DESCUBRE.map(d=>`<div class="dcard"><div class="ph">${scene(d.s)}</div><div class="dbody"><span class="dchip ${d.c}">${d.e} ${d.t}</span><h4>${d.n}</h4><p>${d.d}</p></div></div>`).join('');
+  renderHotels();renderMisReservas();
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+  $$('.reveal').forEach(el=>io.observe(el));
+  setTimeout(()=>toast('¡Bienvenido a Hotelica! La nueva marca, la misma Nicaragua 🗝️','✨'),900);
+})();
+</script>
+</body>
+</html>
