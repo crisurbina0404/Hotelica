@@ -1,0 +1,9 @@
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-label="Hotelica">
+  <rect width="48" height="48" rx="10" fill="#0B3540"/>
+  <circle cx="24" cy="20" r="9" fill="#F1AE74"/>
+  <path d="M24 13 C22 9 25 8 23 5 C22 3 24 2 25 1 C24 3 25 4 24 6 C23 8 21 9 22 11 C23 13 21 14 24 13 Z" fill="#B9CDD3" opacity=".8"/>
+  <path d="M4 42 L20 16 Q21 14 23 15 L25 16 Q26 16 26 18 L44 42 Z" fill="#0E4A5A"/>
+  <path d="M20 16 Q22 14 24 16 Q22 19 23 21 Q20 18 19 21 Q18 18 17 21 Q18 18 20 16 Z" fill="#DDB76A"/>
+  <path d="M17 21 Q15 24 13 26 Q17 25 19 22 Z" fill="#DDB76A"/>
+  <path d="M27 19 Q29 22 31 24 Q28 23 26 20 Z" fill="#DDB76A"/>
+</svg>
