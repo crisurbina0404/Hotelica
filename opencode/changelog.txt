@@ -8,6 +8,26 @@
 
 > Formato: cada avance se registra aquí con fecha y lo que se hizo.
 
+## [v0.4.1] - 2026-08-07
+### Ajuste de configuración (no es HU)
+- Logo del header y footer reemplazado por `src/img/Hotelica.svg` (SVG de marca, 40x40).
+- Wordmark "Hotelica" (con "ica" en dorado cursiva) mantenido al lado del símbolo.
+- CSS `.brand .logo` ajustado para `<img>` (object-fit:contain; sin fondo dorado).
+- Footer: quitada la frase "Antes HotelConnect" de la línea inferior.
+- Footer: quitada la columna "Stack tecnológico" completa.
+- Ribbon superior: quitada la frase "la evolución de HotelConnect".
+
+## [v0.4.0] - 2026-08-07
+### Agregado
+- HU-001 ✅ Terminada: Buscador principal en la portada.
+- Carpeta src/ con estructura HTML + CSS + JS (separados).
+- Buscador por destino (departamentos de Nicaragua), fechas y huéspedes.
+- Tarjetas de hotel con foto, ubicación, calificación, etiquetas, precio "desde" y nº de habitaciones disponibles.
+- Filtros laterales: precio máximo, departamento, servicios y ordenamiento.
+- Validación: la fecha de salida debe ser posterior a la de llegada.
+- Identidad visual oficial adoptada del prototipo (paleta --ink/--gold/--flame/--teal, tipografías Fraunces+Outfit, animaciones pop/drift/spin/mq/pulse/beat).
+- Repositorio git inicializado (commit ea843c8).
+
 ## [v0.3.0] - 2026-07-31
 ### Agregado
 - Estructura de carpetas del proyecto.

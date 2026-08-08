@@ -4,7 +4,7 @@
 
 | Orden | ID | Título | Interfaz | Estado |
 |---|---|---|---|---|
-| 1 | HU-001 | Buscar hoteles por destino | Buscador principal | 🟡 En desarrollo |
+| 1 | HU-001 | Buscar hoteles por destino | Buscador principal | ✅ Terminada |
 | 2 | HU-002 | Ver habitaciones disponibles | Detalle de hotel | ⬜ Escrita |
 | 3 | HU-003 | Reservar con cálculo de total | Modal de reserva | ⬜ Escrita |
 | 4 | HU-004 | Ver historial de reservas | Mis reservas | ⬜ Escrita |

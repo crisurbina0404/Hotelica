@@ -26,11 +26,15 @@ button{font-family:var(--body)}
 /* ---------- Header ---------- */
 header{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;box-shadow:0 2px 16px rgba(11,53,64,.25);padding-top:env(safe-area-inset-top)}
 .hwrap{max-width:1200px;margin:auto;padding:.75rem 1.2rem;display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:.65rem;text-decoration:none}
-.brand .logo{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;background:var(--gold);font-size:1.1rem;box-shadow:0 4px 12px rgba(247,168,27,.4);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
-.brand:hover .logo{transform:rotate(-14deg) scale(1.06)}
-.brand .wm{font-family:var(--display);font-weight:700;font-size:1.5rem;letter-spacing:-.01em;color:#FBF7EE}
-.brand .wm em{font-style:italic;color:var(--gold)}
+.brand{display:flex;align-items:center;gap:.7rem;text-decoration:none}
+.brand .logo-volcan-box{background:#fff;border-radius:10px;padding:5px;display:flex;align-items:center;justify-content:center;width:48px;height:48px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.brand .logo-volcan-img{width:auto;height:38px;display:block;object-fit:contain}
+.brand .wm-playfair{font-family:'Playfair Display',serif;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:1.6rem;color:var(--paper)}
+.brand .wm-footer{font-size:1.8rem}
+.brand-text{display:flex;flex-direction:column;line-height:1}
+.brand-tagline{display:flex;align-items:center;gap:.45rem;font-family:var(--body);font-weight:500;font-size:.72rem;color:#BFD3D6;margin-top:.18rem;letter-spacing:.02em}
+.brand-tagline span{color:var(--gold);font-weight:700;font-size:.85rem;line-height:1}
+.brand:hover .logo-volcan-box{transform:rotate(-3deg) scale(1.04);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 nav.mainnav{display:flex;gap:1.2rem;margin-left:.4rem}
 nav.mainnav a{color:#BFD3D6;text-decoration:none;font-weight:600;font-size:.92rem;position:relative;padding:.2rem 0}
 nav.mainnav a::after{content:'';position:absolute;left:0;bottom:-2px;width:0;height:2px;background:var(--gold);transition:width .25s}
@@ -174,6 +178,7 @@ footer a:hover{color:var(--gold)}
   .search-card{grid-template-columns:1fr 1fr}
   .search-card .btn{grid-column:1/-1;justify-content:center}
   .fwrap{grid-template-columns:1fr}
+  .brand .wm-footer{font-size:1.5rem}
   .menu-toggle{display:flex}
   nav.mainnav{display:none}
   nav.mainnav.open{display:flex;flex-direction:column;gap:.2rem;width:100%;margin:.2rem 0 .4rem;order:3;background:rgba(0,0,0,.18);border-radius:12px;padding:.6rem .8rem}
@@ -187,7 +192,9 @@ footer a:hover{color:var(--gold)}
   .search-card{grid-template-columns:1fr;padding:1rem}
   .search-card .field{min-width:0}
   .hwrap{gap:.7rem;padding:.6rem 1rem}
-  .brand .wm{font-size:1.3rem}
+  .brand .logo-volcan-box{width:42px;height:42px;padding:4px}
+  .brand .logo-volcan-img{height:32px}
+  .brand .wm-playfair{font-size:1.4rem}
   .hero-inner{padding-bottom:120px}
   .hero-land{height:170px}
   .hero-stats{gap:1.1rem}
@@ -200,8 +207,10 @@ footer a:hover{color:var(--gold)}
   .hero h1{font-size:1.95rem}
   .hero p.sub{font-size:.98rem}
   .ribbon{font-size:.7rem;letter-spacing:.02em;padding:.4rem .6rem}
-  .brand .wm{font-size:1.2rem}
-  .brand .logo{width:34px;height:34px}
+  .brand .logo-volcan-box{width:38px;height:38px;padding:3px}
+  .brand .logo-volcan-img{height:28px}
+  .brand .wm-playfair{font-size:1.2rem}
+  .brand .wm-footer{font-size:1.3rem}
   .hwrap{padding:.55rem .8rem}
   .search-card{padding:.9rem}
   .hbody{padding:.9rem .95rem 1rem}
