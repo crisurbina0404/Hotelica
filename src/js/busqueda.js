@@ -10,8 +10,8 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 // Estado global de los filtros
 const state={dept:'Todos', maxPrice:170, amenities:new Set(), favs:new Set()};
 
-// Catálogo de servicios con icono y nombre
-const AMEN={wifi:['📶','Wifi'],piscina:['🏊','Piscina'],desayuno:['🍳','Desayuno'],parqueo:['🅿️','Parqueo'],ac:['❄️','Aire acond.'],bar:['🍸','Bar'],restaurante:['🍽️','Restaurante'],spa:['🧖','Spa'],senderos:['🥾','Senderos'],gym:['🏋️','Gimnasio']};
+// Catálogo de servicios con icono Lucide (nombre del icono) y nombre legible
+const AMEN={wifi:['wifi','Wifi'],piscina:['waves','Piscina'],desayuno:['coffee','Desayuno'],parqueo:['square-parking','Parqueo'],ac:['snowflake','Aire acond.'],bar:['martini','Bar'],restaurante:['utensils','Restaurante'],spa:['flower-2','Spa'],senderos:['footprints','Senderos'],gym:['dumbbell','Gimnasio']};
 
 // Contador único para IDs de gradientes SVG
 let uid=0;
@@ -124,13 +124,13 @@ function cardHTML(h,i){
   // Calculamos habitaciones disponibles (restamos ocupadas y mantenimiento)
   const disp=h.rooms.reduce((a,r)=>a+Math.max(0,r.total-r.ocupadas-(r.mant?r.total:0)),0);
   return `<article class="hcard" style="animation-delay:${i*60}ms">
-    <div class="ph">${h.featured?'<span class="flag">⭐ Destacado</span>':''}${scene(h.scene)}
-      <button class="heart ${state.favs.has(h.id)?'on':''}" onclick="toggleFav(${h.id},this)" title="Guardar en favoritos">♥</button>
+    <div class="ph">${h.featured?'<span class="flag"><i data-lucide="star"></i> Destacado</span>':''}${scene(h.scene)}
+      <button class="heart ${state.favs.has(h.id)?'on':''}" onclick="toggleFav(${h.id},this)" title="Guardar en favoritos"><i data-lucide="heart"></i></button>
     </div>
     <div class="hbody">
-      <div class="hloc">📍 ${h.city}, ${h.dept}</div>
+      <div class="hloc"><i data-lucide="map-pin"></i> ${h.city}, ${h.dept}</div>
       <h3 class="hname">${h.name}</h3>
-      <div class="hrate"><b>★ ${h.rating}</b> · ${h.reviews} reseñas</div>
+      <div class="hrate"><b><i data-lucide="star"></i> ${h.rating}</b> · ${h.reviews} reseñas</div>
       <div class="htags">${h.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
       <div class="hfoot">
         <div class="price"><b>$${pbase(h)}</b> <span>/noche<br>desde</span></div>
@@ -157,17 +157,19 @@ function renderHotels(){
   if(s==='rating')list.sort((a,b)=>b.rating-a.rating);
   if(s==='recomendados')list.sort((a,b)=>(b.featured-a.featured)||(b.rating-a.rating));
   // Renderizamos las tarjetas o el mensaje de vacío
-  $('#grid').innerHTML=list.length?list.map(cardHTML).join(''):`<div class="empty"><div class="big">🦜</div><h3 style="font-family:var(--display);margin:.4rem 0">No encontramos hoteles con esos filtros</h3><p>Probá ampliar el precio o quitar servicios.</p></div>`;
+  $('#grid').innerHTML=list.length?list.map(cardHTML).join(''):`<div class="empty"><div class="big"><i data-lucide="search-x"></i></div><h3 style="font-family:var(--display);margin:.4rem 0">No encontramos hoteles con esos filtros</h3><p>Probá ampliar el precio o quitar servicios.</p></div>`;
   // Actualizamos el contador de resultados
   $('#rescount').textContent=`${list.length} hotel${list.length!==1?'es':''} ${state.dept!=='Todos'?'en '+state.dept:'disponibles'} · ${nochesDe($('#f-in').value,$('#f-out').value)} noches`;
   // Actualizamos el stat del hero
   $('#stat-hoteles').textContent=HOTELS.filter(h=>h.status==='aprobado').length;
+  // Reinicializamos iconos Lucide insertados dinámicamente
+  if(window.lucide) lucide.createIcons();
 }
 
 // Alterna favorito de un hotel
 function toggleFav(id,btn){
-  if(state.favs.has(id)){state.favs.delete(id);btn.classList.remove('on');toast('Quitado de favoritos','💔');}
-  else{state.favs.add(id);btn.classList.add('on');toast('Guardado en tus favoritos','❤️');}
+  if(state.favs.has(id)){state.favs.delete(id);btn.classList.remove('on');toast('Quitado de favoritos','heart-off');}
+  else{state.favs.add(id);btn.classList.add('on');toast('Guardado en tus favoritos','heart');}
   $('#favcount').textContent=state.favs.size;
 }
 
@@ -176,7 +178,7 @@ function limpiarFiltros(){
   state.dept='Todos';state.maxPrice=170;state.amenities.clear();
   $('#fprice').value=170;$('#pval').textContent='$170';
   $$('#fdept input,#famen input').forEach(c=>c.checked=false);
-  renderHotels();toast('Filtros restablecidos','🧹');
+  renderHotels();toast('Filtros restablecidos','rotate-ccw');
 }
 
 // Maneja el submit del formulario de búsqueda
@@ -192,7 +194,7 @@ function buscar(e){
   // Scroll suave hasta los resultados
   document.getElementById('hoteles').scrollIntoView({behavior:'smooth'});
   const n=$('#grid').querySelectorAll('.hcard').length;
-  toast(`${n} hoteles encontrados${state.dept!=='Todos'?' en '+state.dept:''} para tus fechas`,'🔍');
+  toast(`${n} hoteles encontrados${state.dept!=='Todos'?' en '+state.dept:''} para tus fechas`);
 }
 
 // Valida que la salida sea posterior a la llegada
@@ -213,12 +215,13 @@ function validarFechas(){
 // Calcula la cantidad de noches entre dos fechas
 const nochesDe=(a,b)=>{let n=Math.round((new Date(b)-new Date(a))/864e5);return n>0?n:1};
 
-// Muestra un toast temporal
-function toast(msg,icon='✅'){
+// Muestra un toast temporal con icono Lucide
+function toast(msg,icon='circle-check'){
   const t=document.createElement('div');
   t.className='toast';
-  t.innerHTML=`<span>${icon}</span><span>${msg}</span>`;
+  t.innerHTML=`<i data-lucide="${icon}"></i><span>${msg}</span>`;
   $('#toasts').appendChild(t);
+  if(window.lucide) lucide.createIcons();
   setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),380)},3400);
 }
 
@@ -238,16 +241,19 @@ function toast(msg,icon='✅'){
   // Checkboxes de departamento en los filtros
   $('#fdept').innerHTML=depts.map(d=>`<label class="chk"><input type="checkbox" value="${d}" onchange="state.dept=this.checked?this.value:'Todos';$$('#fdept input').forEach(c=>{if(c!==this)c.checked=false});if(!this.checked)state.dept='Todos';renderHotels()"> ${d}</label>`).join('');
   // Checkboxes de servicios en los filtros
-  $('#famen').innerHTML=Object.keys(AMEN).slice(0,8).map(a=>`<label class="chk"><input type="checkbox" value="${a}" onchange="this.checked?state.amenities.add('${a}'):state.amenities.delete('${a}');renderHotels()"> ${AMEN[a][0]} ${AMEN[a][1]}</label>`).join('');
+  $('#famen').innerHTML=Object.keys(AMEN).slice(0,8).map(a=>`<label class="chk"><input type="checkbox" value="${a}" onchange="this.checked?state.amenities.add('${a}'):state.amenities.delete('${a}');renderHotels()"> <i data-lucide="${AMEN[a][0]}"></i> ${AMEN[a][1]}</label>`).join('');
 
   // Texto del marquee (cinta naranja)
-  const dest='GRANADA ✦ LEÓN ✦ OMETEPE ✦ SAN JUAN DEL SUR ✦ CORN ISLAND ✦ MATAGALPA ✦ ESTELÍ ✦ MASAYA ✦ ';
+  const dest='GRANADA · LEÓN · OMETEPE · SAN JUAN DEL SUR · CORN ISLAND · MATAGALPA · ESTELÍ · MASAYA · ';
   $('#mq').textContent=dest+dest;
 
-  // Render inicial
-  renderHotels();
+  // Render inicial (comentado: sin base de datos todavía, el placeholder del HTML se mantiene)
+  // renderHotels();
 
   // Animación reveal al hacer scroll
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
   $$('.reveal').forEach(el=>io.observe(el));
+
+  // Inicializamos iconos Lucide del HTML estático (header, hero, filtros, footer)
+  if(window.lucide) lucide.createIcons();
 })();

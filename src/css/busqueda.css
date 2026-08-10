@@ -19,6 +19,9 @@ h1,h2,h3,h4,.display{font-family:var(--display)}
 button{font-family:var(--body)}
 ::selection{background:var(--gold);color:var(--ink)}
 
+/* Iconos Lucide: heredan color y tamaño del texto/botón */
+.lucide{width:18px;height:18px;vertical-align:-3px;stroke:currentColor;flex-shrink:0}
+
 /* Cinta de rebrand */
 .ribbon{background:var(--gold);color:var(--ink);text-align:center;font-weight:700;font-size:.82rem;letter-spacing:.04em;padding:.5rem 1rem}
 .ribbon b{font-family:var(--display);font-style:italic}
@@ -64,18 +67,18 @@ nav.mainnav a:hover{color:#fff} nav.mainnav a:hover::after{width:100%}
 .field input:focus,.field select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(23,126,140,.16)}
 
 /* Botones */
-.btn{font:700 .95rem var(--body);padding:.74rem 1.3rem;border-radius:11px;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;transition:.2s;text-decoration:none}
-.btn-flame{background:var(--flame);color:#fff;box-shadow:0 6px 18px rgba(244,80,44,.35)}
-.btn-flame:hover{background:var(--flame-d);transform:translateY(-2px);box-shadow:0 10px 24px rgba(244,80,44,.42)}
-.btn-flame:active{transform:translateY(0)}
+.btn{font:700 .95rem var(--body);padding:.74rem 1.3rem;border-radius:11px;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:.45rem;transition:filter .15s;text-decoration:none}
+.btn-flame{background:var(--flame);color:#fff}
+.btn-flame:hover{filter:brightness(.95)}
+.btn-flame:active{filter:brightness(.9)}
 .btn-ink{background:var(--ink);color:#FBF7EE}
-.btn-ink:hover{background:#0E4450;transform:translateY(-2px)}
+.btn-ink:hover{filter:brightness(.95)}
 .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
-.btn-ghost:hover{border-color:var(--teal);transform:translateY(-2px)}
+.btn-ghost:hover{background:#F8F6F0;filter:brightness(.95)}
 .btn-danger{background:#FBE3DC;color:#B3341C}
-.btn-danger:hover{background:#F8CFC2}
+.btn-danger:hover{filter:brightness(.95)}
 .btn-sm{padding:.44rem .82rem;font-size:.83rem;border-radius:9px}
-.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 
 /* SVG decorativo del hero */
 .hero-land{position:absolute;left:0;right:0;bottom:-2px;width:100%;height:230px;z-index:1;pointer-events:none}
@@ -91,7 +94,7 @@ nav.mainnav a:hover{color:#fff} nav.mainnav a:hover::after{width:100%}
 @keyframes mq{to{transform:translateX(-50%)}}
 
 /* ---------- Secciones ---------- */
-section.block{max-width:1200px;margin:auto;padding:3.6rem 1.2rem}
+section.block{max-width:1600px;width:96%;margin:auto;padding:2.6rem 1rem 3.6rem}
 .sec-head{display:flex;align-items:end;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.7rem}
 .sec-head h2{font-size:clamp(1.8rem,3.4vw,2.6rem);font-weight:700;letter-spacing:-.015em}
 .sec-head h2 em{font-style:italic;color:var(--gold-d)}
@@ -99,7 +102,12 @@ section.block{max-width:1200px;margin:auto;padding:3.6rem 1.2rem}
 .dot{width:9px;height:9px;border-radius:50%;background:#2FB56B;box-shadow:0 0 0 0 rgba(47,181,107,.5);animation:pulse 1.8s infinite}
 @keyframes pulse{70%{box-shadow:0 0 0 9px rgba(47,181,107,0)}100%{box-shadow:0 0 0 0 rgba(47,181,107,0)}}
 
-/* ---------- Filtros + grid ---------- */
+/* ---------- Filtros + grid + mapa (3 columnas) ---------- */
+.layout-resultados{display:grid;grid-template-columns:270px minmax(0,1fr) minmax(420px,32%);gap:1.5rem;align-items:start}
+.col-hoteles{min-width:0}
+.mapa-panel{position:sticky;top:96px;align-self:start;aspect-ratio:1;width:100%;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.mapa-panel iframe{width:100%;height:100%;border:0;display:block}
+.placeholder-bd{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--ink2);font-style:italic;font-size:.95rem;background:#fff;border:1px dashed var(--line);border-radius:var(--r)}
 .results{display:grid;grid-template-columns:250px 1fr;gap:1.6rem;align-items:start}
 .filters{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.2rem;position:sticky;top:96px}
 .filters h3{font-size:1.15rem;font-weight:700;margin-bottom:1rem}
@@ -115,7 +123,7 @@ section.block{max-width:1200px;margin:auto;padding:3.6rem 1.2rem}
 .chip.on{background:var(--flame);border-color:var(--flame);color:#fff}
 
 /* Grid de tarjetas */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(285px,1fr));gap:1.4rem}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1.4rem}
 
 /* Tarjeta de hotel */
 .hcard{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;transition:transform .3s,box-shadow .3s;animation:pop .5s both;position:relative}
@@ -181,6 +189,12 @@ footer a:hover{color:var(--gold)}
   .brand .wm-footer{font-size:1.5rem}
   .menu-toggle{display:flex}
   nav.mainnav{display:none}
+  .layout-resultados{grid-template-columns:1fr}
+  .col-mapa{display:none}
+  .mapa-panel{display:none}
+  .grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:1rem;padding-bottom:.5rem;-webkit-overflow-scrolling:touch}
+  .grid>.hcard,.grid>.placeholder-bd{scroll-snap-align:start;min-width:260px;flex:0 0 260px}
+  .grid>.placeholder-bd{min-width:100%;flex-basis:100%}
   nav.mainnav.open{display:flex;flex-direction:column;gap:.2rem;width:100%;margin:.2rem 0 .4rem;order:3;background:rgba(0,0,0,.18);border-radius:12px;padding:.6rem .8rem}
   nav.mainnav.open a{padding:.6rem .4rem;border-bottom:1px solid rgba(255,255,255,.08)}
   nav.mainnav.open a:last-child{border-bottom:0}
@@ -199,7 +213,6 @@ footer a:hover{color:var(--gold)}
   .hero-land{height:170px}
   .hero-stats{gap:1.1rem}
   .hero-stats b{font-size:1.15rem}
-  .grid{grid-template-columns:1fr;gap:1rem}
   .sec-head h2{font-size:1.7rem}
   .fbottom{padding:1rem}
 }

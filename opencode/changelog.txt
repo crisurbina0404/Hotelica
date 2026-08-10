@@ -8,6 +8,24 @@
 
 > Formato: cada avance se registra aquí con fecha y lo que se hizo.
 
+## [v0.5.1] - 2026-08-10
+### Ajuste visual de HU-001 (no nuevo HU)
+- Favicon del sitio cambiado a `src/img/favicon1.svg` (antes `favicon.svg`); también `apple-touch-icon` apunta ahora a `favicon1.svg`.
+- Logo del header y footer reemplazado: se quitó `logo-volcan.png` (archivo eliminado) y se usa `favicon1.svg` dentro de `.logo-volcan-box` junto al wordmark HOTELICA.
+- Layout de resultados: mapa ahora es un panel **cuadrado** (`aspect-ratio:1`) en vez de `height:440px`.
+- Columna del mapa reducida (`minmax(420px,32%)`) para dar más espacio a los hoteles.
+- `.grid` de hoteles con 2 columnas fijas (`repeat(2,minmax(0,1fr))`) en escritorio. En móvil (<960px) sigue con scroll horizontal snap.
+
+## [v0.5.0] - 2026-08-09
+### Ajuste visual de HU-001 (no nuevo HU)
+- Contenedor de hoteles vacío con placeholder "Los hoteles aparecerán aquí cuando se conecten a la base de datos." ( Preliminar la BD en Fase 2). Render inicial en JS comentado.
+- Botones sólidos sin glow: .btn-flame ( --flame ), .btn-ink ( --ink ), .btn-ghost (fondo blanco + borde --line). Hover con filter:brightness(.95), sin box-shadow.
+- Quitados todos los emojis de botones, etiquetas, títulos y ribbon ( Buscar hoteles, Filtros, Limpiar filtros, etc.).
+- Layout con mapa: columna izquierda (filtros + resultados) + columna derecha con iframe de OpenStreetMap embebido Nicaragua. Mapa sticky, panel con borde --line y radius --r.
+- Mapa oculto en móvil (<960px, display:none).
+- Móvil (<960px): contenedor de hoteles con scroll horizontal snap (display:flex; overflow-x:auto; scroll-snap-type:x mandatory), tarjetas min-width:260px.
+- JS sin tocar la lógica de búsqueda; solo se comentó el render inicial.
+
 ## [v0.4.1] - 2026-08-07
 ### Ajuste de configuración (no es HU)
 - Logo del header y footer reemplazado por `src/img/Hotelica.svg` (SVG de marca, 40x40).
