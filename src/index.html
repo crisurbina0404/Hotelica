@@ -303,30 +303,82 @@
     <!-- ============ VISTA DE DETALLE (HU-002) ============ -->
     <section class="block detalle" id="detalle" hidden>
       <button class="btn btn-ghost btn-sm" id="detalleVolver" type="button"><i data-lucide="arrow-left"></i> <span data-i18n="detalle_volver">Volver a resultados</span></button>
+
       <div class="detalle-head">
-        <div class="detalle-ph" id="detallePh"></div>
+        <button class="detalle-ph" id="detallePhBtn" type="button" aria-label="Ver galería">
+          <div class="detalle-ph" id="detallePh"></div>
+          <span class="detalle-ph-zoom"><i data-lucide="image"></i> <span data-i18n="ver_galeria">Ver galería</span></span>
+        </button>
         <div class="detalle-info">
           <div class="detalle-tags" id="detalleTags"></div>
           <h2 class="detalle-nombre" id="detalleNombre"></h2>
           <div class="detalle-loc" id="detalleLoc"></div>
-          <div class="detalle-rate" id="detalleRate"></div>
+          <div class="detalle-rate-row">
+            <div class="detalle-rate" id="detalleRate"></div>
+            <button class="btn btn-ghost btn-sm" id="detalleResenasBtn" type="button"><i data-lucide="message-square"></i> <span data-i18n="ver_resenas">Ver reseñas</span></button>
+          </div>
           <div class="detalle-desc" id="detalleDesc"></div>
           <button class="heart detalle-fav" id="detalleFav" type="button" title="Guardar en favoritos"><i data-lucide="heart"></i></button>
         </div>
       </div>
 
-      <div class="detalle-busqueda" id="detalleBusqueda">
-        <div><span class="flabel" data-i18n="f_llegada">Llegada</span><b id="detalleIn"></b></div>
-        <div><span class="flabel" data-i18n="f_salida">Salida</span><b id="detalleOut"></b></div>
-        <div><span class="flabel" data-i18n="f_huespedes">Huéspedes</span><b id="detalleGuests"></b></div>
-        <div><span class="flabel" data-i18n="fl_noches">Noches</span><b id="detalleNoches"></b></div>
+      <div class="tabs" id="detalleTabs" role="tablist">
+        <button class="tab on" data-tab="general" role="tab" data-i18n="tab_general">Visión general</button>
+        <button class="tab" data-tab="habitaciones" role="tab" data-i18n="tab_habitaciones">Habitaciones</button>
+        <button class="tab" data-tab="servicios" role="tab" data-i18n="tab_servicios">Servicios</button>
+        <button class="tab" data-tab="ubicacion" role="tab" data-i18n="tab_ubicacion">Ubicación</button>
       </div>
 
-      <h3 class="detalle-sub" data-i18n="detalle_habitaciones">Habitaciones disponibles</h3>
-      <div class="habitaciones" id="detalleRooms"></div>
+      <div class="tab-body" id="tab-general" role="tabpanel">
+        <div class="detalle-busqueda" id="detalleBusqueda">
+          <div><span class="flabel" data-i18n="f_llegada">Llegada</span><b id="detalleIn"></b></div>
+          <div><span class="flabel" data-i18n="f_salida">Salida</span><b id="detalleOut"></b></div>
+          <div><span class="flabel" data-i18n="f_huespedes">Huéspedes</span><b id="detalleGuests"></b></div>
+          <div><span class="flabel" data-i18n="fl_noches">Noches</span><b id="detalleNoches"></b></div>
+        </div>
+        <h3 class="detalle-sub" data-i18n="sobre_hotel">Sobre el hotel</h3>
+        <p id="detalleDescLarga" class="detalle-desc-larga"></p>
+        <h3 class="detalle-sub" data-i18n="categorias">Lo que ofrece el hotel</h3>
+        <div class="detalle-categorias" id="detalleCategorias"></div>
+      </div>
+
+      <div class="tab-body" id="tab-habitaciones" role="tabpanel" hidden>
+        <h3 class="detalle-sub" data-i18n="detalle_habitaciones">Habitaciones disponibles</h3>
+        <div class="habitaciones" id="detalleRooms"></div>
+      </div>
+
+      <div class="tab-body" id="tab-servicios" role="tabpanel" hidden>
+        <h3 class="detalle-sub" data-i18n="servicios_titulo">Servicios del hotel</h3>
+        <div class="detalle-amen" id="detalleAmen"></div>
+      </div>
+
+      <div class="tab-body" id="tab-ubicacion" role="tabpanel" hidden>
+        <h3 class="detalle-sub" data-i18n="ubicacion_titulo">Cómo llegar</h3>
+        <p id="detalleUbicacion" class="detalle-desc-larga"></p>
+        <div class="mapa-panel" style="position:static;height:340px;aspect-ratio:auto;margin-top:1rem" id="detalleMapa"></div>
+      </div>
     </section>
   </section>
 </main>
+
+<!-- Lightbox galería (HU-002) -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lightbox-close" id="lightboxClose" aria-label="Cerrar"><i data-lucide="x"></i></button>
+  <button class="lightbox-nav prev" id="lightboxPrev" aria-label="Anterior"><i data-lucide="chevron-left"></i></button>
+  <img id="lightboxImg" alt="">
+  <button class="lightbox-nav next" id="lightboxNext" aria-label="Siguiente"><i data-lucide="chevron-right"></i></button>
+  <div class="lightbox-thumbs" id="lightboxThumbs"></div>
+</div>
+
+<!-- Modal de reseñas (HU-002) -->
+<div class="modal-backdrop" id="resenasModal" hidden>
+  <div class="modal modal-resenas" role="dialog" aria-modal="true">
+    <button class="modal-close" id="resenasClose" aria-label="Cerrar"><i data-lucide="x"></i></button>
+    <h2 id="resenasTitle" data-i18n="resenas_titulo">Opiniones de huéspedes</h2>
+    <div class="resenas-prom" id="resenasProm"></div>
+    <div class="resenas-list" id="resenasList"></div>
+  </div>
+</div>
 
 <!-- ============ FOOTER ============ -->
 <footer>

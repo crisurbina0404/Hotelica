@@ -51,7 +51,14 @@ const I18N={
     toast_filtros:'Filtros restablecidos', toast_buscar:'hoteles encontrados', toast_buscar_en:'para tus fechas',
     detalle_volver:'Volver a resultados', detalle_habitaciones:'Habitaciones disponibles',
     hab_cap:'hasta', hab_por_noche:'/noche', hab_disponibles:'habitaciones disponibles', hab_sin_disp:'Sin disponibilidad', hab_reservar:'Reservar', hab_resenas:'reseñas',
-    fl_noches:'Noches', toast_pronto_reserva:'Próximamente: reserva'
+    fl_noches:'Noches', toast_pronto_reserva:'Próximamente: reserva',
+    ver_galeria:'Ver galería', ver_resenas:'Ver reseñas',
+    tab_general:'Visión general', tab_habitaciones:'Habitaciones', tab_servicios:'Servicios', tab_ubicacion:'Ubicación',
+    sobre_hotel:'Sobre el hotel', categorias:'Lo que ofrece el hotel',
+    servicios_titulo:'Servicios del hotel', ubicacion_titulo:'Cómo llegar',
+    resenas_titulo:'Opiniones de huéspedes', resenas_sub:'opiniones',
+    cat_cercania:'Atractivos cercanos', cat_instalaciones:'Instalaciones', cat_comidas:'Gastronomía', cat_naturaleza:'Naturaleza', cat_hab_tipos:'Tipos de habitación',
+    amen_no_disponible:'No hay servicios en el catálogo de fase 1'
   },
   en:{
     tagline:'Your destination in Nicaragua',
@@ -84,7 +91,14 @@ const I18N={
     toast_filtros:'Filters reset', toast_buscar:'hotels found', toast_buscar_en:'for your dates',
     detalle_volver:'Back to results', detalle_habitaciones:'Available rooms',
     hab_cap:'up to', hab_por_noche:'/night', hab_disponibles:'rooms available', hab_sin_disp:'No availability', hab_reservar:'Book', hab_resenas:'reviews',
-    fl_noches:'Nights', toast_pronto_reserva:'Coming soon: booking'
+    fl_noches:'Nights', toast_pronto_reserva:'Coming soon: booking',
+    ver_galeria:'View gallery', ver_resenas:'See reviews',
+    tab_general:'Overview', tab_habitaciones:'Rooms', tab_servicios:'Amenities', tab_ubicacion:'Location',
+    sobre_hotel:'About the hotel', categorias:'What the hotel offers',
+    servicios_titulo:'Hotel amenities', ubicacion_titulo:'How to get there',
+    resenas_titulo:'Guest reviews', resenas_sub:'reviews',
+    cat_cercania:'Nearby attractions', cat_instalaciones:'Facilities', cat_comidas:'Food', cat_naturaleza:'Nature', cat_hab_tipos:'Room types',
+    amen_no_disponible:'No amenities in the phase 1 catalog'
   }
 };
 
@@ -159,36 +173,84 @@ function scene(type){
 }
 
 // Lista de hoteles (solo los "aprobado" se muestran en resultados)
+// imgs: galería de fotos (Unsplash, vía URL). img: foto de cada habitación.
 const HOTELS=[
  {id:1,name:'Hotel Plaza Colón',dept:'Granada',city:'Granada',scene:'colonial',rating:4.7,reviews:214,featured:true,
   tags:['Centro histórico','Colonial','Piscina'],amenities:['wifi','piscina','desayuno','parqueo','ac','restaurante'],status:'aprobado',
   desc:'Casona colonial de 1890 restaurada, a dos cuadras del Parque Central de Granada.',
-  rooms:[{tipo:'Sencilla Estándar',cap:1,precio:65,total:6,ocupadas:2,mant:false},{tipo:'Doble Deluxe',cap:3,precio:85,total:10,ocupadas:6,mant:false},{tipo:'Suite Colonial',cap:2,precio:100,total:4,ocupadas:3,mant:false}]},
+  imgs:['https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=900','https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=900','https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=900','https://images.unsplash.com/photo-1445019988900-c01f25c18ca3?w=900'],
+  rooms:[{tipo:'Sencilla Estándar',cap:1,precio:65,total:6,ocupadas:2,mant:false,img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600'},{tipo:'Doble Deluxe',cap:3,precio:85,total:10,ocupadas:6,mant:false,img:'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600'},{tipo:'Suite Colonial',cap:2,precio:100,total:4,ocupadas:3,mant:false,img:'https://images.unsplash.com/photo-1611892480238-e8a4db75c1c2?w=600'}]},
  {id:2,name:'Selina Maderas',dept:'Rivas',city:'San Juan del Sur',scene:'beach',rating:4.5,reviews:389,
   tags:['Surf','Frente al mar','Coworking'],amenities:['wifi','bar','ac','piscina'],status:'aprobado',
   desc:'Hostal boutique frente a la bahía, meca del surf con coworking y piscina infinita.',
-  rooms:[{tipo:'Dormitorio Compartido',cap:1,precio:22,total:8,ocupadas:3,mant:false},{tipo:'Doble Frente al Mar',cap:2,precio:45,total:8,ocupadas:4,mant:false},{tipo:'Suite Vista Bahía',cap:2,precio:68,total:3,ocupadas:1,mant:false}]},
+  imgs:['https://images.unsplash.com/photo-1507525428974-6d4a97f1f1db?w=900','https://images.unsplash.com/photo-1519045549483-1e0a30595c1e?w=900','https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=900','https://images.unsplash.com/photo-1505693416388-ac5ce068fe3e?w=900'],
+  rooms:[{tipo:'Dormitorio Compartido',cap:1,precio:22,total:8,ocupadas:3,mant:false,img:'https://images.unsplash.com/photo-1524496604259-52c5fa4abd7c?w=600'},{tipo:'Doble Frente al Mar',cap:2,precio:45,total:8,ocupadas:4,mant:false,img:'https://images.unsplash.com/photo-1551308752-29aa99c1f6d3?w=600'},{tipo:'Suite Vista Bahía',cap:2,precio:68,total:3,ocupadas:1,mant:false,img:'https://images.unsplash.com/photo-1582719502374-1cfe6e2f1c1a?w=600'}]},
  {id:3,name:'Totoco Plantation',dept:'Rivas',city:'Ometepe',scene:'volcano',rating:4.9,reviews:96,
   tags:['Eco-lodge','Vista al volcán','Yoga'],amenities:['wifi','desayuno','spa','senderos'],status:'aprobado',
   desc:'Eco-lodge de lujo a los pies del volcán Concepción. Yoga al amanecer y senderos privados.',
-  rooms:[{tipo:'Doble Jardín',cap:2,precio:88,total:5,ocupadas:2,mant:false},{tipo:'Cabaña Vista Volcán',cap:3,precio:110,total:6,ocupadas:2,mant:false}]},
+  imgs:['https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900','https://images.unsplash.com/photo-1518684079-3e8e0c94c4ab?w=900','https://images.unsplash.com/photo-1502784444187-847328d1f945?w=900','https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=900'],
+  rooms:[{tipo:'Doble Jardín',cap:2,precio:88,total:5,ocupadas:2,mant:false,img:'https://images.unsplash.com/photo-1566073771259-6a14860ba9bd?w=600'},{tipo:'Cabaña Vista Volcán',cap:3,precio:110,total:6,ocupadas:2,mant:false,img:'https://images.unsplash.com/photo-1571008818202-b7c1184cad8d?w=600'}]},
  {id:4,name:'Hotel Los Robles',dept:'Managua',city:'Managua',scene:'city',rating:4.3,reviews:512,
   tags:['Negocios','Céntrico','Aeropuerto'],amenities:['wifi','parqueo','ac','restaurante','gym'],status:'aprobado',
   desc:'Hotel urbano en el corazón de Managua, ideal para viajes de negocios.',
-  rooms:[{tipo:'Sencilla Business',cap:1,precio:58,total:12,ocupadas:5,mant:false},{tipo:'Doble Estándar',cap:2,precio:70,total:15,ocupadas:8,mant:false},{tipo:'Suite Ejecutiva',cap:3,precio:95,total:5,ocupadas:2,mant:false}]},
+  imgs:['https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=900','https://images.unsplash.com/photo-1566073771259-6a14860ba9bd?w=900','https://images.unsplash.com/photo-1445019988900-c01f25c18ca3?w=900','https://images.unsplash.com/photo-1551778324-88c1c1d8e8d4?w=900'],
+  rooms:[{tipo:'Sencilla Business',cap:1,precio:58,total:12,ocupadas:5,mant:false,img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600'},{tipo:'Doble Estándar',cap:2,precio:70,total:15,ocupadas:8,mant:false,img:'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600'},{tipo:'Suite Ejecutiva',cap:3,precio:95,total:5,ocupadas:2,mant:false,img:'https://images.unsplash.com/photo-1611892480238-e8a4db75c1c2?w=600'}]},
  {id:5,name:'La Posada de Doña Inés',dept:'León',city:'León',scene:'colonial',rating:4.6,reviews:178,
   tags:['Colonial','Rooftop','Arte'],amenities:['wifi','desayuno','bar','ac'],status:'aprobado',
   desc:'Posada familiar en el casco histórico de León, con rooftop frente a la Catedral.',
-  rooms:[{tipo:'Sencilla Patio',cap:1,precio:42,total:5,ocupadas:1,mant:false},{tipo:'Doble Patio',cap:2,precio:55,total:7,ocupadas:3,mant:false}]},
+  imgs:['https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=900','https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=900','https://images.unsplash.com/photo-1568084680785-f447987f1c45?w=900','https://images.unsplash.com/photo-1519045549483-1e0a30595c1e?w=900'],
+  rooms:[{tipo:'Sencilla Patio',cap:1,precio:42,total:5,ocupadas:1,mant:false,img:'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600'},{tipo:'Doble Patio',cap:2,precio:55,total:7,ocupadas:3,mant:false,img:'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600'}]},
  {id:6,name:'Arenas Beach Resort',dept:'RACCS',city:'Corn Island',scene:'island',rating:4.8,reviews:143,featured:true,
   tags:['Caribe','Buceo','Todo incluido'],amenities:['wifi','desayuno','bar','spa','ac'],status:'aprobado',
   desc:'Resort caribeño sobre arena blanca en Little Corn Island.',
-  rooms:[{tipo:'Doble Playa',cap:2,precio:118,total:8,ocupadas:5,mant:false},{tipo:'Cabaña Caribeña',cap:3,precio:130,total:5,ocupadas:4,mant:false}]},
+  imgs:['https://images.unsplash.com/photo-1519045549483-1e0a30595c1e?w=900','https://images.unsplash.com/photo-1571008818202-b7c1184cad8d?w=900','https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=900','https://images.unsplash.com/photo-1507525428974-6d4a97f1f1db?w=900'],
+  rooms:[{tipo:'Doble Playa',cap:2,precio:118,total:8,ocupadas:5,mant:false,img:'https://images.unsplash.com/photo-1582719502374-1cfe6e2f1c1a?w=600'},{tipo:'Cabaña Caribeña',cap:3,precio:130,total:5,ocupadas:4,mant:false,img:'https://images.unsplash.com/photo-1571008818202-b7c1184cad8d?w=600'}]},
  {id:7,name:'Selva Negra Mountain Lodge',dept:'Matagalpa',city:'Matagalpa',scene:'eco',rating:4.4,reviews:203,
   tags:['Bosque nuboso','Senderos','Familiar'],amenities:['wifi','desayuno','senderos','restaurante'],status:'aprobado',
   desc:'Lodge de montaña entre pinos y neblina, con senderos de bosque nuboso.',
-  rooms:[{tipo:'Doble Bosque',cap:2,precio:58,total:6,ocupadas:3,mant:false},{tipo:'Cabaña Pino',cap:4,precio:65,total:6,ocupadas:2,mant:false}]}
+  imgs:['https://images.unsplash.com/photo-1518684079-3e8e0c94c4ab?w=900','https://images.unsplash.com/photo-1502784444187-847328d1f945?w=900','https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=900','https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=900'],
+  rooms:[{tipo:'Doble Bosque',cap:2,precio:58,total:6,ocupadas:3,mant:false,img:'https://images.unsplash.com/photo-1566073771259-6a14860ba9bd?w=600'},{tipo:'Cabaña Pino',cap:4,precio:65,total:6,ocupadas:2,mant:false,img:'https://images.unsplash.com/photo-1571008818202-b7c1184cad8d?w=600'}]}
 ];
+
+// Reseñas simuladas de turistas (HU-002: pantalla de opiniones). No se persisten; vienen del JS.
+const REVIEWS={
+ 1:[
+  {nombre:'María Fernanda López',rating:5,fecha:'2026-07-12',comentario:'Una casona colonial preciosa, el patio interno te lleva a otra época. Desayuno espectacular y a dos pasos del Parque Central.'},
+  {nombre:'Carlos Pérez',rating:4,fecha:'2026-06-30',comentario:'Muy buena atención y habitaciones amplias. El único pero: ruido de la calle en la madrugada. Lo volvería a elegir.'},
+  {nombre:'Ana R.',rating:5,fecha:'2026-07-22',comentario:'La Suite Colonial vale cada peso. Te reciben con frutas y el baño es gigante. Recomendado para parejas.'}
+ ],
+ 2:[
+  {nombre:'Diego Sánchez',rating:5,fecha:'2026-07-18',comentario:'El ambiente para surfistas es ideal. Coworking cómodo y la piscina con vista al mar es brutal.'},
+  {nombre:'Lucía M.',rating:4,fecha:'2026-06-10',comentario:'Buen precio y más limpio de lo que esperaba. El dormitorio compartido es pequeño pero suficiente.'},
+  {nombre:'Tom W.',rating:4,fecha:'2026-07-29',comentario:'Kite y surf todo el día, cervezas en la terraza al atardecer. Volveré seguro.'},
+  {nombre:'Camila',rating:5,fecha:'2026-08-02',comentario:'La Suite Vista Bahía es cara pero increíble. Me desperté con delfines.'}
+ ],
+ 3:[
+  {nombre:'Roberto Díaz',rating:5,fecha:'2026-07-05',comentario:'El yoga al amanecer con vista al volcán fue uno de los mejores momentos del viaje. Los senderos son mágicos.'},
+  {nombre:'Sofía G.',rating:5,fecha:'2026-06-20',comentario:'Eco-lodge de verdad: energía solar, agua de lluvia y comida de huerta. La Cabaña Vista Volcán es un sueño.'},
+  {nombre:'James K.',rating:5,fecha:'2026-07-14',comentario:'Aislado, pero eso es lo que se busca. Llevar repellente, hay muchos mosquitos al atardecer.'}
+ ],
+ 4:[
+  {nombre:'Erika B.',rating:4,fecha:'2026-07-25',comentario:'Céntrico y con shuttle al aeropuerto. No es boutique pero cumple perfecto para negocios.'},
+  {nombre:'Ing. Rivera',rating:3,fecha:'2026-06-15',comentario:'Habitación algo anticuada. El gym es básico. Desayuno correcto.'},
+  {nombre:'Pablo M.',rating:4,fecha:'2026-08-01',comentario:'La Suite Ejecutiva tiene un escritorio amplio. Buena señal WiFi para reuniones.'}
+ ],
+ 5:[
+  {nombre:'Laura V.',rating:5,fecha:'2026-07-19',comentario:'El rooftop frente a la Catedral es lo mejor de León. Un atardecer inolvidable con un ron de cortesía.'},
+  {nombre:'Andrea P.',rating:5,fecha:'2026-06-29',comentario:'Posada con mucho cariño en los detalles. Doña Inés es una anfitriona adorable.'},
+  {nombre:'Javier',rating:4,fecha:'2026-07-08',comentario:'Habitaciones modestas pero impecables. Si vas a León, quedate acá.'}
+ ],
+ 6:[
+  {nombre:'Valeria S.',rating:5,fecha:'2026-07-28',comentario:'Caribe puro. Aguas turquesa, buceo con tiburones de aleta blanca y el staff se desvive por todo.'},
+  {nombre:'Mike T.',rating:5,fecha:'2026-06-22',comentario:'All-inclusive sin ser masivo. La Cabaña Caribeña a 10 metros de la playa es increíble.'},
+  {nombre:'Rosario',rating:4,fecha:'2026-08-04',comentario:'Caro, pero justificado. Llegar toma tiempo (vuelo + lancha), valgalo.'}
+ ],
+ 7:[
+  {nombre:'Familia Ortega',rating:4,fecha:'2026-07-21',comentario:'Perfecto para desconectar con los chicos. Senderos seguros y mucho aire fresco.'},
+  {nombre:'Nora H.',rating:5,fecha:'2026-06-18',comentario:'La Cabaña Pino es amplia para 4. El café de altitud es único.'},
+  {nombre:'Eduardo',rating:4,fecha:'2026-07-10',comentario:'Neblina romantica, comida casera y chimenea. Ideal para parejas.'}
+ ]
+};
 
 // Calcula el precio mínimo de un hotel (para el "desde $X/noche")
 const pbase=h=>Math.min(...h.rooms.map(r=>r.precio));
@@ -391,17 +453,29 @@ function cerrarDropdown(panel){ if(panel){ panel.hidden=true; const btn=panel.pr
 // Disponibilidad por habitación: total − ocupadas (en memoria, sin BD).
 const dispHab=r=>Math.max(0, r.total - r.ocupadas);
 
-// HTML de una tarjeta de habitación para la vista de detalle.
+// Categorías predefinidas por scene del hotel (lo que ofrece, agrupado por categoría).
+const CATEG_POR_SCENE={
+  colonial:{cercania:['landmark','Centro histórico','Iglesias y plazas a 2 cuadras'],instalaciones:['archive','Patio colonial','Fuentes y galería de arte'],comidas:['utensils','Cocina tradicional','Desayuno nica incluido'],naturaleza:['sun','Clima cálido','Terrazas con vegetación']},
+  beach:{cercania:['waves','Frente al mar','Playa y escuelas de surf a 100m'],instalaciones:['umbrella-beach','Beach club','Piscina infinita y coworking'],comidas:['martini','Bar de playa','Cocktails al atardecer'],naturaleza:['fish','Buceo y snorkel','Excursiones a yates y pesca']},
+  volcano:{cercania:['mountain','Senderos al volcán','Guías locales incluidos'],instalaciones:['flower-2','Spa y yoga','Eco-lodge 100% solar'],comidas:['coffee','Café de altura','Desayuno orgánico'],naturaleza:['trees','Bosque tropical','Avistamiento de aves']},
+  city:{cercania:['building-2','Centro financiero','A 15 min del aeropuerto'],instalaciones:['briefcase','Business center','Salas de reuniones y gym'],comidas:['utensils','Restaurante','Cocina internacional 24h'],naturaleza:['car','Conexión rápida','Shuttle al aeropuerto']},
+  island:{cercania:['fish','Buceo en arrecifes','Tiburones de aleta blanca'],instalaciones:['ship','Muelle privado','Todo incluido y spa'],comidas:['utensils','Cocina caribeña','Mariscos frescos del día'],naturaleza:['palmtree','Arena blanca','Aguas turquesa']},
+  eco:{cercania:['trees','Senderos de bosque','Bosque nuboso privado'],instalaciones:['flower-2','Cabañas de montaña','Hogar a leña y café orgánico'],comidas:['utensils','Comida de huerta','Café de altura y dulces'],naturaleza:['bird','Avistamiento','Aves endémicas y neblina']}
+};
+
+// HTML de una tarjeta de habitación (con imagen) para la vista de detalle.
 function habCardHTML(r){
   const d=dispHab(r), ok=d>0;
   const t=I18N[lang];
   return `<article class="hab-card">
-    <div>
+    <img class="hab-img" loading="lazy" src="${r.img||''}" alt="${r.tipo}">
+    <div class="hab-body">
       <h4 class="hab-tipo">${r.tipo}</h4>
       <div class="hab-meta">
         <span><i data-lucide="users"></i> ${t.hab_cap} ${r.cap}</span>
         <span><i data-lucide="tag"></i> $${r.precio} ${t.hab_por_noche}</span>
       </div>
+      <div class="hab-precio">$${r.precio}<small> ${t.hab_por_noche}</small></div>
       <div class="hab-disp ${ok?'ok':'no'}">${ok?`${d} ${t.hab_disponibles}`:t.hab_sin_disp}</div>
     </div>
     <div class="hab-acciones">
@@ -410,31 +484,102 @@ function habCardHTML(r){
   </article>`;
 }
 
-// Abre la vista de detalle del hotel id. event llega desde el click en la tarjeta.
+// Estado de la galería activa (hotel visualizado en el lightbox).
+let galeriaHotel=null, galeriaIdx=0;
+
+// Construye los thumbs del lightbox y marca el activo.
+function renderGaleriaThumbs(){
+  const t=I18N[lang];
+  if(!galeriaHotel) return;
+  $('#lightboxThumbs').innerHTML=galeriaHotel.imgs.map((u,i)=>`<img src="${u}" class="${i===galeriaIdx?'on':''}" onclick="galeriaIr(${i})" alt="">`).join('');
+}
+// Cambia la imagen principal del lightbox.
+function galeriaIr(i){
+  if(!galeriaHotel) return;
+  galeriaIdx=(i+galeriaHotel.imgs.length)%galeriaHotel.imgs.length;
+  $('#lightboxImg').src=galeriaHotel.imgs[galeriaIdx];
+  renderGaleriaThumbs();
+}
+function abrirGaleria(h){ galeriaHotel=h; galeriaIdx=0; $('#lightboxImg').src=h.imgs[0]; $('#lightbox').hidden=false; renderGaleriaThumbs(); if(window.lucide) lucide.createIcons(); }
+function cerrarGaleria(){ $('#lightbox').hidden=true; galeriaHotel=null; }
+
+// Activa una pestaña del detalle.
+function activarTab(tab){
+  $$('#detalleTabs .tab').forEach(b=>b.classList.toggle('on', b.dataset.tab===tab));
+  $$('#detalle .tab-body').forEach(p=>p.hidden = p.id!=='tab-'+tab);
+  if(window.lucide) lucide.createIcons();
+}
+
+// Abre el modal de reseñas del hotel.
+function abrirResenas(h){
+  const t=I18N[lang], list=REVIEWS[h.id]||[];
+  const prom=h.rating, total=h.reviews;
+  $('#resenasProm').innerHTML=`<span class="big">${prom}</span><span class="stars">${starsHTML(prom)}</span><small>${total} ${t.resenas_sub}</small>`;
+  $('#resenasList').innerHTML=list.length?list.map(r=>`
+    <div class="resena">
+      <div class="resena-head">
+        <span class="resena-nombre">${r.nombre}</span>
+        <span class="resena-stars">${starsHTML(r.rating)}</span>
+        <span class="resena-fecha">${r.fecha}</span>
+      </div>
+      <p class="resena-comentario">${r.comentario}</p>
+    </div>
+  `).join(''):`<p style="color:var(--ink2)">${t.amen_no_disponible}</p>`;
+  $('#resenasModal').hidden=false;
+  if(window.lucide) lucide.createIcons();
+}
+function cerrarResenas(){ $('#resenasModal').hidden=true; }
+
+// Devuelve N estrellas SVG (Lucide) para calificación de 0 a 5 (mitades redondeadas hacia abajo).
+function starsHTML(n){
+  let full=Math.floor(n), half=(n-full)>=0.5, html='';
+  for(let i=0;i<full;i++) html+='<i data-lucide="star"></i>';
+  if(half) html+='<i data-lucide="star-half"></i>';
+  for(let i=full+(half?1:0);i<5;i++) html+='<i data-lucide="star" style="opacity:.25"></i>';
+  return html;
+}
+
+// Abre la vista de detalle del hotel id.
 function abrirDetalle(id, event){
   if(event && event.target.closest('.heart')) return;
   const h=HOTELS.find(x=>x.id===id);
   if(!h || h.status!=='aprobado') return;
   const t=I18N[lang];
   // Encabezado
-  $('#detallePh').innerHTML=scene(h.scene);
+  $('#detallePh').innerHTML=`<img src="${h.imgs[0]}" alt="${h.name}">`;
+  $('#detallePhBtn').onclick=()=>abrirGaleria(h);
   $('#detalleNombre').textContent=h.name;
   $('#detalleLoc').innerHTML=`<i data-lucide="map-pin"></i> ${h.city}, ${h.dept}`;
   $('#detalleRate').innerHTML=`<b><i data-lucide="star"></i> ${h.rating}</b> · ${h.reviews} ${t.hab_resenas}`;
   $('#detalleDesc').textContent=h.desc;
   $('#detalleTags').innerHTML=h.tags.map(tg=>`<span class="tag">${tg}</span>`).join('');
+  $('#detalleResenasBtn').onclick=()=>abrirResenas(h);
   // Favorito en detalle
   const fav=$('#detalleFav');
   fav.classList.toggle('on', state.favs.has(h.id));
   fav.onclick=()=>{ toggleFav(h.id, fav); fav.classList.toggle('on', state.favs.has(h.id)); };
-  // Recap de la búsqueda
+  // Tab general
   const n=nochesDe($('#f-in').value,$('#f-out').value);
   $('#detalleIn').textContent=$('#f-in').value||'—';
   $('#detalleOut').textContent=$('#f-out').value||'—';
   $('#detalleGuests').textContent=$('#f-guests').value||'1';
   $('#detalleNoches').textContent=n;
+  $('#detalleDescLarga').textContent=h.desc+' La atención del staff y los detalles de arquitectura hacen de cada estadía una experiencia memorable. Wifi en todas las áreas, recepción 24h y opciones de transporte desde el aeropuerto.';
+  // Categorías por scene
+  const cat=CATEG_POR_SCENE[h.scene]||CATEG_POR_SCENE.eco;
+  const catLabels={cercania:t.cat_cercania,instalaciones:t.cat_instalaciones,comidas:t.cat_comidas,naturaleza:t.cat_naturaleza};
+  $('#detalleCategorias').innerHTML=['cercania','instalaciones','comidas','naturaleza'].map(k=>{
+    const [ic,title,desc]=cat[k]; return `<div class="cat-item"><i data-lucide="${ic}"></i><div><b>${catLabels[k]}</b><span>${title}</span></div></div>`;
+  }).join('');
   // Habitaciones
   $('#detalleRooms').innerHTML=h.rooms.map(habCardHTML).join('');
+  // Servicios (amenidades del hotel)
+  $('#detalleAmen').innerHTML=h.amenities.map(a=>`<div class="amen-item"><i data-lucide="${AMEN[a][0]}"></i> ${AMEN[a][1]}</div>`).join('')||`<p>${t.amen_no_disponible}</p>`;
+  // Ubicación + mapa
+  $('#detalleUbicacion').textContent=`${h.name} está ubicado en ${h.city}, departamento de ${h.dept}, Nicaragua. Atractivos del entorno a corta distancia.`;
+  $('#detalleMapa').innerHTML=`<iframe title="Mapa de ${h.city}" src="https://www.openstreetmap.org/export/embed.html?bbox=-87.8%2C10.7%2C-82.6%2C15.1&layer=mapnik&marker=12.86%2C-85.21" style="width:100%;height:100%;border:0" loading="lazy"></iframe>`;
+  // Activar tab Visión general por defecto
+  activarTab('general');
   // Mostrar detalle y ocultar resultados
   $('#hoteles').hidden=true;
   $('#detalle').hidden=false;
@@ -495,6 +640,19 @@ function filtrarPorDepto(depto){
 
   // === HU-002 · Vista de detalle ===
   $('#detalleVolver').addEventListener('click', cerrarDetalle);
+  $$('#detalleTabs .tab').forEach(b=>b.addEventListener('click', ()=>activarTab(b.dataset.tab)));
+  // Lightbox galería
+  $('#lightboxClose').addEventListener('click', cerrarGaleria);
+  $('#lightboxPrev').addEventListener('click', ()=>galeriaIr(galeriaIdx-1));
+  $('#lightboxNext').addEventListener('click', ()=>galeriaIr(galeriaIdx+1));
+  // Modal de reseñas
+  $('#resenasClose').addEventListener('click', cerrarResenas);
+  $('#resenasModal').addEventListener('click', e=>{ if(e.target.id==='resenasModal') cerrarResenas(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){ cerrarGaleria(); cerrarResenas(); }
+    if($('#lightbox').hidden===false && e.key==='ArrowLeft') galeriaIr(galeriaIdx-1);
+    if($('#lightbox').hidden===false && e.key==='ArrowRight') galeriaIr(galeriaIdx+1);
+  });
 
   // === HU-012 · Login (modal, social y correo) ===
   $('#loginBtn').addEventListener('click', abrirModal);

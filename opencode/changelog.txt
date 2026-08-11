@@ -8,6 +8,18 @@
 
 > Formato: cada avance se registra aquí con fecha y lo que se hizo.
 
+## [v0.7.1] - 2026-08-10
+### Ampliación HU-002 · Vista de detalle mejorada (galería, categorías, reseñas)
+- Vista de detalle reorganizada con **tabs**: Visión general | Habitaciones | Servicios | Ubicación.
+- **Tab Visión general**: descripción larga + bloque "Tu búsqueda" (llegada/salida/huéspedes/noches) + sección "Lo que ofrece el hotel" con 4 categorías (Atractivos cercanos, Instalaciones, Gastronomía, Naturaleza) derivadas de la `scene` del hotel, con íconos Lucide.
+- **Tab Habitaciones**: tarjetas con **foto** de la habitación (Unsplash), tipo, capacidad (`users`), precio/noche (`tag`), disponibilidad `total − ocupadas` y botón Reservar (deshabilitado sin disponibilidad).
+- **Tab Servicios**: lista de amenidades del hotel con íconos Lucide del catálogo `AMEN`.
+- **Tab Ubicación**: texto descriptivo + mapa OpenStreetMap embebido del hotel.
+- **Galería (lightbox)**: clic en la foto del encabezado abre un lightbox con todas las fotos del hotel (`h.imgs`), navegación con flechas / teclado (← → →, Esc para cerrar) y miniaturas inferiores.
+- **Reseñas / opiniones**: botón "Ver reseñas" junto al rating abre un **modal** con el promedio grande + estrellas + lista de reseñas escritas (nombre, estrellas, fecha, comentario). Contenido simulado en el JS (`REVIEWS`), 3-4 por hotel. Cierra con X / Esc / clic fuera.
+- Datos Unsplash añadidos a `HOTELS` (4 `imgs` por hotel + `img` por habitación). Catálogo `REVIEWS` nuevo en `busqueda.js`.
+- i18n ES/EN ampliado con textos del detalle nuevo (tabs, categorías, reseñas, botón galería).
+
 ## [v0.7.0] - 2026-08-10
 ### HU-002 · Vista de detalle de hotel (simulada en memoria, sin BD)
 - Vista de detalle a la que se accede clickeando una tarjeta de resultado de HU-001. Reemplaza la sección de resultados (sin rutas, Fase 1) y se vuelve con "Volver a resultados".
