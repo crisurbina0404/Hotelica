@@ -48,7 +48,10 @@ const I18N={
     rescount_todos:'disponibles', rescount_en:'en', noches_label:'noches',
     empty_title:'No encontramos hoteles con esos filtros', empty_body:'Probá ampliar el precio o quitar servicios.',
     toast_fav_on:'Guardado en favoritos', toast_fav_off:'Quitado de favoritos',
-    toast_filtros:'Filtros restablecidos', toast_buscar:'hoteles encontrados', toast_buscar_en:'para tus fechas'
+    toast_filtros:'Filtros restablecidos', toast_buscar:'hoteles encontrados', toast_buscar_en:'para tus fechas',
+    detalle_volver:'Volver a resultados', detalle_habitaciones:'Habitaciones disponibles',
+    hab_cap:'hasta', hab_por_noche:'/noche', hab_disponibles:'habitaciones disponibles', hab_sin_disp:'Sin disponibilidad', hab_reservar:'Reservar', hab_resenas:'reseñas',
+    fl_noches:'Noches', toast_pronto_reserva:'Próximamente: reserva'
   },
   en:{
     tagline:'Your destination in Nicaragua',
@@ -78,7 +81,10 @@ const I18N={
     rescount_todos:'available', rescount_en:'in', noches_label:'nights',
     empty_title:'No hotels match those filters', empty_body:'Try raising the price or removing amenities.',
     toast_fav_on:'Saved to favorites', toast_fav_off:'Removed from favorites',
-    toast_filtros:'Filters reset', toast_buscar:'hotels found', toast_buscar_en:'for your dates'
+    toast_filtros:'Filters reset', toast_buscar:'hotels found', toast_buscar_en:'for your dates',
+    detalle_volver:'Back to results', detalle_habitaciones:'Available rooms',
+    hab_cap:'up to', hab_por_noche:'/night', hab_disponibles:'rooms available', hab_sin_disp:'No availability', hab_reservar:'Book', hab_resenas:'reviews',
+    fl_noches:'Nights', toast_pronto_reserva:'Coming soon: booking'
   }
 };
 
@@ -195,9 +201,9 @@ const pbase=h=>Math.min(...h.rooms.map(r=>r.precio));
 function cardHTML(h,i){
   // Calculamos habitaciones disponibles (restamos ocupadas y mantenimiento)
   const disp=h.rooms.reduce((a,r)=>a+Math.max(0,r.total-r.ocupadas-(r.mant?r.total:0)),0);
-  return `<article class="hcard" style="animation-delay:${i*60}ms">
+  return `<article class="hcard" style="animation-delay:${i*60}ms;cursor:pointer" onclick="abrirDetalle(${h.id},event)">
     <div class="ph">${h.featured?'<span class="flag"><i data-lucide="star"></i> Destacado</span>':''}${scene(h.scene)}
-      <button class="heart ${state.favs.has(h.id)?'on':''}" onclick="toggleFav(${h.id},this)" title="Guardar en favoritos"><i data-lucide="heart"></i></button>
+      <button class="heart ${state.favs.has(h.id)?'on':''}" onclick="event.stopPropagation();toggleFav(${h.id},this)" title="Guardar en favoritos"><i data-lucide="heart"></i></button>
     </div>
     <div class="hbody">
       <div class="hloc"><i data-lucide="map-pin"></i> ${h.city}, ${h.dept}</div>
@@ -380,6 +386,77 @@ function toggleDropdown(panelId, btnId){
 function cerrarDropdown(panel){ if(panel){ panel.hidden=true; const btn=panel.previousElementSibling; if(btn) btn.setAttribute('aria-expanded','false'); } }
 
 // ============================================
+// HU-002 · VISTA DE DETALLE DE HOTEL
+// ============================================
+// Disponibilidad por habitación: total − ocupadas (en memoria, sin BD).
+const dispHab=r=>Math.max(0, r.total - r.ocupadas);
+
+// HTML de una tarjeta de habitación para la vista de detalle.
+function habCardHTML(r){
+  const d=dispHab(r), ok=d>0;
+  const t=I18N[lang];
+  return `<article class="hab-card">
+    <div>
+      <h4 class="hab-tipo">${r.tipo}</h4>
+      <div class="hab-meta">
+        <span><i data-lucide="users"></i> ${t.hab_cap} ${r.cap}</span>
+        <span><i data-lucide="tag"></i> $${r.precio} ${t.hab_por_noche}</span>
+      </div>
+      <div class="hab-disp ${ok?'ok':'no'}">${ok?`${d} ${t.hab_disponibles}`:t.hab_sin_disp}</div>
+    </div>
+    <div class="hab-acciones">
+      <button class="btn btn-flame btn-sm" ${ok?'':'disabled'} onclick="reservarHab(event)"><i data-lucide="calendar-plus"></i> ${t.hab_reservar}</button>
+    </div>
+  </article>`;
+}
+
+// Abre la vista de detalle del hotel id. event llega desde el click en la tarjeta.
+function abrirDetalle(id, event){
+  if(event && event.target.closest('.heart')) return;
+  const h=HOTELS.find(x=>x.id===id);
+  if(!h || h.status!=='aprobado') return;
+  const t=I18N[lang];
+  // Encabezado
+  $('#detallePh').innerHTML=scene(h.scene);
+  $('#detalleNombre').textContent=h.name;
+  $('#detalleLoc').innerHTML=`<i data-lucide="map-pin"></i> ${h.city}, ${h.dept}`;
+  $('#detalleRate').innerHTML=`<b><i data-lucide="star"></i> ${h.rating}</b> · ${h.reviews} ${t.hab_resenas}`;
+  $('#detalleDesc').textContent=h.desc;
+  $('#detalleTags').innerHTML=h.tags.map(tg=>`<span class="tag">${tg}</span>`).join('');
+  // Favorito en detalle
+  const fav=$('#detalleFav');
+  fav.classList.toggle('on', state.favs.has(h.id));
+  fav.onclick=()=>{ toggleFav(h.id, fav); fav.classList.toggle('on', state.favs.has(h.id)); };
+  // Recap de la búsqueda
+  const n=nochesDe($('#f-in').value,$('#f-out').value);
+  $('#detalleIn').textContent=$('#f-in').value||'—';
+  $('#detalleOut').textContent=$('#f-out').value||'—';
+  $('#detalleGuests').textContent=$('#f-guests').value||'1';
+  $('#detalleNoches').textContent=n;
+  // Habitaciones
+  $('#detalleRooms').innerHTML=h.rooms.map(habCardHTML).join('');
+  // Mostrar detalle y ocultar resultados
+  $('#hoteles').hidden=true;
+  $('#detalle').hidden=false;
+  window.scrollTo({top:0, behavior:'smooth'});
+  if(window.lucide) lucide.createIcons();
+}
+
+// Cierra el detalle y vuelve a los resultados.
+function cerrarDetalle(){
+  $('#detalle').hidden=true;
+  $('#hoteles').hidden=false;
+  document.getElementById('hoteles').scrollIntoView({behavior:'smooth'});
+}
+
+// Puente a HU-003: por ahora abre un toast "Próximamente: reserva".
+function reservarHab(event){
+  if(event) event.stopPropagation();
+  const t=I18N[lang];
+  toast(t.toast_pronto_reserva, 'calendar-plus');
+}
+
+// ============================================
 // HU-014 · MENÚ DE CATEGORÍAS (filtro por departamento)
 // ============================================
 // Lista de departamentos disponibles en el mega menú / drawer.
@@ -415,6 +492,9 @@ function filtrarPorDepto(depto){
 
   // Render inicial (comentado: sin base de datos todavía, el placeholder del HTML se mantiene)
   // renderHotels();
+
+  // === HU-002 · Vista de detalle ===
+  $('#detalleVolver').addEventListener('click', cerrarDetalle);
 
   // === HU-012 · Login (modal, social y correo) ===
   $('#loginBtn').addEventListener('click', abrirModal);

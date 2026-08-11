@@ -247,6 +247,44 @@ footer a:hover{color:var(--gold)}
 .fbottom{border-top:1px solid rgba(255,255,255,.12);text-align:center;font-size:.78rem;padding:1.1rem;color:#7E969B}
 .fbottom em{font-family:var(--display);color:var(--gold)}
 
+/* ---------- VISTA DE DETALLE (HU-002) ---------- */
+.detalle[hidden]{display:none!important}
+.detalle #detalleVolver{margin-bottom:1.2rem}
+.detalle-head{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:1.6rem;align-items:stretch;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);margin-bottom:1.4rem}
+.detalle-ph{min-height:240px;display:flex;align-items:stretch}
+.detalle-ph svg{width:100%;height:100%;display:block;object-fit:cover}
+.detalle-info{padding:1.3rem 1.4rem;position:relative}
+.detalle-tags{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.6rem}
+.detalle-tags .tag{font-size:.74rem}
+.detalle-nombre{font-family:var(--display);font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;letter-spacing:-.01em;margin:0 0 .3rem}
+.detalle-loc{display:flex;align-items:center;gap:.4rem;color:var(--ink2);font-size:.92rem;font-weight:600;margin-bottom:.5rem}
+.detalle-loc .lucide{width:16px;height:16px;color:var(--flame)}
+.detalle-rate{display:flex;align-items:center;gap:.4rem;font-weight:700;font-size:.95rem;margin-bottom:.6rem}
+.detalle-rate .lucide{width:16px;height:16px;color:var(--gold)}
+.detalle-desc{color:var(--ink2);font-size:.95rem;line-height:1.5;max-width:60ch}
+.detalle-fav{position:absolute;top:1.1rem;right:1.2rem;background:#fff;border:1px solid var(--line);width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.detalle-fav .lucide{width:18px;height:18px;color:var(--ink2)}
+.detalle-fav.on .lucide{color:var(--flame);fill:var(--flame)}
+
+.detalle-busqueda{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1.6rem}
+.detalle-busqueda > div{display:flex;flex-direction:column;gap:.2rem}
+.detalle-busqueda b{font-family:var(--display);font-size:1.05rem;color:var(--ink)}
+.detalle-busqueda .flabel{font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+
+.detalle-sub{font-family:var(--display);font-size:1.3rem;font-weight:700;margin:.4rem 0 1rem}
+.habitaciones{display:grid;grid-template-columns:1fr;gap:1rem}
+.hab-card{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:1.1rem 1.2rem;box-shadow:var(--shadow);transition:transform .2s}
+.hab-card:hover{transform:translateY(-2px)}
+.hab-tipo{font:700 1.1rem var(--display);margin:0 0 .3rem}
+.hab-meta{display:flex;flex-wrap:wrap;gap:.8rem;color:var(--ink2);font-size:.88rem;font-weight:600;margin-bottom:.5rem}
+.hab-meta .lucide{width:15px;height:15px;color:var(--teal)}
+.hab-precio{font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--ink)}
+.hab-precio small{font-family:var(--body);font-size:.75rem;color:var(--ink2);font-weight:500}
+.hab-disp{font-size:.82rem;font-weight:700;margin-bottom:.4rem}
+.hab-disp.ok{color:var(--teal)}
+.hab-disp.no{color:#B3341C}
+.hab-acciones{display:flex;flex-direction:column;align-items:flex-end;gap:.6rem}
+
 /* Reveal */
 .reveal{opacity:0;transform:translateY(26px);transition:.7s cubic-bezier(.2,.8,.2,1)}
 .reveal.in{opacity:1;transform:none}
@@ -272,6 +310,11 @@ footer a:hover{color:var(--gold)}
   .grid>.hcard,.grid>.placeholder-bd{scroll-snap-align:start;min-width:260px;flex:0 0 260px}
   .grid>.placeholder-bd{min-width:100%;flex-basis:100%}
   .hright{margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+  .detalle-head{grid-template-columns:1fr}
+  .detalle-ph{min-height:180px}
+  .detalle-busqueda{grid-template-columns:1fr 1fr}
+  .hab-card{grid-template-columns:1fr;gap:.7rem}
+  .hab-acciones{align-items:flex-start;flex-direction:row}
 }
 @media(max-width:640px){
   .hright .login-btn span,.hright #userBtn #userName{display:none}

@@ -8,6 +8,18 @@
 
 > Formato: cada avance se registra aquí con fecha y lo que se hizo.
 
+## [v0.7.0] - 2026-08-10
+### HU-002 · Vista de detalle de hotel (simulada en memoria, sin BD)
+- Vista de detalle a la que se accede clickeando una tarjeta de resultado de HU-001. Reemplaza la sección de resultados (sin rutas, Fase 1) y se vuelve con "Volver a resultados".
+- Encabezado: nombre, ubicación (ciudad + dept con `map-pin`), calificación con `star` + reseñas, etiquetas, descripción y botón de favorito `heart` reutilizable desde el detalle.
+- Escena SVG grande del hotel reutilizando `scene(h.scene)`.
+- Bloque "Tu búsqueda": Llegada / Salida / Huéspedes / Noches tomados del buscador de HU-001 (con valores por defecto si faltan).
+- Lista de habitaciones: una tarjeta por habitación con tipo, capacidad (`users`), precio por noche (`tag`), disponibilidad `total − ocupadas` ("X habitaciones disponibles" en teal, o "Sin disponibilidad" en rojo) y botón **Reservar** (flame) que queda **deshabilitado** si no hay disponibilidad.
+- Botón **Reservar** abre un toast "Próximamente: reserva" — puente a HU-003 (aún no implementada).
+- Integración con i18n ES/EN: nuevos textos del detalle (títulos, etiquetas, recap, habitaciones) traducidos en vivo con `data-i18n`. `lucide.createIcons()` tras render.
+- Click en la tarjeta de HU-001 abre el detalle; el corazón de favoritos detiene la propagación para no abrirlo.
+- Responsive: en móvil el detalle se apila verticalmente (encabezado + galería en una columna, habitaciones a una columna).
+
 ## [v0.6.0] - 2026-08-10
 ### Navegación: HU-012, HU-013, HU-014 (todo simulado en memoria, sin BD)
 - **HU-012 · Inicio de sesión (simulado)**: botón flame "Iniciar sesión" en el header abre un modal con 3 botones sociales (Google/Facebook/Apple, SVG inline de marca), separador "o continuá con tu correo" y campos Correo + Contraseña + nota "Sesión simulada: aún no hay base de datos.". Credenciales demo `demo@hotelica.test`/`hotelica`; credenciales inválidas muestran error en el formulario. Al iniciar sesión (social o correo) el botón del header se reemplaza por avatar (inicial) + nombre + menú con "Cerrar sesión". Toast "Sesión iniciada (simulada)". La sesión vive SOLO en `sesion.user` (variable JS): al recargar vuelve a invitado. No se persiste en localStorage ni BD. Se eliminó la sección redundante "Iniciar sesión" del drawer móvil (solo accesible vía el botón del header).
