@@ -10,6 +10,78 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 // Estado global de los filtros
 const state={dept:'Todos', maxPrice:170, amenities:new Set(), favs:new Set()};
 
+// Sesión simulada en memoria (HU-012): NO se persiste en localStorage ni BD.
+// Al recargar la página se pierde (comportamiento esperado en esta fase).
+const sesion={user:null};
+
+// Idioma en memoria (HU-013): por defecto 'es'; NO se persiste.
+let lang='es';
+
+// Diccionario i18n mínimo (ES/EN). Las claves se asocian a [data-i18n] en el HTML.
+// Lo no traducido aquí queda en español (se completa en Fase 2 con backend).
+const I18N={
+  es:{
+    tagline:'Tu destino en Nicaragua',
+    nav_hoteles:'Hoteles', nav_reservas:'Mis reservas', nav_categorias:'Categorías',
+    dd_departamentos:'Departamentos', dd_accesos:'Accesos',
+    acc_reservas:'Mis reservaciones', acc_favoritos:'Favoritos', acc_descubri:'Descubrí', acc_portal:'Portal del hotel', acc_admin:'Administración',
+    login_btn:'Iniciar sesión', logout:'Cerrar sesión',
+    dd_idioma:'Idioma',
+    login_title:'Iniciar sesión', login_sub:'Accedé a tus reservas y favoritos',
+    login_google:'Continuar con Google', login_facebook:'Continuar con Facebook', login_apple:'Continuar con Apple',
+    login_or:'o continuá con tu correo', login_email:'Correo', login_pass:'Contraseña',
+    login_note:'Sesión simulada: aún no hay base de datos.',
+    login_err_bad:'Correo o contraseña incorrectos',
+    toast_login_ok:'Sesión iniciada (simulada)', toast_logout:'Sesión cerrada',
+    toast_lang:'Idioma actualizado',
+    hero_eyebrow:'Boutique de reservas · Hecho en Nicaragua',
+    hero_h1:'Donde Nicaragua <em>te reciba</em>.',
+    hero_sub:'Hotelica reúne los hoteles con más alma del país — del Pacífico al Caribe — para que reservés en segundos y viajés para siempre.',
+    hero_stat1:'hoteles con alma', hero_stat2:'departamentos', hero_stat3:'calificación promedio',
+    f_destino:'Destino', f_llegada:'Llegada', f_salida:'Salida', f_huespedes:'Huéspedes', f_buscar:'Buscar hoteles',
+    sec_eyebrow:'Disponibilidad en tiempo real', sec_h2:'Hoteles con <em>alma</em> en Nicaragua', sec_live:'Actualizado hoy',
+    sort_recomendados:'Recomendados', sort_precio_asc:'Precio: menor a mayor', sort_precio_desc:'Precio: mayor a menor', sort_rating:'Mejor calificación',
+    filtros_titulo:'Filtros', fl_precio:'Precio máximo por noche', fl_depto:'Departamento', fl_servicios:'Servicios', fl_limpiar:'Limpiar filtros',
+    placeholder_bd:'Los hoteles aparecerán aquí cuando se conecten a la base de datos.',
+    favpill:'favoritos',
+    footer_plataforma:'Plataforma', footer_buscar:'Buscar hoteles', footer_rights:'Donde Nicaragua te recibe',
+    rescount_todos:'disponibles', rescount_en:'en', noches_label:'noches',
+    empty_title:'No encontramos hoteles con esos filtros', empty_body:'Probá ampliar el precio o quitar servicios.',
+    toast_fav_on:'Guardado en favoritos', toast_fav_off:'Quitado de favoritos',
+    toast_filtros:'Filtros restablecidos', toast_buscar:'hoteles encontrados', toast_buscar_en:'para tus fechas'
+  },
+  en:{
+    tagline:'Your destination in Nicaragua',
+    nav_hoteles:'Hotels', nav_reservas:'My bookings', nav_categorias:'Categories',
+    dd_departamentos:'Departments', dd_accesos:'Quick links',
+    acc_reservas:'My reservations', acc_favoritos:'Favorites', acc_descubri:'Discover', acc_portal:'Hotel portal', acc_admin:'Admin',
+    login_btn:'Sign in', logout:'Sign out',
+    dd_idioma:'Language',
+    login_title:'Sign in', login_sub:'Access your bookings and favorites',
+    login_google:'Continue with Google', login_facebook:'Continue with Facebook', login_apple:'Continue with Apple',
+    login_or:'or continue with your email', login_email:'Email', login_pass:'Password',
+    login_note:'Simulated session: no database yet.',
+    login_err_bad:'Wrong email or password',
+    toast_login_ok:'Session started (simulated)', toast_logout:'Session closed',
+    toast_lang:'Language updated',
+    hero_eyebrow:'Booking boutique · Made in Nicaragua',
+    hero_h1:'Where Nicaragua <em>welcomes you</em>.',
+    hero_sub:'Hotelica brings together the country\'s most soulful hotels — from the Pacific to the Caribbean — so you can book in seconds and travel forever.',
+    hero_stat1:'soulful hotels', hero_stat2:'departments', hero_stat3:'average rating',
+    f_destino:'Destination', f_llegada:'Check-in', f_salida:'Check-out', f_huespedes:'Guests', f_buscar:'Search hotels',
+    sec_eyebrow:'Real-time availability', sec_h2:'Hotels with <em>soul</em> in Nicaragua', sec_live:'Updated today',
+    sort_recomendados:'Recommended', sort_precio_asc:'Price: low to high', sort_precio_desc:'Price: high to low', sort_rating:'Top rated',
+    filtros_titulo:'Filters', fl_precio:'Max price per night', fl_depto:'Department', fl_servicios:'Amenities', fl_limpiar:'Clear filters',
+    placeholder_bd:'Hotels will appear here once the database is connected.',
+    favpill:'favorites',
+    footer_plataforma:'Platform', footer_buscar:'Search hotels', footer_rights:'Where Nicaragua welcomes you',
+    rescount_todos:'available', rescount_en:'in', noches_label:'nights',
+    empty_title:'No hotels match those filters', empty_body:'Try raising the price or removing amenities.',
+    toast_fav_on:'Saved to favorites', toast_fav_off:'Removed from favorites',
+    toast_filtros:'Filters reset', toast_buscar:'hotels found', toast_buscar_en:'for your dates'
+  }
+};
+
 // Catálogo de servicios con icono Lucide (nombre del icono) y nombre legible
 const AMEN={wifi:['wifi','Wifi'],piscina:['waves','Piscina'],desayuno:['coffee','Desayuno'],parqueo:['square-parking','Parqueo'],ac:['snowflake','Aire acond.'],bar:['martini','Bar'],restaurante:['utensils','Restaurante'],spa:['flower-2','Spa'],senderos:['footprints','Senderos'],gym:['dumbbell','Gimnasio']};
 
@@ -157,9 +229,11 @@ function renderHotels(){
   if(s==='rating')list.sort((a,b)=>b.rating-a.rating);
   if(s==='recomendados')list.sort((a,b)=>(b.featured-a.featured)||(b.rating-a.rating));
   // Renderizamos las tarjetas o el mensaje de vacío
-  $('#grid').innerHTML=list.length?list.map(cardHTML).join(''):`<div class="empty"><div class="big"><i data-lucide="search-x"></i></div><h3 style="font-family:var(--display);margin:.4rem 0">No encontramos hoteles con esos filtros</h3><p>Probá ampliar el precio o quitar servicios.</p></div>`;
+  const t=I18N[lang];
+  $('#grid').innerHTML=list.length?list.map(cardHTML).join(''):`<div class="empty"><div class="big"><i data-lucide="search-x"></i></div><h3 style="font-family:var(--display);margin:.4rem 0">${t.empty_title}</h3><p>${t.empty_body}</p></div>`;
   // Actualizamos el contador de resultados
-  $('#rescount').textContent=`${list.length} hotel${list.length!==1?'es':''} ${state.dept!=='Todos'?'en '+state.dept:'disponibles'} · ${nochesDe($('#f-in').value,$('#f-out').value)} noches`;
+  const n=nochesDe($('#f-in').value,$('#f-out').value);
+  $('#rescount').textContent=`${list.length} hotel${list.length!==1?'es':''} ${state.dept!=='Todos'?t.rescount_en+' '+state.dept:t.rescount_todos} · ${n} ${t.noches_label}`;
   // Actualizamos el stat del hero
   $('#stat-hoteles').textContent=HOTELS.filter(h=>h.status==='aprobado').length;
   // Reinicializamos iconos Lucide insertados dinámicamente
@@ -168,8 +242,9 @@ function renderHotels(){
 
 // Alterna favorito de un hotel
 function toggleFav(id,btn){
-  if(state.favs.has(id)){state.favs.delete(id);btn.classList.remove('on');toast('Quitado de favoritos','heart-off');}
-  else{state.favs.add(id);btn.classList.add('on');toast('Guardado en tus favoritos','heart');}
+  const t=I18N[lang];
+  if(state.favs.has(id)){state.favs.delete(id);btn.classList.remove('on');toast(t.toast_fav_off,'heart-off');}
+  else{state.favs.add(id);btn.classList.add('on');toast(t.toast_fav_on,'heart');}
   $('#favcount').textContent=state.favs.size;
 }
 
@@ -178,7 +253,7 @@ function limpiarFiltros(){
   state.dept='Todos';state.maxPrice=170;state.amenities.clear();
   $('#fprice').value=170;$('#pval').textContent='$170';
   $$('#fdept input,#famen input').forEach(c=>c.checked=false);
-  renderHotels();toast('Filtros restablecidos','rotate-ccw');
+  renderHotels();toast(I18N[lang].toast_filtros,'rotate-ccw');
 }
 
 // Maneja el submit del formulario de búsqueda
@@ -194,7 +269,8 @@ function buscar(e){
   // Scroll suave hasta los resultados
   document.getElementById('hoteles').scrollIntoView({behavior:'smooth'});
   const n=$('#grid').querySelectorAll('.hcard').length;
-  toast(`${n} hoteles encontrados${state.dept!=='Todos'?' en '+state.dept:''} para tus fechas`);
+  const t=I18N[lang];
+  toast(`${n} ${t.toast_buscar}${state.dept!=='Todos'?' '+t.rescount_en+' '+state.dept:''} ${t.toast_buscar_en}`);
 }
 
 // Valida que la salida sea posterior a la llegada
@@ -226,8 +302,98 @@ function toast(msg,icon='circle-check'){
 }
 
 // ============================================
-// INICIALIZACIÓN AL CARGAR LA PÁGINA
+// HU-013 · CAMBIO DE IDIOMA
 // ============================================
+// Aplica el idioma actual a todos los [data-i18n] del documento.
+// data-i18n-html permite HTML inline (ej: <em>); data-i18n solo texto.
+function applyLang(){
+  const t=I18N[lang];
+  document.documentElement.lang = lang==='es'?'es-NI':'en';
+  $$('[data-i18n]').forEach(el=>{
+    const k=el.getAttribute('data-i18n');
+    if(t[k]!==undefined) el.textContent=t[k];
+  });
+  $$('[data-i18n-html]').forEach(el=>{
+    const k=el.getAttribute('data-i18n-html');
+    if(t[k]!==undefined) el.innerHTML=t[k];
+  });
+  // Botones de idioma (header y drawer): marcar el activo
+  $$('[data-lang]').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+  // Re-render de textos dinámicos (contador, mensaje vacío)
+  renderHotels();
+  if(window.lucide) lucide.createIcons();
+}
+// Cambia el idioma y feedback
+function setLang(l){ if(!I18N[l]) return; lang=l; applyLang(); toast(I18N[l].toast_lang,'globe'); }
+
+// ============================================
+// HU-012 · INICIO DE SESIÓN (simulado en memoria)
+// ============================================
+// Credenciales demo hardcodeadas (solo para esta fase, sin BD).
+const DEMO={email:'demo@hotelica.test', pass:'hotelica', nombre:'Demo'};
+
+function avatarFor(nombre){ return (nombre||'U').trim().charAt(0).toUpperCase(); }
+
+// Actualiza el header según sesion.user
+function renderSesion(){
+  const userWrap=$('#userWrap'), loginBtn=$('#loginBtn');
+  if(sesion.user){
+    loginBtn.hidden=true;
+    userWrap.hidden=false;
+    $('#userName').textContent=sesion.user.nombre;
+    $('#userAvatar').textContent=avatarFor(sesion.user.nombre);
+  }else{
+    loginBtn.hidden=false;
+    userWrap.hidden=true;
+  }
+  if(window.lucide) lucide.createIcons();
+}
+
+// Inicia sesión (social o correo). Guarda SOLO en la variable en memoria.
+function iniciarSesion(provider, nombre){
+  sesion.user={provider, nombre};
+  renderSesion();
+  cerrarModal();
+  toast(I18N[lang].toast_login_ok,'circle-check');
+}
+
+function cerrarSesion(){
+  sesion.user=null;
+  renderSesion();
+  cerrarDropdown($('#userPanel'),'userBtn');
+  toast(I18N[lang].toast_logout,'log-out');
+}
+
+// === Modal ===
+function abrirModal(){ $('#loginModal').hidden=false; $('#loginErr').hidden=true; $('#loginForm').reset(); if(window.lucide) lucide.createIcons(); }
+function cerrarModal(){ $('#loginModal').hidden=true; }
+
+// === Dropdowns genéricos (categorías y usuario) ===
+function toggleDropdown(panelId, btnId){
+  const panel=$('#'+panelId), btn=$('#'+btnId);
+  const open=!panel.hidden;
+  panel.hidden=open;
+  btn.setAttribute('aria-expanded', String(!open));
+  if(!open){ // se cerro
+  } else if(window.lucide){ lucide.createIcons(); }
+}
+function cerrarDropdown(panel){ if(panel){ panel.hidden=true; const btn=panel.previousElementSibling; if(btn) btn.setAttribute('aria-expanded','false'); } }
+
+// ============================================
+// HU-014 · MENÚ DE CATEGORÍAS (filtro por departamento)
+// ============================================
+// Lista de departamentos disponibles en el mega menú / drawer.
+const DEPTOS=['Granada','Rivas','Managua','León','Masaya','Estelí','Matagalpa','RACCS'];
+
+// Filtra hoteles por departamento y hace scroll a resultados.
+function filtrarPorDepto(depto){
+  state.dept=depto;
+  // Sincroniza el select principal y los checkboxes laterales
+  $('#f-dept').value = depto;
+  $$('#fdept input').forEach(c=>c.checked=(c.value===depto));
+  renderHotels();
+  document.getElementById('hoteles').scrollIntoView({behavior:'smooth'});
+}
 (function init(){
   // Fechas por defecto: hoy y mañana
   let hoy=new Date();
@@ -235,10 +401,10 @@ function toast(msg,icon='circle-check'){
   $('#f-in').value=hoy.toISOString().split('T')[0];
   $('#f-out').value=manana.toISOString().split('T')[0];
 
-  // Llenamos el select principal de departamentos
+  // Llenamos el select principal de departamentos ( Todos + los que existen en HOTELS )
   const depts=[...new Set(HOTELS.map(h=>h.dept))];
   $('#f-dept').innerHTML='<option>Todos</option>'+depts.map(d=>`<option>${d}</option>`).join('');
-  // Checkboxes de departamento en los filtros
+  // Checkboxes de departamento en los filtros laterales
   $('#fdept').innerHTML=depts.map(d=>`<label class="chk"><input type="checkbox" value="${d}" onchange="state.dept=this.checked?this.value:'Todos';$$('#fdept input').forEach(c=>{if(c!==this)c.checked=false});if(!this.checked)state.dept='Todos';renderHotels()"> ${d}</label>`).join('');
   // Checkboxes de servicios en los filtros
   $('#famen').innerHTML=Object.keys(AMEN).slice(0,8).map(a=>`<label class="chk"><input type="checkbox" value="${a}" onchange="this.checked?state.amenities.add('${a}'):state.amenities.delete('${a}');renderHotels()"> <i data-lucide="${AMEN[a][0]}"></i> ${AMEN[a][1]}</label>`).join('');
@@ -250,10 +416,50 @@ function toast(msg,icon='circle-check'){
   // Render inicial (comentado: sin base de datos todavía, el placeholder del HTML se mantiene)
   // renderHotels();
 
+  // === HU-012 · Login (modal, social y correo) ===
+  $('#loginBtn').addEventListener('click', abrirModal);
+  $('#loginClose').addEventListener('click', cerrarModal);
+  $('#loginModal').addEventListener('click', e=>{ if(e.target.id==='loginModal') cerrarModal(); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ cerrarModal(); cerrarDropdown($('#catPanel')); cerrarDropdown($('#userPanel')); cerrarDrawer(); } });
+  $$('.btn-social').forEach(b=>b.addEventListener('click', ()=>iniciarSesion(b.dataset.provider, b.dataset.provider)));
+  $('#loginForm').addEventListener('submit', e=>{
+    e.preventDefault();
+    const email=$('#loginEmail').value.trim(), pass=$('#loginPass').value;
+    if(email===DEMO.email && pass===DEMO.pass){ iniciarSesion('correo', DEMO.nombre); }
+    else { const err=$('#loginErr'); err.hidden=false; err.textContent=I18N[lang].login_err_bad; }
+  });
+  $('#logoutBtn').addEventListener('click', cerrarSesion);
+
+  // === Dropdowns de header: categorías (HU-014) y usuario (HU-012) ===
+  $('#catBtn').addEventListener('click', e=>{ e.stopPropagation(); toggleDropdown('catPanel','catBtn'); });
+  $('#userBtn').addEventListener('click', e=>{ e.stopPropagation(); toggleDropdown('userPanel','userBtn'); });
+  document.addEventListener('click', e=>{
+    if(!$('#catWrap').contains(e.target)) cerrarDropdown($('#catPanel'));
+    if(!$('#userWrap').contains(e.target)) cerrarDropdown($('#userPanel'));
+  });
+  // Filtrado por departamento desde el mega menú (escritorio) y el drawer (móvil)
+  $$('#catDeptos [data-dept]').forEach(btn=>btn.addEventListener('click', ()=>{ cerrarDropdown($('#catPanel')); filtrarPorDepto(btn.dataset.dept); }));
+  $$('#drawerDeptos [data-dept]').forEach(btn=>btn.addEventListener('click', ()=>{ cerrarDrawer(); filtrarPorDepto(btn.dataset.dept); }));
+
+  // === HU-013 · Idioma: toggles del header y del drawer ===
+  $$('#langWrap [data-lang]').forEach(b=>b.addEventListener('click', ()=>setLang(b.dataset.lang)));
+  $$('#drawerLang [data-lang]').forEach(b=>b.addEventListener('click', ()=>setLang(b.dataset.lang)));
+
+  // === Drawer móvil (HU-014 móvil): abrir/cerrar ===
+  $('#menuToggle').addEventListener('click', abrirDrawer);
+  $('#drawerClose').addEventListener('click', cerrarDrawer);
+  $('#drawerOverlay').addEventListener('click', cerrarDrawer);
+  // Cerrar drawer al seguir un enlace interno
+  $$('#drawer a').forEach(a=>a.addEventListener('click', ()=>{ if(a.getAttribute('href')?.startsWith('#')) cerrarDrawer(); }));
+
   // Animación reveal al hacer scroll
   const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
   $$('.reveal').forEach(el=>io.observe(el));
 
-  // Inicializamos iconos Lucide del HTML estático (header, hero, filtros, footer)
-  if(window.lucide) lucide.createIcons();
+  // Aplicamos el idioma por defecto (es) para traducir cualquier [data-i18n] marcado
+  applyLang();
 })();
+
+// Abrir/cerrar drawer móvil
+function abrirDrawer(){ const d=$('#drawer'); d.classList.add('open'); d.setAttribute('aria-hidden','false'); $('#drawerOverlay').hidden=false; document.body.style.overflow='hidden'; if(window.lucide) lucide.createIcons(); }
+function cerrarDrawer(){ const d=$('#drawer'); if(!d.classList.contains('open')) return; d.classList.remove('open'); d.setAttribute('aria-hidden','true'); $('#drawerOverlay').hidden=true; document.body.style.overflow=''; }

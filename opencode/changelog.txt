@@ -8,6 +8,15 @@
 
 > Formato: cada avance se registra aquí con fecha y lo que se hizo.
 
+## [v0.6.0] - 2026-08-10
+### Navegación: HU-012, HU-013, HU-014 (todo simulado en memoria, sin BD)
+- **HU-012 · Inicio de sesión (simulado)**: botón flame "Iniciar sesión" en el header abre un modal con 3 botones sociales (Google/Facebook/Apple, SVG inline de marca), separador "o continuá con tu correo" y campos Correo + Contraseña + nota "Sesión simulada: aún no hay base de datos.". Credenciales demo `demo@hotelica.test`/`hotelica`; credenciales inválidas muestran error en el formulario. Al iniciar sesión (social o correo) el botón del header se reemplaza por avatar (inicial) + nombre + menú con "Cerrar sesión". Toast "Sesión iniciada (simulada)". La sesión vive SOLO en `sesion.user` (variable JS): al recargar vuelve a invitado. No se persiste en localStorage ni BD. Se eliminó la sección redundante "Iniciar sesión" del drawer móvil (solo accesible vía el botón del header).
+- **HU-013 · Cambio de idioma**: control `ES|EN` con ícono `globe` en el header (repetido en el drawer móvil). Diccionario `I18N={es, en}` en `busqueda.js`; se marcan con `data-i18n`/`data-i18n-html` los textos principales (nav, hero, buscador, filtros, footer, toasts, mensajes de error y contador de resultados). `applyLang()` recorre `[data-i18n]` e `[data-i18n-html]` en vivo, sin recargar. Idioma por defecto: español; al recargar vuelve al por defecto (no se persiste). Quedan en español los textos editoriales no traducidos (se completan en Fase 2 con backend).
+- **HU-014 · Menú de categorías y accesos**: botón "Categorías" con `layout-grid` en el header abre un dropdown con dos secciones: **Departamentos** (Granada, Rivas, Managua, León, Masaya, Estelí, Matagalpa, RACCS) y **Accesos** (Mis reservaciones, Favoritos, Descubrí, Portal del hotel, Administración, con íconos Lucide). Al elegir un departamento se setea `state.dept`, se sincroniza el select y los checkboxes laterales, se renderiza y se hace scroll a `#hoteles`. El dropdown cierra al clic externo o `Esc`.
+- **Drawer móvil (<960px)**: el menú hamburguesa abre un drawer lateral derecho con Departamentos + Accesos + Idioma (login queda en el botón flame del header, visible). Overlay semioscuro; cierra al elegir enlace, clic en overlay o `Esc`.
+- **Corrección de bug**: `.modal-backdrop`, `.drawer-overlay` y `.dropdown-panel` tenían `display:flex`/`animation` que sobreescribían el atributo `hidden` del HTML; se añadió `[hidden]{display:none!important}` para que el modal y los dropdowns se oculten correctamente.
+- Migración de textos del hero/buscador/filtros/footer a `[data-i18n]`. `lucide.createIcons()` se llama después de cada render dinámico (renderHotels, applyLang, abrirDrawer, iniciarSesion).
+
 ## [v0.5.1] - 2026-08-10
 ### Ajuste visual de HU-001 (no nuevo HU)
 - Favicon del sitio cambiado a `src/img/favicon1.svg` (antes `favicon.svg`); también `apple-touch-icon` apunta ahora a `favicon1.svg`.

@@ -48,6 +48,78 @@ nav.mainnav a:hover{color:#fff} nav.mainnav a:hover::after{width:100%}
 .menu-toggle{display:none;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;width:42px;height:42px;border-radius:10px;cursor:pointer;font-size:1.2rem;line-height:1;align-items:center;justify-content:center}
 .menu-toggle:hover{background:rgba(255,255,255,.2)}
 
+/* ---------- Botones del header (login, categorías, idioma) ---------- */
+.hdr-btn{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;border-radius:999px;padding:.4rem .9rem;font:600 .85rem var(--body);cursor:pointer;transition:filter .15s;text-decoration:none}
+.hdr-btn:hover{filter:brightness(1.1);background:rgba(255,255,255,.18)}
+.hdr-btn .chev{width:14px;height:14px;opacity:.7}
+.login-btn{background:var(--flame);border-color:var(--flame);color:#fff}
+.login-btn:hover{filter:brightness(.95)}
+
+/* Dropdown genérico del header (categorías y usuario) */
+.hdr-dropdown{position:relative;display:inline-block}
+.dropdown-panel{position:absolute;top:calc(100% + 8px);right:0;min-width:280px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 40px rgba(11,53,64,.18);z-index:60;padding:.6rem;animation:ddpop .16s ease-out}
+@keyframes ddpop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.dd-section{padding:.4rem 0}
+.dd-section + .dd-section{border-top:1px solid var(--line);margin-top:.2rem;padding-top:.4rem}
+.dd-label{display:block;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);padding:.2rem .6rem .4rem}
+.dd-list{display:grid;grid-template-columns:1fr 1fr;gap:.1rem}
+.dd-list a,.dd-list button{display:flex;align-items:center;gap:.5rem;text-decoration:none;color:var(--ink);font:600 .86rem var(--body);padding:.5rem .6rem;border-radius:8px;border:0;background:transparent;cursor:pointer;text-align:left;transition:background .15s}
+.dd-list a:hover,.dd-list button:hover{background:#F3F0E8}
+.dd-list .lucide{width:16px;height:16px;color:var(--ink2)}
+.hdr-user .user-avatar{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--ink);font-weight:800;font-size:.78rem;display:inline-flex;align-items:center;justify-content:center}
+
+/* Toggle de idioma */
+.hdr-lang{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:.32rem .6rem;color:#fff}
+.hdr-lang .lucide{width:16px;height:16px;opacity:.85}
+.hdr-lang button{background:transparent;border:0;color:#BFD3D6;font-weight:700;font-size:.8rem;cursor:pointer;padding:.1rem .3rem;border-radius:6px;transition:.15s}
+.hdr-lang button.on{color:var(--flame)}
+.hdr-lang button:hover{color:#fff}
+.lang-sep{opacity:.4;font-size:.75rem}
+
+/* ---------- Drawer lateral móvil + overlay ---------- */
+.drawer{position:fixed;top:0;right:-320px;width:300px;max-width:85vw;height:100vh;height:100dvh;background:#fff;z-index:80;box-shadow:-12px 0 40px rgba(11,53,64,.25);transition:right .28s cubic-bezier(.2,.8,.2,1);overflow-y:auto;display:flex;flex-direction:column}
+.drawer.open{right:0}
+.drawer-bar{display:flex;align-items:center;justify-content:space-between;background:var(--ink);color:#fff;padding:1rem 1.2rem;font:700 1rem var(--display)}
+.drawer-bar .lucide{width:20px;height:20px}
+.drawer-close{background:rgba(255,255,255,.12);border:0;color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.drawer-close:hover{background:rgba(255,255,255,.2)}
+.drawer-body{padding:.6rem 1rem 2rem}
+.drawer .dd-section{padding:.8rem 0}
+.drawer .dd-section + .dd-section{border-top:1px solid var(--line)}
+.drawer .dd-list{grid-template-columns:1fr}
+.drawer .dd-label{padding:.2rem 0 .5rem;color:var(--ink)}
+.drawer-login{width:100%;justify-content:center}
+.drawer-overlay{position:fixed;inset:0;background:rgba(11,53,64,.5);z-index:75;animation:fade .2s}
+.drawer-overlay[hidden]{display:none!important}
+.dropdown-panel[hidden]{display:none!important}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* ---------- Modal de inicio de sesión ---------- */
+.modal-backdrop{position:fixed;inset:0;background:rgba(11,53,64,.55);z-index:90;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fade .2s}
+.modal-backdrop[hidden]{display:none!important}
+.modal{position:relative;background:#fff;border-radius:18px;box-shadow:0 30px 70px rgba(11,53,64,.35);width:100%;max-width:420px;padding:1.8rem;animation:mpop .2s ease-out}
+@keyframes mpop{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:none}}
+.modal-close{position:absolute;top:.8rem;right:.8rem;background:#F3F0E8;border:0;width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--ink)}
+.modal-close:hover{background:#E8E2D4}
+.modal h2{font-family:var(--display);font-size:1.45rem;font-weight:700;margin:0 0 .15rem}
+.modal-sub{color:var(--ink2);font-size:.9rem;margin:0 0 1.2rem}
+.social-btns{display:flex;flex-direction:column;gap:.6rem}
+.btn-social{display:flex;align-items:center;gap:.6rem;width:100%;justify-content:center;padding:.7rem 1rem;border-radius:11px;font:600 .9rem var(--body);cursor:pointer;border:1.5px solid var(--line);background:#fff;color:var(--ink);transition:filter .15s}
+.btn-social:hover{filter:brightness(.96);background:#FAF8F2}
+.btn-social.google{border-color:#dadce0}
+.btn-social.facebook{background:#1877F2;border-color:#1877F2;color:#fff}
+.btn-social.apple{background:#111;border-color:#111;color:#fff}
+.btn-social svg{flex-shrink:0}
+.modal-sep{display:flex;align-items:center;gap:.8rem;margin:1.2rem 0;color:var(--ink2);font-size:.82rem;font-weight:600}
+.modal-sep::before,.modal-sep::after{content:'';flex:1;height:1px;background:var(--line)}
+.modal-field{display:block;margin-bottom:.7rem}
+.modal-field span{display:block;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:.3rem}
+.modal-field input{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:.68rem .8rem;font:600 .92rem var(--body);color:var(--ink);background:#FDFCF9;box-sizing:border-box}
+.modal-field input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(23,126,140,.16)}
+.login-err{color:#B3341C;font-size:.85rem;font-weight:600;margin:.3rem 0 .6rem}
+.modal-note{display:flex;align-items:center;gap:.4rem;margin-top:1rem;font-size:.78rem;color:var(--ink2);background:#F3F0E8;border:1px dashed var(--line);border-radius:10px;padding:.6rem .8rem}
+.modal-note .lucide{width:15px;height:15px;flex-shrink:0}
+
 /* ---------- Hero ---------- */
 .hero{position:relative;overflow:hidden;background:linear-gradient(180deg,#FCF8EE 0%,#EDF1E8 100%);padding:3.4rem 1.2rem 0}
 .hero::before{content:'';position:absolute;top:-120px;left:-80px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(247,168,27,.22),transparent 70%);pointer-events:none}
@@ -189,16 +261,21 @@ footer a:hover{color:var(--gold)}
   .brand .wm-footer{font-size:1.5rem}
   .menu-toggle{display:flex}
   nav.mainnav{display:none}
+  /* En móvil los controles se mueven al drawer */
+  .hdr-dropdown#catWrap{display:none}
+  .hright > .hdr-lang{display:none}
+  .favpill{display:none}
   .layout-resultados{grid-template-columns:1fr}
   .col-mapa{display:none}
   .mapa-panel{display:none}
   .grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:1rem;padding-bottom:.5rem;-webkit-overflow-scrolling:touch}
   .grid>.hcard,.grid>.placeholder-bd{scroll-snap-align:start;min-width:260px;flex:0 0 260px}
   .grid>.placeholder-bd{min-width:100%;flex-basis:100%}
-  nav.mainnav.open{display:flex;flex-direction:column;gap:.2rem;width:100%;margin:.2rem 0 .4rem;order:3;background:rgba(0,0,0,.18);border-radius:12px;padding:.6rem .8rem}
-  nav.mainnav.open a{padding:.6rem .4rem;border-bottom:1px solid rgba(255,255,255,.08)}
-  nav.mainnav.open a:last-child{border-bottom:0}
   .hright{margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+}
+@media(max-width:640px){
+  .hright .login-btn span,.hright #userBtn #userName{display:none}
+  .hright .hdr-user .chev{display:none}
 }
 @media(max-width:640px){
   .hero{padding:2.2rem 1rem 0}

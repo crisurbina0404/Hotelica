@@ -25,19 +25,162 @@
       </span>
       <span class="brand-text">
         <span class="wm-playfair">HOTELICA</span>
-        <span class="brand-tagline"><span>—</span> Tu destino en Nicaragua <span>—</span></span>
+        <span class="brand-tagline"><span>—</span> <span data-i18n="tagline">Tu destino en Nicaragua</span> <span>—</span></span>
       </span>
     </a>
     <nav class="mainnav" id="mainnav">
-      <a href="#hoteles">Hoteles</a>
-      <a href="#misreservas">Mis reservas</a>
+      <a href="#hoteles" data-i18n="nav_hoteles">Hoteles</a>
+      <a href="#misreservas" data-i18n="nav_reservas">Mis reservas</a>
     </nav>
     <div class="hright">
-      <button class="favpill"><i data-lucide="heart"></i> <span id="favcount">0</span> favoritos</button>
+      <!-- Categorías (HU-014) -->
+      <div class="hdr-dropdown" id="catWrap">
+        <button class="hdr-btn" id="catBtn" type="button" aria-haspopup="true" aria-expanded="false">
+          <i data-lucide="layout-grid"></i> <span data-i18n="nav_categorias">Categorías</span> <i data-lucide="chevron-down" class="chev"></i>
+        </button>
+        <div class="dropdown-panel" id="catPanel" role="menu" hidden>
+          <div class="dd-section">
+            <span class="dd-label" data-i18n="dd_departamentos">Departamentos</span>
+            <div class="dd-list" id="catDeptos">
+              <button type="button" data-dept="Granada">Granada</button>
+              <button type="button" data-dept="Rivas">Rivas</button>
+              <button type="button" data-dept="Managua">Managua</button>
+              <button type="button" data-dept="León">León</button>
+              <button type="button" data-dept="Masaya">Masaya</button>
+              <button type="button" data-dept="Estelí">Estelí</button>
+              <button type="button" data-dept="Matagalpa">Matagalpa</button>
+              <button type="button" data-dept="RACCS">RACCS</button>
+            </div>
+          </div>
+          <div class="dd-section">
+            <span class="dd-label" data-i18n="dd_accesos">Accesos</span>
+            <div class="dd-list">
+              <a href="#misreservas"><i data-lucide="calendar-check"></i> <span data-i18n="acc_reservas">Mis reservaciones</span></a>
+              <a href="#favoritos"><i data-lucide="heart"></i> <span data-i18n="acc_favoritos">Favoritos</span></a>
+              <a href="#hoteles"><i data-lucide="compass"></i> <span data-i18n="acc_descubri">Descubrí</span></a>
+              <a href="#portal-hotel"><i data-lucide="building-2"></i> <span data-i18n="acc_portal">Portal del hotel</span></a>
+              <a href="#admin"><i data-lucide="shield"></i> <span data-i18n="acc_admin">Administración</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Idioma (HU-013) -->
+      <div class="hdr-lang" id="langWrap">
+        <i data-lucide="globe"></i>
+        <button type="button" data-lang="es" class="on">ES</button>
+        <span class="lang-sep">|</span>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+
+      <!-- Iniciar sesión (HU-012) -->
+      <button class="hdr-btn login-btn" id="loginBtn" type="button">
+        <i data-lucide="log-in"></i> <span data-i18n="login_btn">Iniciar sesión</span>
+      </button>
+
+      <!-- Usuario logueado (se muestra al iniciar sesión, en memoria) -->
+      <div class="hdr-dropdown hdr-user" id="userWrap" hidden>
+        <button class="hdr-btn" id="userBtn" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="user-avatar" id="userAvatar">U</span> <span id="userName">Usuario</span> <i data-lucide="chevron-down" class="chev"></i>
+        </button>
+        <div class="dropdown-panel" id="userPanel" role="menu" hidden>
+          <div class="dd-list">
+            <a href="#misreservas"><i data-lucide="calendar-check"></i> <span data-i18n="acc_reservas">Mis reservaciones</span></a>
+            <a href="#favoritos"><i data-lucide="heart"></i> <span data-i18n="acc_favoritos">Favoritos</span></a>
+            <button type="button" id="logoutBtn"><i data-lucide="log-out"></i> <span data-i18n="logout">Cerrar sesión</span></button>
+          </div>
+        </div>
+      </div>
+
+      <button class="favpill"><i data-lucide="heart"></i> <span id="favcount">0</span> <span data-i18n="favpill">favoritos</span></button>
       <button class="menu-toggle" id="menuToggle" aria-label="Menú"><i data-lucide="menu"></i></button>
     </div>
   </div>
 </header>
+
+<!-- Drawer lateral móvil (HU-014 móvil: categorías + accesos + login + idioma) -->
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-bar">
+    <span data-i18n="nav_categorias">Categorías</span>
+    <button class="drawer-close" id="drawerClose" aria-label="Cerrar"><i data-lucide="x"></i></button>
+  </div>
+  <div class="drawer-body">
+    <div class="dd-section">
+      <span class="dd-label" data-i18n="dd_departamentos">Departamentos</span>
+      <div class="dd-list" id="drawerDeptos">
+        <button type="button" data-dept="Granada">Granada</button>
+        <button type="button" data-dept="Rivas">Rivas</button>
+        <button type="button" data-dept="Managua">Managua</button>
+        <button type="button" data-dept="León">León</button>
+        <button type="button" data-dept="Masaya">Masaya</button>
+        <button type="button" data-dept="Estelí">Estelí</button>
+        <button type="button" data-dept="Matagalpa">Matagalpa</button>
+        <button type="button" data-dept="RACCS">RACCS</button>
+      </div>
+    </div>
+    <div class="dd-section">
+      <span class="dd-label" data-i18n="dd_accesos">Accesos</span>
+      <div class="dd-list">
+        <a href="#misreservas"><i data-lucide="calendar-check"></i> <span data-i18n="acc_reservas">Mis reservaciones</span></a>
+        <a href="#favoritos"><i data-lucide="heart"></i> <span data-i18n="acc_favoritos">Favoritos</span></a>
+        <a href="#hoteles"><i data-lucide="compass"></i> <span data-i18n="acc_descubri">Descubrí</span></a>
+        <a href="#portal-hotel"><i data-lucide="building-2"></i> <span data-i18n="acc_portal">Portal del hotel</span></a>
+        <a href="#admin"><i data-lucide="shield"></i> <span data-i18n="acc_admin">Administración</span></a>
+      </div>
+    </div>
+    <div class="dd-section">
+      <span class="dd-label" data-i18n="dd_idioma">Idioma</span>
+      <div class="hdr-lang" id="drawerLang">
+        <i data-lucide="globe"></i>
+        <button type="button" data-lang="es" class="on">ES</button>
+        <span class="lang-sep">|</span>
+        <button type="button" data-lang="en">EN</button>
+      </div>
+    </div>
+  </div>
+</aside>
+<div class="drawer-overlay" id="drawerOverlay" hidden></div>
+
+<!-- ============ MODAL INICIO DE SESIÓN (HU-012) ============ -->
+<div class="modal-backdrop" id="loginModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <button class="modal-close" id="loginClose" aria-label="Cerrar"><i data-lucide="x"></i></button>
+    <h2 id="loginTitle" data-i18n="login_title">Iniciar sesión</h2>
+    <p class="modal-sub" data-i18n="login_sub">Accedé a tus reservas y favoritos</p>
+
+    <div class="social-btns">
+      <button type="button" class="btn-social google" data-provider="Google">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M5.84 14.1a6.6 6.6 0 0 1 0-4.2V7.06H2.18a11 11 0 0 0 0 9.88l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"/></svg>
+        <span data-i18n="login_google">Continuar con Google</span>
+      </button>
+      <button type="button" class="btn-social facebook" data-provider="Facebook">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#fff" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.52c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z"/></svg>
+        <span data-i18n="login_facebook">Continuar con Facebook</span>
+      </button>
+      <button type="button" class="btn-social apple" data-provider="Apple">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#fff" d="M16.36 12.78c-.02-2.1 1.71-3.11 1.79-3.16-.98-1.43-2.5-1.62-3.04-1.65-1.29-.13-2.52.76-3.18.76-.66 0-1.67-.74-2.75-.72-1.42.02-2.73.83-3.46 2.1-1.48 2.57-.38 6.36 1.06 8.44.7 1.02 1.54 2.17 2.64 2.13 1.06-.04 1.46-.69 2.74-.69 1.28 0 1.64.69 2.76.67 1.14-.02 1.86-1.04 2.56-2.07.81-1.19 1.14-2.34 1.16-2.4-.03-.01-2.22-.85-2.24-3.37zM14.18 6.06c.58-.71.97-1.69.87-2.66-.84.03-1.85.56-2.46 1.26-.54.62-1.01 1.61-.89 2.57.94.07 1.9-.48 2.48-1.17z"/></svg>
+        <span data-i18n="login_apple">Continuar con Apple</span>
+      </button>
+    </div>
+
+    <div class="modal-sep"><span data-i18n="login_or">o continuá con tu correo</span></div>
+
+    <form id="loginForm">
+      <label class="modal-field">
+        <span data-i18n="login_email">Correo</span>
+        <input type="email" id="loginEmail" required placeholder="nombre@correo.com" autocomplete="email">
+      </label>
+      <label class="modal-field">
+        <span data-i18n="login_pass">Contraseña</span>
+        <input type="password" id="loginPass" required placeholder="••••••••" autocomplete="current-password">
+      </label>
+      <p class="login-err" id="loginErr" hidden></p>
+      <button type="submit" class="btn btn-flame" style="width:100%;justify-content:center"><i data-lucide="log-in"></i> <span data-i18n="login_btn">Iniciar sesión</span></button>
+    </form>
+
+    <p class="modal-note"><i data-lucide="info"></i> <span data-i18n="login_note">Sesión simulada: aún no hay base de datos.</span></p>
+  </div>
+</div>
 
 <main>
   <!-- ============ VISTA TURISTA: HERO + BUSCADOR ============ -->
@@ -45,29 +188,29 @@
 
     <div class="hero">
       <div class="hero-inner">
-        <span class="eyebrow">Boutique de reservas · Hecho en Nicaragua</span>
-        <h1>Donde Nicaragua <em>te recibe</em>.</h1>
-        <p class="sub">Hotelica reúne los hoteles con más alma del país — del Pacífico al Caribe — para que reservés en segundos y viajés para siempre.</p>
+        <span class="eyebrow" data-i18n="hero_eyebrow">Boutique de reservas · Hecho en Nicaragua</span>
+        <h1 data-i18n-html="hero_h1">Donde Nicaragua <em>te recibe</em>.</h1>
+        <p class="sub" data-i18n="hero_sub">Hotelica reúne los hoteles con más alma del país — del Pacífico al Caribe — para que reservés en segundos y viajés para siempre.</p>
           <div class="hero-stats">
-            <div><b id="stat-hoteles">8</b><span>hoteles con alma</span></div>
-            <div><b>8</b><span>departamentos</span></div>
-            <div><b><i data-lucide="star"></i> 4.6</b><span>calificación promedio</span></div>
+            <div><b id="stat-hoteles">8</b><span data-i18n="hero_stat1">hoteles con alma</span></div>
+            <div><b>8</b><span data-i18n="hero_stat2">departamentos</span></div>
+            <div><b><i data-lucide="star"></i> 4.6</b><span data-i18n="hero_stat3">calificación promedio</span></div>
           </div>
 
         <!-- Tarjeta de búsqueda -->
         <form id="form-busqueda" class="search-card" onsubmit="buscar(event)">
-          <div class="field"><label><i data-lucide="map-pin"></i> Destino</label>
+          <div class="field"><label><i data-lucide="map-pin"></i> <span data-i18n="f_destino">Destino</span></label>
             <select id="f-dept"><option>Todos</option></select>
           </div>
-          <div class="field"><label>Llegada</label><input type="date" id="f-in"></div>
-          <div class="field"><label>Salida</label><input type="date" id="f-out"></div>
-          <div class="field"><label>Huéspedes</label>
+          <div class="field"><label data-i18n="f_llegada">Llegada</label><input type="date" id="f-in"></div>
+          <div class="field"><label data-i18n="f_salida">Salida</label><input type="date" id="f-out"></div>
+          <div class="field"><label data-i18n="f_huespedes">Huéspedes</label>
             <select id="f-guests">
               <option>1</option><option selected>2</option>
               <option>3</option><option>4</option><option>5</option><option>6</option>
             </select>
           </div>
-          <button type="submit" class="btn btn-flame"><i data-lucide="search"></i> Buscar hoteles</button>
+          <button type="submit" class="btn btn-flame"><i data-lucide="search"></i> <span data-i18n="f_buscar">Buscar hoteles</span></button>
         </form>
       </div>
 
@@ -98,16 +241,16 @@
     <section class="block" id="hoteles">
       <div class="sec-head reveal">
         <div>
-          <span class="eyebrow">Disponibilidad en tiempo real</span>
-          <h2>Hoteles con <em>alma</em> en Nicaragua</h2>
+          <span class="eyebrow" data-i18n="sec_eyebrow">Disponibilidad en tiempo real</span>
+          <h2 data-i18n-html="sec_h2">Hoteles con <em>alma</em> en Nicaragua</h2>
         </div>
         <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <span class="live"><span class="dot"></span> Actualizado hoy</span>
+          <span class="live"><span class="dot"></span> <span data-i18n="sec_live">Actualizado hoy</span></span>
           <select id="sort" class="field" onchange="renderHotels()">
-            <option value="recomendados">Recomendados</option>
-            <option value="precio-asc">Precio: menor a mayor</option>
-            <option value="precio-desc">Precio: mayor a menor</option>
-            <option value="rating">Mejor calificación</option>
+            <option value="recomendados" data-i18n="sort_recomendados">Recomendados</option>
+            <option value="precio-asc" data-i18n="sort_precio_asc">Precio: menor a mayor</option>
+            <option value="precio-desc" data-i18n="sort_precio_desc">Precio: mayor a menor</option>
+            <option value="rating" data-i18n="sort_rating">Mejor calificación</option>
           </select>
         </div>
       </div>
@@ -115,23 +258,23 @@
       <div class="layout-resultados">
         <!-- Col 1: Filtros -->
         <aside class="filters reveal">
-          <h3>Filtros</h3>
+          <h3 data-i18n="filtros_titulo">Filtros</h3>
           <div class="fgroup">
-            <span class="flabel">Precio máximo por noche</span>
+            <span class="flabel" data-i18n="fl_precio">Precio máximo por noche</span>
             <span class="pval" id="pval">$170</span>
             <input type="range" id="fprice" min="20" max="170" step="5" value="170"
                    oninput="state.maxPrice=+this.value;document.getElementById('pval').textContent='$'+this.value;renderHotels()">
           </div>
           <div class="fgroup">
-            <span class="flabel">Departamento</span>
+            <span class="flabel" data-i18n="fl_depto">Departamento</span>
             <div id="fdept"></div>
           </div>
           <div class="fgroup">
-            <span class="flabel">Servicios</span>
+            <span class="flabel" data-i18n="fl_servicios">Servicios</span>
             <div id="famen"></div>
           </div>
           <div class="fgroup">
-            <button type="button" class="btn btn-ghost btn-sm" onclick="limpiarFiltros()">Limpiar filtros</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="limpiarFiltros()"><i data-lucide="rotate-ccw"></i> <span data-i18n="fl_limpiar">Limpiar filtros</span></button>
           </div>
         </aside>
 
@@ -142,7 +285,7 @@
           <p id="mensaje-error" class="mensaje-error" hidden></p>
           <!-- Grilla de hoteles (en Fase 2 se llenará desde la BD) -->
           <div class="grid" id="grid">
-            <p class="placeholder-bd">Los hoteles aparecerán aquí cuando se conecten a la base de datos.</p>
+            <p class="placeholder-bd" data-i18n="placeholder_bd">Los hoteles aparecerán aquí cuando se conecten a la base de datos.</p>
           </div>
         </div>
 
@@ -175,12 +318,12 @@
       <p style="font-size:.9rem;max-width:300px">Donde Nicaragua te recibe. Plataforma integral de turismo y reservación de hoteles. Proyecto académico de Ingeniería de Software.</p>
     </div>
     <div>
-      <h4>Plataforma</h4>
-      <a href="#hoteles">Buscar hoteles</a>
-      <a href="#misreservas">Mis reservas</a>
+      <h4 data-i18n="footer_plataforma">Plataforma</h4>
+      <a href="#hoteles" data-i18n="footer_buscar">Buscar hoteles</a>
+      <a href="#misreservas" data-i18n="nav_reservas">Mis reservas</a>
     </div>
   </div>
-  <div class="fbottom"><em>Hotelica</em> © 2026 · Donde Nicaragua te recibe · Managua, Nicaragua</div>
+  <div class="fbottom"><em>Hotelica</em> © 2026 · <span data-i18n="footer_rights">Donde Nicaragua te recibe</span> · Managua, Nicaragua</div>
 </footer>
 
 <!-- contenedor de toasts -->
