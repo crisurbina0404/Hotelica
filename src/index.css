@@ -1,1 +1,176 @@
 @import "tailwindcss";
+
+/* Paleta oficial de Hotelica (definida en la guía del proyecto) */
+@theme {
+  --color-primary: #0f766e;
+  --color-primary-dark: #115e59;
+  --color-primary-deep: #0b3f3a;
+  --color-primary-ink: #072f2b;
+  --color-primary-light: #ccfbf1;
+  --color-primary-soft: #f0fdfa;
+  --color-accent: #f59e0b;
+  --color-accent-dark: #b45309;
+  --color-accent-light: #fef3c7;
+  --color-ink: #0f172a;
+  --color-muted: #475569;
+  --color-line: #e2e8f0;
+  --color-canvas: #f8fafc;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+  --color-admin: #4f46e5;
+  --color-admin-soft: #e0e7ff;
+  --color-hotel: #b45309;
+  --color-hotel-soft: #fef3c7;
+
+  --font-display: "Poppins", "Inter", sans-serif;
+  --font-body: "Inter", "Poppins", sans-serif;
+
+  --shadow-lift: 0 18px 45px -18px rgb(15 23 42 / 0.28);
+  --shadow-card: 0 8px 24px -12px rgb(15 23 42 / 0.18);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Selección de texto con la marca */
+::selection {
+  background: var(--color-accent);
+  color: #1c1303;
+}
+
+/* Barra de desplazamiento discreta con los colores del proyecto */
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: #eef2f6; }
+::-webkit-scrollbar-thumb { background: #99b8b2; border-radius: 8px; border: 3px solid #eef2f6; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* Capa ambiental de fondo: tintes de lago, volcán y arena */
+.ambient-bg {
+  background:
+    radial-gradient(1100px 500px at 85% -5%, rgb(15 118 110 / 0.09), transparent 60%),
+    radial-gradient(900px 480px at -10% 25%, rgb(245 158 11 / 0.10), transparent 55%),
+    radial-gradient(800px 600px at 50% 110%, rgb(17 94 89 / 0.08), transparent 60%),
+    var(--color-canvas);
+}
+
+/* Textura de puntos sutil para secciones destacadas */
+.dot-texture {
+  background-image: radial-gradient(rgb(15 118 110 / 0.16) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+.dot-texture-light {
+  background-image: radial-gradient(rgb(255 255 255 / 0.14) 1.2px, transparent 1.2px);
+  background-size: 18px 18px;
+}
+
+/* ===== Animaciones firma de Hotelica ===== */
+
+/* La foto del hero "respira" lentamente (efecto Ken Burns) */
+@keyframes kenburns {
+  0% { transform: scale(1.02) translateY(0); }
+  100% { transform: scale(1.12) translateY(-14px); }
+}
+.anim-kenburns { animation: kenburns 22s ease-in-out infinite alternate; will-change: transform; }
+
+/* Aparición suave al entrar en pantalla (controlada por IntersectionObserver) */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-in { opacity: 1; transform: none; }
+
+/* Cinta de destinos en movimiento continuo */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 36s linear infinite;
+  width: max-content;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+/* Flotación suave de elementos decorativos */
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(var(--float-rot, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--float-rot, 0deg)); }
+}
+.anim-floaty { animation: floaty 5.5s ease-in-out infinite; }
+
+/* Entrada de modales y avisos */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.anim-pop { animation: pop-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.anim-toast { animation: toast-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Latido del corazón de favoritos */
+@keyframes heart-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.anim-heart { animation: heart-pop 0.4s ease both; }
+
+/* Barras de estadísticas que crecen al cargar */
+@keyframes grow-bar {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+.anim-grow { transform-origin: left; animation: grow-bar 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Spinner de búsqueda */
+@keyframes spin { to { transform: rotate(360deg); } }
+.anim-spin { animation: spin 0.8s linear infinite; }
+
+/* Línea decorativa tipo ola dibujada a mano */
+.wave-underline { stroke-dasharray: 320; stroke-dashoffset: 320; animation: draw-wave 1.4s 0.5s ease forwards; }
+@keyframes draw-wave { to { stroke-dashoffset: 0; } }
+
+/* Subrayado ondulante para enlaces de navegación */
+.nav-link { position: relative; }
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: -4px;
+  width: 100%; height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s ease;
+}
+.nav-link:hover::after, .nav-link.active::after { transform: scaleX(1); }
+
+/* Accesibilidad: sin movimiento para quien lo prefiera */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .reveal { opacity: 1 !important; transform: none !important; }
+  .marquee-track { animation: none !important; }
+}
+
+/* Los formularios de fecha usan el esquema claro */
+input[type="date"] { color-scheme: light; }
