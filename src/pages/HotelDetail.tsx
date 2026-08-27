@@ -247,8 +247,8 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                 </pattern>
               </defs>
               <rect width="100%" height="100%" fill="url(#malla)" />
-              <path d="M-20 190 C 120 140, 240 230, 420 170 S 700 120, 900 180" fill="none" stroke="#0F766E" strokeOpacity="0.35" strokeWidth="10" strokeLinecap="round" />
-              <path d="M60 40 C 180 90, 300 20, 460 70 S 720 60, 860 30" fill="none" stroke="#F59E0B" strokeOpacity="0.4" strokeWidth="5" strokeDasharray="2 10" strokeLinecap="round" />
+              <path d="M-20 190 C 120 140, 240 230, 420 170 S 700 120, 900 180" fill="none" stroke="#0B3540" strokeOpacity="0.35" strokeWidth="10" strokeLinecap="round" />
+              <path d="M60 40 C 180 90, 300 20, 460 70 S 720 60, 860 30" fill="none" stroke="#F7A81B" strokeOpacity="0.4" strokeWidth="5" strokeDasharray="2 10" strokeLinecap="round" />
             </svg>
             <span className="anim-floaty relative flex flex-col items-center text-primary">
               <IconoPin size={44} />

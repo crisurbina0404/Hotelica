@@ -152,7 +152,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             <input
               type="range" min={800} max={3500} step={100} value={precioMax}
               onChange={(e) => setPrecioMax(Number(e.target.value))}
-              className="mt-2.5 w-full accent-[#F59E0B]"
+              className="mt-2.5 w-full accent-[#F7A81B]"
               aria-label="Precio máximo por noche"
             />
             <div className="flex justify-between text-[10px] font-semibold text-muted"><span>C$ 800</span><span>C$ 3,500</span></div>
@@ -176,7 +176,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
           </div>
 
           <label className="mt-5 flex cursor-pointer items-center gap-2.5 rounded-lg border border-line px-3 py-2.5 transition-colors hover:border-primary/40">
-            <input type="checkbox" checked={soloDestacados} onChange={(e) => setSoloDestacados(e.target.checked)} className="h-4 w-4 accent-[#0F766E]" />
+            <input type="checkbox" checked={soloDestacados} onChange={(e) => setSoloDestacados(e.target.checked)} className="h-4 w-4 accent-[#0B3540]" />
             <span className="text-sm font-semibold text-ink">Solo destacados</span>
           </label>
 
