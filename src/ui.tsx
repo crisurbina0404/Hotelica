@@ -42,6 +42,27 @@ export function Reveal({
   );
 }
 
+// ----- Bloque de marca unificado: nombre en Libre Baskerville + frase -----
+export function Marca({
+  tam = "md",
+  oscura = false,
+  centrada = false,
+  className = "",
+}: {
+  tam?: "chica" | "md" | "grande" | "enorme";
+  oscura?: boolean;
+  centrada?: boolean;
+  className?: string;
+}) {
+  const claseTam = tam === "md" ? "" : tam;
+  return (
+    <span className={`brand ${claseTam} ${oscura ? "oscura" : ""} ${centrada ? "items-center" : ""} ${className}`.trim()}>
+      <span className="brand-name">Hotelica</span>
+      <span className="brand-tag">Tu destino en Nicaragua</span>
+    </span>
+  );
+}
+
 // ----- Estrellas de calificación (soporta fracciones) -----
 export function Estrellas({ valor, size = 15, className = "" }: { valor: number; size?: number; className?: string }) {
   const pct = Math.max(0, Math.min(100, (valor / 5) * 100));

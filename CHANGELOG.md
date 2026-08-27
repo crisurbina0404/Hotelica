@@ -6,6 +6,28 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.6.0] — 2026-08-02 · Unificación de marca
+
+### Agregado
+- Fuente **Libre Baskerville** (400, 700) cargada desde Google Fonts
+  en el `<head>`.
+- Bloque de marca reutilizable `.brand` (componente `Marca` en
+  `src/ui.tsx`): nombre **HOTELICA** en Libre Baskerville 700,
+  mayúsculas, teal `#0B3540`, + la frase "Tu destino en Nicaragua"
+  en teal `#177E8C` con guiones dorados `#E0A83C` a los lados.
+- Splash de entrada con la marca unificada (se desvanece al cargar).
+- El bloque de marca ahora aparece en: header, footer, selector de
+  rol (acceso de demostración) y pantalla de éxito de la reserva.
+
+### Cambiado
+- Ninguna instancia del nombre vuelve a renderizarse con Fraunces:
+  la tipografía de la marca es exclusiva de Libre Baskerville.
+- Sobre fondos oscuros (header transparente encima del hero y footer)
+  el bloque usa su variante invertida `.brand.oscura`; la estructura
+  y los guiones dorados se mantienen idénticos.
+- Sin cambios de colores de fondo ni de layout: solo tipografía
+  de marca.
+
 ## [v0.5.0] — 2026-08-02 · Pulido de interfaz turista
 
 ### Eliminado
