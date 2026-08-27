@@ -27,6 +27,7 @@
 
   --font-display: "Fraunces", "Georgia", serif;
   --font-body: "Outfit", "Segoe UI", sans-serif;
+  --font-brand: "Libre Baskerville", "Georgia", serif;
 
   --shadow-lift: 0 18px 45px -18px rgb(28 43 48 / 0.3);
   --shadow-card: 0 8px 24px -12px rgb(28 43 48 / 0.16);
@@ -73,6 +74,53 @@ body {
 .dot-texture-light {
   background-image: radial-gradient(rgb(255 255 255 / 0.14) 1.2px, transparent 1.2px);
   background-size: 18px 18px;
+}
+
+/* ===== Bloque de marca unificado (.brand) =====
+   Nombre en Libre Baskerville 700, mayúsculas, teal #0B3540;
+   frase "Tu destino en Nicaragua" en teal #177E8C con guiones dorados #E0A83C */
+.brand {
+  --brand-name: 1.25rem;
+  --brand-tag: 0.72rem;
+  --c-brand-name: #0b3540;
+  --c-brand-tag: #177e8c;
+  --c-brand-dash: #e0a83c;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--brand-name) * 0.24);
+}
+.brand.chica  { --brand-name: 1.02rem; --brand-tag: 0.6rem; }
+.brand.grande { --brand-name: 2rem;    --brand-tag: 0.88rem; }
+.brand.enorme { --brand-name: 2.9rem;  --brand-tag: 1.12rem; }
+/* Variante sobre fondos oscuros: misma estructura, texto invertido */
+.brand.oscura { --c-brand-name: #f8f6f0; --c-brand-tag: #8fd3de; }
+.brand-name {
+  font-family: var(--font-brand);
+  font-weight: 700;
+  font-size: var(--brand-name);
+  line-height: 1;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--c-brand-name);
+}
+.brand-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-size: var(--brand-tag);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  color: var(--c-brand-tag);
+}
+.brand-tag::before,
+.brand-tag::after {
+  content: "";
+  width: 1.7em;
+  height: max(2px, 0.16em);
+  border-radius: 2px;
+  background: var(--c-brand-dash);
 }
 
 /* ===== Animaciones de Hotelica (solo las necesarias, todas finitas) ===== */

@@ -6,7 +6,7 @@ import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import type { Habitacion, Hotel, Reserva } from "../data";
 import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO } from "../data";
-import { Modal, Spinner } from "../ui";
+import { Modal, Spinner, Marca } from "../ui";
 import {
   IconoLlave, IconoTarjeta, IconoBillete, IconoBanco, IconoCheck,
   IconoCalendario, IconoHuespedes, IconoCama,
@@ -193,6 +193,11 @@ export function ModalReserva({
             <button onClick={() => { alCerrar(); navegar({ nombre: "resultados" }); }} className="rounded-lg border-2 border-primary px-6 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary-soft">
               Seguir explorando
             </button>
+          </div>
+
+          {/* Marca unificada al cerrar el flujo de reserva */}
+          <div className="mt-9">
+            <Marca tam="chica" centrada />
           </div>
         </div>
       )}

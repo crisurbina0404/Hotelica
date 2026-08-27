@@ -11,6 +11,7 @@ import {
   IconoEscudo, IconoHotel, IconoHuespedes, IconoCheck, IconoReiniciar,
 } from "./icons";
 import { IconoBuscar } from "./icons";
+import { Marca } from "./ui";
 
 // ----- Barra de navegación principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
@@ -56,9 +57,8 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
         {/* Marca */}
         <button onClick={() => navegar({ nombre: "inicio" })} className="flex items-center gap-2.5" aria-label="Ir al inicio">
           <LogoMark size={34} />
-          <span className={`font-display text-[1.35rem] font-bold leading-none ${clara ? "text-white" : "text-ink"}`}>
-            Hotel<span className="text-accent">ica</span>
-          </span>
+          {/* Bloque de marca unificado (Libre Baskerville + frase) */}
+          <Marca oscura={clara} />
         </button>
 
         {/* Navegación de escritorio */}
@@ -105,7 +105,11 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               <>
                 <button className="fixed inset-0 z-10 cursor-default" onClick={() => setMenuRol(false)} aria-label="Cerrar menú" />
                 <div className="anim-pop absolute right-0 z-20 mt-2 w-72 rounded-xl border border-line bg-white p-2 shadow-lift">
-                  <p className="px-3 pb-1.5 pt-2 text-[11px] font-bold uppercase tracking-wider text-muted">Modo de demostración</p>
+                  {/* Marca presente en el acceso de sesión de demostración */}
+                  <div className="mb-1.5 flex justify-center border-b border-line px-3 pb-3 pt-3.5">
+                    <Marca tam="chica" centrada />
+                  </div>
+                  <p className="px-3 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">Modo de demostración</p>
                   {(Object.keys(USUARIOS_DEMO) as Rol[]).map((r) => {
                     const u = USUARIOS_DEMO[r];
                     const Icono = r === "turista" ? IconoHuespedes : r === "hotel" ? IconoHotel : IconoEscudo;
@@ -229,7 +233,7 @@ export function Footer({ navegar }: { navegar: Navegar }) {
         <div>
           <div className="flex items-center gap-2.5">
             <LogoMark size={38} />
-            <span className="font-display text-2xl font-bold text-white">Hotel<span className="text-accent">ica</span></span>
+            <Marca tam="grande" oscura />
           </div>
           <p className="mt-4 flex items-center gap-2 text-sm text-teal-200/90">
             <BanderaNI size={15} /> Donde Nicaragua te recibe
