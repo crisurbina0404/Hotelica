@@ -88,15 +88,16 @@ export const IMAGEN_HERO = IMG.hero;
 
 // ----- Catálogo de departamentos y municipios de Nicaragua -----
 
+// Orden narrativo de la portada: de la colonia al Caribe
 export const DEPARTAMENTOS: Departamento[] = [
   { id: "granada", nombre: "Granada" },
-  { id: "rivas", nombre: "Rivas" },
   { id: "leon", nombre: "León" },
+  { id: "rivas", nombre: "Rivas" },
+  { id: "managua", nombre: "Managua" },
   { id: "masaya", nombre: "Masaya" },
-  { id: "matagalpa", nombre: "Matagalpa" },
   { id: "esteli", nombre: "Estelí" },
-  { id: "chontales", nombre: "Chontales" },
-  { id: "caribe", nombre: "Caribe Sur" },
+  { id: "matagalpa", nombre: "Matagalpa" },
+  { id: "caribe", nombre: "RACCS (Caribe Sur)" },
 ];
 
 export const MUNICIPIOS: Municipio[] = [
@@ -118,8 +119,9 @@ export const MUNICIPIOS: Municipio[] = [
   { id: "m-sebaco", nombre: "Sébaco", departamentoId: "matagalpa" },
   { id: "m-esteli", nombre: "Estelí", departamentoId: "esteli" },
   { id: "m-condega", nombre: "Condega", departamentoId: "esteli" },
-  { id: "m-juigalpa", nombre: "Juigalpa", departamentoId: "chontales" },
-  { id: "m-acoyapa", nombre: "Acoyapa", departamentoId: "chontales" },
+  { id: "m-managua", nombre: "Managua", departamentoId: "managua" },
+  { id: "m-tipitapa", nombre: "Tipitapa", departamentoId: "managua" },
+  { id: "m-sandino", nombre: "Ciudad Sandino", departamentoId: "managua" },
   { id: "m-bluefields", nombre: "Bluefields", departamentoId: "caribe" },
   { id: "m-corn", nombre: "Corn Island", departamentoId: "caribe" },
 ];
@@ -273,11 +275,11 @@ export const HOTELES_SEED: Hotel[] = [
   },
   {
     id: "h-ruta",
-    nombre: "Motel Ruta Chontales",
+    nombre: "Motel Ruta Norte",
     dueno: "Sociedad HG S.A.",
-    departamentoId: "chontales",
-    municipioId: "m-juigalpa",
-    direccion: "Km 140 carretera a Juigalpa",
+    departamentoId: "managua",
+    municipioId: "m-managua",
+    direccion: "Km 11 Carretera Norte, Managua",
     descripcion: "Motel de carretera con habitaciones por hora.",
     imagen: IMG.leon,
     galeria: [IMG.leon],

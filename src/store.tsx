@@ -19,7 +19,8 @@ type Persistido = {
   folio: number; // último número de folio usado
 };
 
-const CLAVE_LS = "hotelica-fase1";
+// Clave de almacenamiento (cambia cuando el catálogo de datos evoluciona)
+const CLAVE_LS = "hotelica-fase1-v2";
 
 // Carga los datos guardados o usa las semillas si es la primera visita
 function cargar(): Persistido {

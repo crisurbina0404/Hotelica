@@ -11,19 +11,20 @@ import { Reveal, TituloSeccion, Estrellas } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
 import {
   BanderaNI, IconoBuscar, IconoCalendario, IconoHuespedes, IconoPalmera,
-  IconoPin, IconoOla, IconoComillas, IconoLlave, IconoCama, IconoCheck,
+  IconoPin, IconoComillas, IconoLlave, IconoCama, IconoCheck,
 } from "../icons";
+import { SiluetaDepto } from "../siluetas";
 
 // Gradientes que identifican a cada departamento en la sección de destinos
 const GRADIENTES: Record<string, string> = {
   granada: "from-[#B45309] to-[#7C2D12]",
+  leon: "from-[#F4502C] to-[#9A2E12]",
   rivas: "from-[#0E7490] to-[#155E75]",
-  leon: "from-[#C2410C] to-[#7C2D12]",
+  managua: "from-[#0B3540] to-[#06222A]",
   masaya: "from-[#BE185D] to-[#831843]",
-  matagalpa: "from-[#15803D] to-[#14532D]",
   esteli: "from-[#4D7C0F] to-[#365314]",
-  chontales: "from-[#A16207] to-[#713F12]",
-  caribe: "from-[#0F766E] to-[#134E4A]",
+  matagalpa: "from-[#15803D] to-[#14532D]",
+  caribe: "from-[#127181] to-[#0B3540]",
 };
 
 export function Inicio({ navegar }: { navegar: Navegar }) {
@@ -71,9 +72,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
       {/* ============ HERO: lo primero que ve el turista ============ */}
       <section className="relative flex min-h-[700px] flex-col overflow-hidden">
         <div className="absolute inset-0">
-          <img src={IMAGEN_HERO} alt="Atardecer en el lago de Nicaragua con los volcanes de Ometepe" className="anim-kenburns h-full w-full object-cover" />
-          {/* Overlay verde azulado definido en la guía de estilo */}
-          <div className="absolute inset-0 bg-[linear-gradient(165deg,rgba(15,118,110,0.62)_0%,rgba(11,63,58,0.55)_45%,rgba(15,23,42,0.72)_100%)]" />
+          <img src={IMAGEN_HERO} alt="Atardecer en el lago de Nicaragua con los volcanes de Ometepe" className="h-full w-full object-cover" />
+          {/* Overlay teal profundo definido en la guía de estilo */}
+          <div className="absolute inset-0 bg-[linear-gradient(165deg,rgba(11,53,64,0.66)_0%,rgba(7,36,44,0.58)_45%,rgba(5,27,33,0.78)_100%)]" />
         </div>
 
         <div className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col justify-end px-4 pb-40 pt-32 sm:px-6 lg:pb-44">
@@ -90,7 +91,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
                 Nicaragua
                 {/* Ola dibujada bajo la palabra clave */}
                 <svg className="wave-underline absolute -bottom-2 left-0 w-full" viewBox="0 0 300 14" fill="none" aria-hidden="true">
-                  <path d="M3 10c30-7 55-7 74 0s49 7 74 0 49-7 74 0 47 7 72 0" stroke="#F59E0B" strokeWidth="4.5" strokeLinecap="round" />
+                  <path d="M3 10c30-7 55-7 74 0s49 7 74 0 49-7 74 0 47 7 72 0" stroke="#F7A81B" strokeWidth="4.5" strokeLinecap="round" />
                 </svg>
               </span>
             </h1>
@@ -191,21 +192,6 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         </Reveal>
       </section>
 
-      {/* ============ CINTA DE DESTINOS EN MOVIMIENTO ============ */}
-      <div className="marquee mt-14 overflow-hidden border-y border-primary-deep/20 bg-primary-deep py-3.5">
-        <div className="marquee-track flex items-center gap-8 text-sm font-semibold uppercase tracking-[0.2em] text-teal-200/90">
-          {[0, 1].map((rep) => (
-            <div key={rep} className="flex items-center gap-8" aria-hidden={rep === 1}>
-              {["Granada", "San Juan del Sur", "Isla de Ometepe", "León", "Corn Island", "Matagalpa", "Catarina", "Estelí"].map((n) => (
-                <span key={`${rep}-${n}`} className="flex items-center gap-8 whitespace-nowrap">
-                  {n} <span className="text-accent"><IconoOla size={16} /></span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* ============ DESTINOS POR DEPARTAMENTO ============ */}
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
         <Reveal>
@@ -227,8 +213,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
                   className={`group relative flex h-52 w-56 shrink-0 flex-col justify-end overflow-hidden rounded-xl bg-gradient-to-br ${GRADIENTES[d.id]} p-4 text-left shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:shadow-lift`}
                 >
                   <span className="dot-texture-light absolute inset-0 opacity-60" />
-                  <span className="absolute -right-5 -top-5 text-white/15 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-110">
-                    <IconoPalmera size={110} />
+                  {/* Silueta característica del departamento (SVG inline accesible) */}
+                  <span className="absolute -right-3 -top-3 text-white/25 transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110">
+                    <SiluetaDepto id={d.id} className="h-28 w-28" />
                   </span>
                   <span className="relative rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold text-white backdrop-blur-sm">
                     {cantidad > 0 ? `${cantidad} hotel${cantidad > 1 ? "es" : ""}` : "Próximamente"}

@@ -30,14 +30,14 @@ function Base({ size = 18, children, ...rest }: P) {
 export function LogoMark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect x="2" y="2" width="44" height="44" rx="13" fill="#0F766E" />
-      <rect x="2" y="2" width="44" height="44" rx="13" stroke="#115E59" strokeWidth="1.5" />
-      <path d="M12 10h6a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4h-6" stroke="#FDE68A" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M16 16v16" stroke="#FDE68A" strokeWidth="2.2" strokeLinecap="round" />
-      <circle cx="31" cy="20" r="6.5" fill="#F59E0B" />
-      <path d="M31 9.5v2.2M40.5 20h-2.2M37.7 13.3l-1.6 1.6M24.3 13.3l1.6 1.6" stroke="#FDE68A" strokeWidth="2" strokeLinecap="round" />
-      <path d="M22 33c2.5-2.4 6-2.4 8.5 0s6 2.4 8.5 0" stroke="#5EEAD4" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M22 38c2.5-2.4 6-2.4 8.5 0s6 2.4 8.5 0" stroke="#99F6E4" strokeWidth="2.2" strokeLinecap="round" opacity="0.7" />
+      <rect x="2" y="2" width="44" height="44" rx="13" fill="#0B3540" />
+      <rect x="2" y="2" width="44" height="44" rx="13" stroke="#092A33" strokeWidth="1.5" />
+      <path d="M12 10h6a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4h-6" stroke="#FDE9B8" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M16 16v16" stroke="#FDE9B8" strokeWidth="2.2" strokeLinecap="round" />
+      <circle cx="31" cy="20" r="6.5" fill="#F7A81B" />
+      <path d="M31 9.5v2.2M40.5 20h-2.2M37.7 13.3l-1.6 1.6M24.3 13.3l1.6 1.6" stroke="#FDE9B8" strokeWidth="2" strokeLinecap="round" />
+      <path d="M22 33c2.5-2.4 6-2.4 8.5 0s6 2.4 8.5 0" stroke="#8CC3CE" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M22 38c2.5-2.4 6-2.4 8.5 0s6 2.4 8.5 0" stroke="#B9DAE1" strokeWidth="2.2" strokeLinecap="round" opacity="0.7" />
     </svg>
   );
 }
@@ -104,10 +104,6 @@ export const IconoHotel = (p: P) => (
 
 export const IconoPalmera = (p: P) => (
   <Base {...p}><path d="M12.5 21c-.6-5-.6-9 .5-13" /><path d="M13 8c-2.8-2.4-6-2.6-8.5-1 2 .3 4.5 1 6.5 2.5M13 8c.6-3.2 2.8-5 5.8-5.2-1.2 1.5-2 3.2-2.2 5M13 8c3-.8 5.8-.2 7.5 1.8-2-.3-4.4-.2-6.4.6" /><path d="M5 21h14" /></Base>
-);
-
-export const IconoOla = (p: P) => (
-  <Base {...p}><path d="M3 9c2.2-2.3 5-2.3 7.2 0s5 2.3 7.2 0" /><path d="M3 15c2.2-2.3 5-2.3 7.2 0s5 2.3 7.2 0" opacity="0.6" /></Base>
 );
 
 export const IconoFiltro = (p: P) => (
