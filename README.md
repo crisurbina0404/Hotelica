@@ -78,7 +78,7 @@ El backlog completo está priorizado mediante **MoSCoW** y estimado con **Planni
 | **Backend** | Lógica simulada en JS (Memoria) | Node.js + Express |
 | **Base de Datos**| MySQL (`Base de Datos Hotelica.sql`) / Supabase | PostgreSQL Relacional |
 | **Gestión Ágil** | Jira (Sprints) · Google Sheets (Backlog/Poker) | - |
-| **Diseño/Diagramas**| Draw.io (PERT, Casos de Uso, Clases) | Figma |
+| **Diseño/Diagramas**| Draw.io (PERT, Casos de Uso, Clases) | HTML DEMO |
 
 ---
 
