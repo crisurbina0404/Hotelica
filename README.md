@@ -132,7 +132,7 @@ Al ser una maqueta funcional frontend, no requiere servidor complejo para la Fas
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/tu-usuario/hotelica.git
+   git clone https://github.com/crisurbina0404/Hotelica.git
    cd hotelica
    ```
 2. **Ejecutar Frontend:**
