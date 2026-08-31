@@ -6,19 +6,25 @@ import { useApp } from "./store";
 import type { Ruta, Navegar } from "./rutas";
 import { DEPARTAMENTOS, USUARIOS_DEMO } from "./data";
 import type { Rol } from "./data";
+import { t } from "./i18n";
 import {
   LogoMark, BanderaNI, IconoCorazon, IconoChevronAbajo, IconoMenu, IconoX,
   IconoEscudo, IconoHotel, IconoHuespedes, IconoCheck, IconoReiniciar,
 } from "./icons";
 import { IconoBuscar } from "./icons";
-import { Marca } from "./ui";
+import { Marca, Modal } from "./ui";
 
 // ----- Barra de navegación principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
-  const { favoritos, rol, cambiarRol, avisar, reiniciarDemo } = useApp();
+  const { favoritos, rol, usuario, idioma, cambiarRol, login, loginSocial, logout, cambiarIdioma, avisar, reiniciarDemo } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [menuRol, setMenuRol] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
+  // Modal de login
+  const [loginAbierto, setLoginAbierto] = useState(false);
+  const [correo, setCorreo] = useState("");
+  const [contrasena, setContrasena] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   // La barra se vuelve sólida cuando el visitante baja por la página
   useEffect(() => {
@@ -30,7 +36,21 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
   // Sobre el hero del inicio la barra es transparente con letras claras
   const clara = ruta.nombre === "inicio" && !scrolled && !menuMovil;
-  const usuario = USUARIOS_DEMO[rol];
+  const usuarioDemo = USUARIOS_DEMO[rol];
+
+  // Manejador del formulario de login
+  const manejarLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!correo.trim() || !contrasena.trim()) {
+      setLoginError(t(idioma, "loginError"));
+      return;
+    }
+    setLoginError("");
+    login(correo, contrasena);
+    setLoginAbierto(false);
+    setCorreo("");
+    setContrasena("");
+  };
 
   // Cambia el rol de demostración y lleva a la pantalla que le corresponde
   const elegirRol = (r: Rol) => {
@@ -63,23 +83,65 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
         {/* Navegación de escritorio */}
         <nav className="ml-6 hidden items-center gap-6 lg:flex">
-          <Enlace a={{ nombre: "inicio" }} texto="Inicio" activo={ruta.nombre === "inicio"} />
-          <Enlace a={{ nombre: "resultados" }} texto="Explorar hoteles" activo={ruta.nombre === "resultados" || ruta.nombre === "hotel"} />
-          <Enlace a={{ nombre: "reservas" }} texto="Mis reservas" activo={ruta.nombre === "reservas"} />
+          <Enlace a={{ nombre: "inicio" }} texto={t(idioma, "inicio")} activo={ruta.nombre === "inicio"} />
+          <Enlace a={{ nombre: "resultados" }} texto={t(idioma, "explorar")} activo={ruta.nombre === "resultados" || ruta.nombre === "hotel"} />
+          <Enlace a={{ nombre: "reservas" }} texto={t(idioma, "reservas")} activo={ruta.nombre === "reservas"} />
           <button
             onClick={() => navegar({ nombre: "favoritos" })}
             className={`nav-link flex items-center gap-1.5 text-sm font-medium transition-colors ${ruta.nombre === "favoritos" ? "active" : ""} ${clara ? "text-white" : "text-ink hover:text-primary"}`}
           >
-            Favoritos
+            {t(idioma, "favoritos")}
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-white">
               {favoritos.length}
             </span>
           </button>
-          {rol === "hotel" && <Enlace a={{ nombre: "panel" }} texto="Panel del hotel" activo={ruta.nombre === "panel"} />}
-          {rol === "admin" && <Enlace a={{ nombre: "admin" }} texto="Consola admin" activo={ruta.nombre === "admin"} />}
+          {rol === "hotel" && <Enlace a={{ nombre: "panel" }} texto={t(idioma, "panelHotel")} activo={ruta.nombre === "panel"} />}
+          {rol === "admin" && <Enlace a={{ nombre: "admin" }} texto={t(idioma, "consolaAdmin")} activo={ruta.nombre === "admin"} />}
         </nav>
 
         <div className="ml-auto flex items-center gap-2.5">
+          {/* Toggle de idioma ES | EN */}
+          <button
+            onClick={cambiarIdioma}
+            className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+              clara
+                ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
+                : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
+            }`}
+            aria-label={`Cambiar a ${idioma === "es" ? "inglés" : "español"}`}
+          >
+            {idioma === "es" ? "ES" : "EN"}
+          </button>
+
+          {/* Botón de login o usuario autenticado */}
+          {usuario ? (
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-semibold ${clara ? "text-white" : "text-ink"}`}>
+                {t(idioma, "hola")}, {usuario.nombre}
+              </span>
+              <button
+                onClick={logout}
+                className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+                  clara
+                    ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
+                    : "border-line bg-white text-ink hover:border-danger hover:text-danger"
+                }`}
+              >
+                {t(idioma, "cerrarSesion")}
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setLoginAbierto(true)}
+              className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
+                clara
+                  ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
+                  : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
+              }`}
+            >
+              {t(idioma, "iniciarSesion")}
+            </button>
+          )}
           {/* Selector de rol de demostración */}
           <div className="relative">
             <button
@@ -95,9 +157,9 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
                 rol === "turista" ? "bg-primary text-white" : rol === "hotel" ? "bg-hotel text-white" : "bg-admin text-white"
               }`}>
-                {usuario.nombre.charAt(0)}
+                {usuarioDemo.nombre.charAt(0)}
               </span>
-              <span className="hidden sm:block">{usuario.etiqueta}</span>
+              <span className="hidden sm:block">{usuarioDemo.etiqueta}</span>
               <IconoChevronAbajo size={14} className={`transition-transform ${menuRol ? "rotate-180" : ""}`} />
             </button>
 
@@ -163,17 +225,17 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
         <nav className="anim-pop border-t border-line bg-white px-4 py-4 shadow-lift lg:hidden">
           <div className="grid gap-1">
             {([
-              ["inicio", "Inicio"],
-              ["resultados", "Explorar hoteles"],
-              ["reservas", "Mis reservas"],
-              ["favoritos", `Favoritos (${favoritos.length})`],
-            ] as [Ruta["nombre"], string][]).map(([n, t]) => (
+              ["inicio", t(idioma, "inicio")],
+              ["resultados", t(idioma, "explorar")],
+              ["reservas", t(idioma, "reservas")],
+              ["favoritos", `${t(idioma, "favoritos")} (${favoritos.length})`],
+            ] as [Ruta["nombre"], string][]).map(([n, texto]) => (
               <button
                 key={n}
                 onClick={() => { navegar({ nombre: n } as Ruta); setMenuMovil(false); }}
                 className={`rounded-lg px-3 py-2.5 text-left text-sm font-semibold ${ruta.nombre === n ? "bg-primary-soft text-primary" : "text-ink hover:bg-canvas"}`}
               >
-                {t}
+                {texto}
               </button>
             ))}
             {rol !== "turista" && (
@@ -181,12 +243,75 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                 onClick={() => { navegar({ nombre: rol === "hotel" ? "panel" : "admin" }); setMenuMovil(false); }}
                 className="rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-primary hover:bg-primary-soft"
               >
-                {rol === "hotel" ? "Panel del hotel" : "Consola admin"}
+                {rol === "hotel" ? t(idioma, "panelHotel") : t(idioma, "consolaAdmin")}
               </button>
             )}
           </div>
         </nav>
       )}
+
+      {/* Modal de login (HU-001) */}
+      <Modal abierto={loginAbierto} alCerrar={() => { setLoginAbierto(false); setLoginError(""); setCorreo(""); setContrasena(""); }}>
+        <div className="p-6 sm:p-8">
+          <div className="mb-6 text-center">
+            <h2 className="font-display text-xl font-bold text-ink">{t(idioma, "loginTitulo")}</h2>
+          </div>
+
+          <form onSubmit={manejarLogin} className="grid gap-4">
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">{t(idioma, "loginCorreo")}</span>
+              <input
+                type="email"
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value)}
+                placeholder="turista@hotelica.ni"
+                className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">{t(idioma, "loginContrasena")}</span>
+              <input
+                type="password"
+                value={contrasena}
+                onChange={(e) => setContrasena(e.target.value)}
+                placeholder="••••••••"
+                className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+              />
+            </label>
+
+            {loginError && (
+              <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-red-500">
+                {loginError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97]"
+            >
+              {t(idioma, "loginBtn")}
+            </button>
+          </form>
+
+          <div className="relative mt-6">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-line" /></div>
+            <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-muted">{t(idioma, "loginRedes")}</span></div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-3">
+            {(["Google", "Facebook", "Apple"] as const).map((p) => (
+              <button
+                key={p}
+                onClick={() => { loginSocial(p); setLoginAbierto(false); }}
+                className="flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-semibold text-ink transition-all hover:border-primary/40 hover:shadow-sm"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 }
@@ -196,22 +321,22 @@ export function Toasts() {
   const { toasts } = useApp();
   return (
     <div className="pointer-events-none fixed bottom-5 right-5 z-[90] flex w-[min(92vw,360px)] flex-col gap-2.5">
-      {toasts.map((t) => (
+      {toasts.map((toast) => (
         <div
-          key={t.id}
+          key={toast.id}
           role="status"
           className={`anim-toast pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lift ${
-            t.tono === "ok"
+            toast.tono === "ok"
               ? "border-[#86EFAC] bg-[#F0FDF4] text-[#166534]"
-              : t.tono === "error"
+              : toast.tono === "error"
               ? "border-[#FCA5A5] bg-[#FEF2F2] text-[#B91C1C]"
               : "border-[#99F6E4] bg-primary-soft text-primary-dark"
           }`}
         >
           <span className="mt-0.5 shrink-0">
-            {t.tono === "ok" ? <IconoCheck size={16} /> : t.tono === "error" ? <IconoX size={16} /> : <IconoBuscar size={16} />}
+            {toast.tono === "ok" ? <IconoCheck size={16} /> : toast.tono === "error" ? <IconoX size={16} /> : <IconoBuscar size={16} />}
           </span>
-          <p className="text-sm font-semibold leading-snug">{t.texto}</p>
+          <p className="text-sm font-semibold leading-snug">{toast.texto}</p>
         </div>
       ))}
     </div>
@@ -220,7 +345,7 @@ export function Toasts() {
 
 // ----- Pie de página -----
 export function Footer({ navegar }: { navegar: Navegar }) {
-  const { reiniciarDemo } = useApp();
+  const { reiniciarDemo, idioma } = useApp();
   return (
     <footer className="relative mt-20 overflow-hidden bg-primary-ink text-teal-100">
       {/* Franja decorativa superior con olas */}
@@ -265,10 +390,10 @@ export function Footer({ navegar }: { navegar: Navegar }) {
         <div>
           <h4 className="font-display text-sm font-bold uppercase tracking-wider text-white">Explora</h4>
           <ul className="mt-4 grid gap-2 text-sm">
-            <li><button onClick={() => navegar({ nombre: "resultados" })} className="text-teal-200/80 transition-colors hover:text-accent">Todos los hoteles</button></li>
-            <li><button onClick={() => navegar({ nombre: "reservas" })} className="text-teal-200/80 transition-colors hover:text-accent">Mis reservas</button></li>
-            <li><button onClick={() => navegar({ nombre: "favoritos" })} className="text-teal-200/80 transition-colors hover:text-accent">Mis favoritos</button></li>
-            <li><button onClick={() => navegar({ nombre: "inicio" })} className="text-teal-200/80 transition-colors hover:text-accent">Cómo funciona</button></li>
+            <li><button onClick={() => navegar({ nombre: "resultados" })} className="text-teal-200/80 transition-colors hover:text-accent">{t(idioma, "explorar")}</button></li>
+            <li><button onClick={() => navegar({ nombre: "reservas" })} className="text-teal-200/80 transition-colors hover:text-accent">{t(idioma, "reservas")}</button></li>
+            <li><button onClick={() => navegar({ nombre: "favoritos" })} className="text-teal-200/80 transition-colors hover:text-accent">{t(idioma, "favoritos")}</button></li>
+            <li><button onClick={() => navegar({ nombre: "inicio" })} className="text-teal-200/80 transition-colors hover:text-accent">{t(idioma, "inicio")}</button></li>
           </ul>
         </div>
 

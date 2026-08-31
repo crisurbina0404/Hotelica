@@ -9,6 +9,10 @@ import {
   nuevoPromedio, hoyISO, seTraslapan,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol } from "./data";
+import type { Idioma } from "./i18n";
+
+// Datos del usuario autenticado (login simulado)
+export type Usuario = { nombre: string; rol: "Turista" | "Hotel" | "Admin" };
 
 // Forma de los datos que se guardan en el navegador
 type Persistido = {
@@ -51,9 +55,15 @@ type AppCtx = {
   resenas: Resena[];
   favoritos: string[];
   rol: Rol;
+  usuario: Usuario | null;
+  idioma: Idioma;
   toasts: Toast[];
   avisar: (texto: string, tono?: Toast["tono"]) => void;
   cambiarRol: (r: Rol) => void;
+  login: (correo: string, contrasena: string) => void;
+  loginSocial: (proveedor: string) => void;
+  logout: () => void;
+  cambiarIdioma: () => void;
   alternarFavorito: (hotelId: string) => void;
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva) => void;
@@ -69,11 +79,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [datos, setDatos] = useState<Persistido>(cargar);
   const [rol, setRol] = useState<Rol>("turista");
   const [toasts, setToasts] = useState<Toast[]>([]);
+  // Login simulado: usuario autenticado (persiste en localStorage)
+  const [usuario, setUsuario] = useState<Usuario | null>(() => {
+    try {
+      const crudo = localStorage.getItem("hotelica-usuario");
+      return crudo ? JSON.parse(crudo) : null;
+    } catch { return null; }
+  });
+  // Selector de idioma (persiste en localStorage)
+  const [idioma, setIdioma] = useState<Idioma>(() => {
+    return (localStorage.getItem("hotelica-idioma") as Idioma) || "es";
+  });
 
   // Guardamos los cambios en el navegador cada vez que cambian los datos
   useEffect(() => {
     localStorage.setItem(CLAVE_LS, JSON.stringify(datos));
   }, [datos]);
+
+  // Persistir usuario en localStorage
+  useEffect(() => {
+    if (usuario) localStorage.setItem("hotelica-usuario", JSON.stringify(usuario));
+    else localStorage.removeItem("hotelica-usuario");
+  }, [usuario]);
+
+  // Persistir idioma en localStorage
+  useEffect(() => {
+    localStorage.setItem("hotelica-idioma", idioma);
+  }, [idioma]);
 
   // Muestra un aviso y lo retira automáticamente a los 3.5 segundos
   const avisar = (texto: string, tono: Toast["tono"] = "ok") => {
@@ -169,6 +201,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const cambiarRol = (r: Rol) => setRol(r);
 
+  // Login simulado: si el correo no está vacío, crea un usuario demo
+  const login = (correo: string, _contrasena: string) => {
+    if (!correo.trim()) return; // no debería llegar si la UI valida
+    const nombre = correo.split("@")[0].replace(/[._]/g, " ");
+    const capitalizado = nombre.charAt(0).toUpperCase() + nombre.slice(1);
+    setUsuario({ nombre: capitalizado || "Turista Demo", rol: "Turista" });
+    avisar(`Bienvenido, ${capitalizado || "Turista Demo"}`, "ok");
+  };
+
+  // Login directo con redes sociales simuladas (Google, Facebook, Apple)
+  const loginSocial = (_proveedor: string) => {
+    setUsuario({ nombre: "Turista Demo", rol: "Turista" });
+    avisar("Sesión iniciada con red social (demo)", "ok");
+  };
+
+  // Cerrar sesión
+  const logout = () => {
+    setUsuario(null);
+    setRol("turista");
+    avisar("Sesión cerrada", "info");
+  };
+
+  // Cambiar idioma ES ↔ EN
+  const cambiarIdioma = () => {
+    setIdioma((prev) => (prev === "es" ? "en" : "es"));
+  };
+
   // Restaura los datos originales de demostración
   const reiniciarDemo = () => {
     localStorage.removeItem(CLAVE_LS);
@@ -189,9 +248,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resenas: datos.resenas,
       favoritos: datos.favoritos,
       rol,
+      usuario,
+      idioma,
       toasts,
       avisar,
       cambiarRol,
+      login,
+      loginSocial,
+      logout,
+      cambiarIdioma,
       alternarFavorito,
       crearReserva,
       cambiarEstadoReserva,
@@ -200,7 +265,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       disponiblesDe,
       reiniciarDemo,
     }),
-    [datos, rol, toasts]
+    [datos, rol, usuario, idioma, toasts]
   );
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
