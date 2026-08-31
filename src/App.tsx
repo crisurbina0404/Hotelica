@@ -3,7 +3,7 @@
 // Enrutamiento por estado: cada pantalla = una historia de usuario
 // ============================================================
 import { useEffect, useState } from "react";
-import { AppProvider } from "./store";
+import { AppProvider, useApp } from "./store";
 import type { Ruta } from "./rutas";
 import { Navbar, Footer, Toasts } from "./layout";
 import { Marca } from "./ui";
@@ -15,7 +15,11 @@ import { MisReservas, Favoritos } from "./pages/MyReservations";
 import { PanelHotel } from "./pages/HotelPanel";
 import { PanelAdmin } from "./pages/AdminPanel";
 
-function App() {
+// Rutas protegidas: requieren usuario autenticado
+const RUTAS_PROTEGIDAS: Ruta["nombre"][] = ["reservas", "panel", "admin"];
+
+function AppInner() {
+  const { usuario } = useApp();
   // La pantalla actual se guarda en el estado (sin URL, es una maqueta)
   const [ruta, setRuta] = useState<Ruta>({ nombre: "inicio" });
 
@@ -30,6 +34,11 @@ function App() {
 
   // Al navegar, volvemos al inicio de la página
   const navegar = (r: Ruta) => {
+    // Protección de rutas: si no hay usuario y la ruta es protegida, redirigir a inicio
+    if (!usuario && RUTAS_PROTEGIDAS.includes(r.nombre)) {
+      setRuta({ nombre: "inicio" });
+      return;
+    }
     setRuta(r);
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
@@ -48,7 +57,7 @@ function App() {
   };
 
   return (
-    <AppProvider>
+    <>
       {/* Splash de marca al abrir la maqueta */}
       {splash && (
         <div
@@ -69,6 +78,15 @@ function App() {
         <Footer navegar={navegar} />
         <Toasts />
       </div>
+    </>
+  );
+}
+
+// App wrapper con provider (separa Provider del uso de useApp)
+function App() {
+  return (
+    <AppProvider>
+      <AppInner />
     </AppProvider>
   );
 }

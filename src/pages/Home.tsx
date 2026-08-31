@@ -7,6 +7,7 @@ import type { Navegar } from "../rutas";
 import {
   DEPARTAMENTOS, MUNICIPIOS, IMAGEN_HERO, fmtDinero, sumarDias, hoyISO,
 } from "../data";
+import { t } from "../i18n";
 import { Reveal, TituloSeccion, Estrellas } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
 import {
@@ -28,7 +29,7 @@ const GRADIENTES: Record<string, string> = {
 };
 
 export function Inicio({ navegar }: { navegar: Navegar }) {
-  const { hoteles, resenas, favoritos, avisar } = useApp();
+  const { hoteles, resenas, favoritos, idioma, avisar } = useApp();
 
   // ----- Estado del buscador principal (HU-001) -----
   const [depto, setDepto] = useState("");
@@ -86,7 +87,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
 
           <Reveal delay={120}>
             <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.08] text-white sm:text-5xl lg:text-[3.6rem]">
-              Encuentra tu próximo destino en{" "}
+              {t(idioma, "heroTitulo")}{" "}
               <span className="relative inline-block text-accent">
                 Nicaragua
                 {/* Ola dibujada bajo la palabra clave */}
@@ -99,16 +100,15 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
 
           <Reveal delay={240}>
             <p className="mt-6 max-w-xl text-base leading-relaxed text-teal-50/90 sm:text-lg">
-              Reserva hoteles pequeños y familiares de forma sencilla: patios coloniales, playas del Pacífico,
-              montañas cafetaleras y el azul del Caribe.
+              {t(idioma, "heroSubtitulo")}
             </p>
           </Reveal>
 
           <Reveal delay={360}>
             <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2 text-sm text-teal-50/95">
-              <span className="flex items-center gap-2"><span className="text-accent"><IconoPalmera size={18} /></span><b>{aprobados.length}</b> hoteles familiares</span>
-              <span className="flex items-center gap-2"><span className="text-accent"><IconoPin size={18} /></span><b>{MUNICIPIOS.length}</b> municipios</span>
-              <span className="flex items-center gap-2"><span className="text-accent"><IconoComillas size={18} /></span><b>{resenas.length}</b> reseñas de viajeros</span>
+              <span className="flex items-center gap-2"><span className="text-accent"><IconoPalmera size={18} /></span><b>{aprobados.length}</b> {t(idioma, "heroDestinos")}</span>
+              <span className="flex items-center gap-2"><span className="text-accent"><IconoPin size={18} /></span><b>{MUNICIPIOS.length}</b> {t(idioma, "heroMunicipios")}</span>
+              <span className="flex items-center gap-2"><span className="text-accent"><IconoComillas size={18} /></span><b>{resenas.length}</b> {t(idioma, "heroResenas")}</span>
             </div>
           </Reveal>
         </div>
@@ -121,8 +121,8 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
             <div className="mb-4 flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"><IconoBuscar size={17} /></span>
               <div>
-                <p className="font-display text-base font-bold text-ink">¿A dónde viajas?</p>
-                <p className="text-xs text-muted">Busca por departamento, fechas y número de huéspedes</p>
+                <p className="font-display text-base font-bold text-ink">{t(idioma, "buscadorTitulo")}</p>
+                <p className="text-xs text-muted">{t(idioma, "buscadorSubtitulo")}</p>
               </div>
             </div>
 
@@ -176,7 +176,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
                   className="group flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] lg:w-auto"
                 >
                   <IconoBuscar size={16} className="transition-transform group-hover:rotate-12" />
-                  Buscar hoteles
+                  {t(idioma, "buscarBtn")}
                 </button>
               </div>
             </div>
@@ -198,7 +198,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <TituloSeccion ceja="Destinos que enamoran" titulo="De la colonia al Caribe, un departamento a la vez" />
             <button onClick={() => navegar({ nombre: "resultados" })} className="nav-link text-sm font-bold text-primary">
-              Ver todos los hoteles →
+              {t(idioma, "verTodos")}
             </button>
           </div>
         </Reveal>

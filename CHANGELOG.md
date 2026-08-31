@@ -6,6 +6,56 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.9.0] — 2026-08-31 · Product Backlog oficial (36 HUs)
+
+### Agregado
+- **Product Backlog oficial refinado** con 36 Historias de Usuario
+  (HU-000 a HU-035) organizadas en 6 módulos: Infraestructura,
+  Autenticación, Búsqueda, Reservas, Gestión Hotel y Administración.
+- **Documentación detallada** con criterios MoSCoW y escenarios BDD
+  para cada HU del Sprint 1.
+- **Archivos individuales creados** en `historias-usuario/`:
+  - `HU-001-registrarse.md` — Registro en la plataforma (Alta)
+  - `HU-002-iniciar-sesion.md` — Iniciar sesión (Alta)
+  - `HU-003-cerrar-sesion.md` — Cerrar sesión (Alta)
+  - `HU-006-buscar-hoteles.md` — Buscar hoteles por departamento (Alta)
+
+### Cambiado
+- Se reemplazó la numeración antigua (4 HUs) por la nueva estructura
+  oficial (36 HUs) en `Orden de Historias de Usuarios.md`.
+- Se eliminó el archivo antiguo `HU-001-login.md` (reemplazado por
+  `HU-002-iniciar-sesion.md` según la nueva numeración).
+
+## [v0.7.0] — 2026-08-31 · Sprint 1: Login e Idioma
+
+### Agregado
+- **HU-001 — Login simulado**: campo de correo, contraseña, botón "Iniciar sesión"
+  y botones sociales simulados (Google, Facebook, Apple) que登录 directo como
+  "Turista Demo". Validación de campos vacíos con mensaje de error en rojo.
+- **Estado global de usuario** (`src/store.tsx`): campo `usuario` con tipo
+  `{ nombre, rol } | null`, acciones `login()`, `loginSocial()`, `logout()`.
+  Persistencia en `localStorage` (clave `hotelica-usuario`).
+- **Modal de login** en el header (`src/layout.tsx`): se abre con el botón
+  "Iniciar sesión" y se cierra con Escape o botón X.
+- **Botón de sesión en header**: si `usuario` es null muestra "Iniciar sesión";
+  si existe, muestra "Hola, {nombre}" + "Cerrar sesión".
+- **HU-002 — Selector de idioma ES/EN**: toggle `ES | EN` en el header.
+  Diccionario de traducciones en `src/i18n.ts` con 26 claves (header, home,
+  login). Persistencia en `localStorage` (clave `hotelica-idioma`).
+- **Textos traducidos** en el header, menú móvil, footer y sección hero
+  de Home.tsx.
+- **Protección de rutas** (`src/App.tsx`): rutas `reservas`, `panel` y
+  `admin` redirigen a inicio si `usuario` es null.
+- **Archivos de documentación**: `Orden de Historias de Usuarios.md`
+  (Product Backlog actualizado) y `historias-usuario/HU-001-login.md`
+  (plantilla INVEST con BDD).
+
+### Cambiado
+- `App.tsx` separado en `AppInner` (usa `useApp`) y `App` (envuelve con
+  `AppProvider`) para respetar las reglas de hooks.
+- `layout.tsx`: variable `usuario` renombrada a `usuarioDemo` para evitar
+  conflicto con el nuevo campo `usuario` del store.
+
 ## [v0.6.0] — 2026-08-02 · Unificación de marca
 
 ### Agregado
