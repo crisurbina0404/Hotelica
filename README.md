@@ -1,12 +1,12 @@
 # 🗝️ Hotelica — Tu destino en Nicaragua
 
-> *Donde Nicaragua te recibe 🇳🇮*
+> *Donde Nicaragua te recibe 🇳*
 
 **Hotelica** es un sistema de reservación de hoteles enfocado en hoteles pequeños y familiares de Nicaragua. Proyecto académico desarrollado para el curso de **Ingeniería del Software II** (Grupo #08 · Recinto Central Managua "Carlos Fonseca Amador").
 
-![Estado](https://img.shields.io/badge/Estado-Fase%201%20(Maqueta)-177E8C?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Estado-Fase%201%20(Demo)-177E8C?style=for-the-badge)
 ![Metodología](https://img.shields.io/badge/Metodología-Scrum%20Ágil-F4502C?style=for-the-badge)
-![Frontend](https://img.shields.io/badge/Fase%201-HTML%20|%20CSS%20|%20JS-E08E0B?style=for-the-badge)
+![Frontend](https://img.shields.io/badge/Frontend-React%20+%20TypeScript-E08E0B?style=for-the-badge)
 ![Base de Datos](https://img.shields.io/badge/BD-MySQL%20|%20Supabase-0B3540?style=for-the-badge)
 
 ---
@@ -53,18 +53,18 @@ Para cada funcionalidad seguimos estrictamente este flujo académico:
 
 ---
 
-## 🧩 Historias de Usuario (Product Backlog)
+## 🧩 Product Backlog (36 Historias de Usuario)
 
 El backlog completo está priorizado mediante **MoSCoW** y estimado con **Planning Poker** (Secuencia de Fibonacci).
 
 | Módulo / Épica | Historias de Usuario (HU) |
 |---|---|
-| **Infraestructura** | `HU-000` Crear BD relacional (MySQL/Supabase) |
-| **Autenticación** | `HU-001` Login (correo/red social) · `HU-002` Cambiar idioma (ES/EN) · `HU-009` Favoritos |
-| **Búsqueda** | `HU-003` Buscar y filtrar por destino · `HU-004` Descubrir destinos y actividades |
-| **Reservas** | `HU-005` Reservar con IVA 15% · `HU-006` Cancelar · `HU-007` Historial · `HU-008` Calificar estadía |
-| **Gestión Hotel** | `HU-010` Registrar hotel · `HU-011` Habitaciones/Precios · `HU-012` Fotos · `HU-013` Gestionar reservas · `HU-014` Check-in/out · `HU-015` Reporte ocupación |
-| **Administración**| `HU-016` Aprobar/Rechazar hoteles · `HU-017` Gestionar usuarios · `HU-018` Estadísticas globales |
+| **Infraestructura** | `HU-000` Crear BD relacional |
+| **Autenticación** | `HU-001` Registro · `HU-002` Login · `HU-003` Logout · `HU-004` Recuperar contraseña · `HU-005` Perfil |
+| **Búsqueda** | `HU-006` Buscar por depto · `HU-007` Filtro precio · `HU-008` Filtro capacidad · `HU-009` Detalles · `HU-010` Habitaciones · `HU-011` Disponibilidad · `HU-012` Destinos |
+| **Reservas** | `HU-013` Crear reserva · `HU-014` Calcular IVA/Total · `HU-015` Historial · `HU-016` Cancelar · `HU-017` Estado · `HU-018` Pago · `HU-019` Calificar · `HU-020` Favoritos |
+| **Gestión Hotel** | `HU-021` Registrar hotel · `HU-022` Editar info · `HU-023` Habitaciones · `HU-024` Precios · `HU-025` Fotos · `HU-026` Ver reservas · `HU-027` Confirmar/Rechazar · `HU-028` Check-in · `HU-029` Check-out · `HU-030` Ocupación |
+| **Administración**| `HU-031` Aprobar hotel · `HU-032` Rechazar hotel · `HU-033` Gestionar usuarios · `HU-034` Estadísticas · `HU-035` Notificaciones |
 
 *(Ver detalle completo, wireframes y criterios BDD en el documento `HOTELICA- T01 UserStory.pdf` y la carpeta `/historias-usuario/`)*.
 
@@ -72,13 +72,78 @@ El backlog completo está priorizado mediante **MoSCoW** y estimado con **Planni
 
 ## 🛠️ Stack Tecnológico
 
-| Capa | Fase 1 (Actual) | Fase 2 (Pendiente) |
-|---|---|---|
-| **Frontend** | HTML5, CSS3, JavaScript Vanilla (Sin frameworks) | React / TypeScript (Evaluado a futuro) |
-| **Backend** | Lógica simulada en JS (Memoria) | Node.js + Express |
-| **Base de Datos**| MySQL (`Base de Datos Hotelica.sql`) / Supabase | PostgreSQL Relacional |
-| **Gestión Ágil** | Jira (Sprints) · Google Sheets (Backlog/Poker) | - |
-| **Diseño/Diagramas**| Draw.io (PERT, Casos de Uso, Clases) | HTML DEMO |
+| Capa | Tecnología |
+|---|---|
+| **Frontend (Demo)** | React 18 · TypeScript · Vite · Tailwind CSS v4 |
+| **Base de Datos** | MySQL (`Base de Datos Hotelica.sql`) / Supabase (PostgreSQL) |
+| **Backend (Fase 2)** | Node.js + Express (o API REST de Supabase) |
+| **Gestión Ágil** | Jira (Sprints) · Google Sheets (Backlog/Poker) |
+| **Diseño/Diagramas**| Draw.io (PERT, Casos de Uso, Clases) |
+
+---
+
+## 📁 Estructura del Repositorio
+
+```text
+Hotelica - Demo/
+├── index.html                  # Entrada principal de Vite
+├── package.json                # Dependencias del proyecto
+├── vite.config.js              # Configuración de Vite
+├── tsconfig.json               # Configuración de TypeScript
+├── CHANGELOG.md                # Historial de cambios (v0.1.0+)
+├── Orden de Historias de Usuarios.md # Índice de construcción (36 HUs)
+├── Hotelica.md                 # Guía maestra del proyecto
+├── Base de Datos Hotelica.sql  # Esquema MySQL + Seeds
+│
+├── dist/                       # Build de producción (Vite)
+│
+└── src/                        # Código fuente (11 archivos base)
+    ├── App.tsx                 # Componente raíz y enrutamiento
+    ├── main.tsx                # Punto de entrada de React
+    ├── layout.tsx              # Layout global (Header, Footer, Marca)
+    ├── rutas.ts                # Definición de rutas
+    ├── store.tsx               # Estado global (Context API)
+    ├── data.ts                 # Datos simulados (hoteles, destinos)
+    ├── ui.tsx                  # Componentes base reutilizables
+    ├── tarjeta.tsx             # Componente de tarjeta de hotel
+    ├── icons.tsx               # Iconos SVG inline
+    ├── siluetas.tsx            # Siluetas SVG de departamentos
+    ├── index.css               # Estilos globales y Tailwind
+    │
+    └── pages/                  # 7 páginas principales
+        ├── Home.tsx            # Portada turística (buscador)
+        ├── Results.tsx         # Resultados de búsqueda
+        ├── HotelDetail.tsx     # Detalle del hotel y habitaciones
+        ├── BookingModal.tsx    # Modal de reserva (3 pasos)
+        ├── MyReservations.tsx  # Historial del turista
+        ├── HotelPanel.tsx      # Dashboard del hotelero
+        └── AdminPanel.tsx      # Consola del administrador
+```
+
+---
+
+## 🚀 Cómo ejecutar el proyecto
+
+### Frontend (Demo React)
+```bash
+# 1. Clonar el repositorio
+git clone https://github.com/tu-usuario/hotelica.git
+cd "Hotelica - Demo"
+
+# 2. Instalar dependencias
+npm install
+
+# 3. Iniciar servidor de desarrollo
+npm run dev
+
+# 4. Abrir en el navegador (generalmente http://localhost:5173)
+```
+
+### Base de Datos (MySQL)
+```bash
+# Cargar el esquema y datos de prueba
+mysql -u root -p < "Base de Datos Hotelica.sql"
+```
 
 ---
 
@@ -107,51 +172,6 @@ El esquema relacional (`Base de Datos Hotelica.sql`) cuenta con **11 tablas prin
 
 ---
 
-## 📁 Estructura del Repositorio
-
-```text
-hotelica/
-├── index.html                  # Maqueta funcional (Fase 1)
-├── css/                        # Estilos (Identidad visual Hotelica)
-├── js/                         # Lógica vanilla y enrutamiento
-├── historias-usuario/          # HU-000 a HU-018 redactadas
-├── docs/                       # Diagramas (PERT, Casos de uso exportados)
-├── Base de Datos Hotelica.sql  # Esquema MySQL + Seeds
-├── Orden de Historias de Usuarios.md # Índice de construcción
-├── HOTELICA- T01 UserStory.pdf # Entregable 1 (Documentación oficial)
-├── Hotelica.md                 # Guía maestra del proyecto
-├── CHANGELOG.md                # Historial de cambios (v0.1.0+)
-└── README.md
-```
-
----
-
-## 🚀 Cómo ejecutar el proyecto (Fase 1)
-
-Al ser una maqueta funcional frontend, no requiere servidor complejo para la Fase 1:
-
-1. **Clonar el repositorio:**
-   ```bash
-   git clone https://github.com/crisurbina0404/Hotelica.git
-   cd hotelica
-   ```
-2. **Ejecutar Frontend:**
-   Abrir `index.html` directamente en el navegador, o usar la extensión **Live Server** en VS Code.
-3. **Cargar Base de Datos (Opcional para Fase 1):**
-   ```bash
-   mysql -u root -p < "Base de Datos Hotelica.sql"
-   ```
-
----
-
-## 🗓️ Planificación (Diagrama PERT)
-
-El proyecto se desarrolla en **14 semanas** (del 10 de agosto al 20 de noviembre de 2026), dividido en Sprints de máximo 4 semanas. 
-- **Ruta Crítica:** Definición de BD ➔ Diseño UI  Frontend Turista  Integración ➔ Pruebas ➔ Defensa.
-- *(El diagrama PERT interactivo y detallado se encuentra en `docs/Diagrama PERT.html` o en el Entregable 1).*
-
----
-
 ## 📈 Changelog
 
 El progreso detallado versión por versión se encuentra en [`CHANGELOG.md`](./CHANGELOG.md).
@@ -161,7 +181,7 @@ El progreso detallado versión por versión se encuentra en [`CHANGELOG.md`](./C
 
 ---
 
-## 👨‍ Equipo (Grupo #08)
+## 👨💻 Equipo (Grupo #08)
 
 | Nombre | Rol Scrum |
 |---|---|
