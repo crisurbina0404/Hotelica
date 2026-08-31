@@ -7,7 +7,7 @@
 ![Estado](https://img.shields.io/badge/Estado-Fase%201%20(Demo)-177E8C?style=for-the-badge)
 ![Metodología](https://img.shields.io/badge/Metodología-Scrum%20Ágil-F4502C?style=for-the-badge)
 ![Frontend](https://img.shields.io/badge/Frontend-React%20+%20TypeScript-E08E0B?style=for-the-badge)
-![Base de Datos](https://img.shields.io/badge/BD-MySQL%20|%20Supabase-0B3540?style=for-the-badge)
+![Base de Datos](https://img.shields.io/badge/BD-|%20Supabase-0B3540?style=for-the-badge)
 
 ---
 
