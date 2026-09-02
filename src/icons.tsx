@@ -26,19 +26,17 @@ function Base({ size = 18, children, ...rest }: P) {
   );
 }
 
-// Marca de Hotelica: llave que abre una puerta con sol naciente
+// Marca de Hotelica: volcán con sol naciente (favicon SVG)
 export function LogoMark({ size = 34 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
-      <rect x="2" y="2" width="44" height="44" rx="13" fill="#0B3540" />
-      <rect x="2" y="2" width="44" height="44" rx="13" stroke="#092A33" strokeWidth="1.5" />
-      <path d="M12 10h6a4 4 0 0 1 4 4v20a4 4 0 0 1-4 4h-6" stroke="#FDE9B8" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M16 16v16" stroke="#FDE9B8" strokeWidth="2.2" strokeLinecap="round" />
-      <circle cx="31" cy="20" r="6.5" fill="#F7A81B" />
-      <path d="M31 9.5v2.2M40.5 20h-2.2M37.7 13.3l-1.6 1.6M24.3 13.3l1.6 1.6" stroke="#FDE9B8" strokeWidth="2" strokeLinecap="round" />
-      <path d="M22 33c2.5-2.4 6-2.4 8.5 0s6 2.4 8.5 0" stroke="#8CC3CE" strokeWidth="2.2" strokeLinecap="round" />
-      <path d="M22 38c2.5-2.4 6-2.4 8.5 0s6 2.4 8.5 0" stroke="#B9DAE1" strokeWidth="2.2" strokeLinecap="round" opacity="0.7" />
-    </svg>
+    <img
+      src="/favicon.svg"
+      alt="Hotelica"
+      width={size}
+      height={size}
+      style={{ width: size, height: size, objectFit: "contain" }}
+      aria-hidden="true"
+    />
   );
 }
 

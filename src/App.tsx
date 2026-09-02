@@ -7,7 +7,6 @@ import { AppProvider, useApp } from "./store";
 import type { Ruta } from "./rutas";
 import { Navbar, Footer, Toasts } from "./layout";
 import { Marca } from "./ui";
-import { LogoMark } from "./icons";
 import { Inicio } from "./pages/Home";
 import { Resultados } from "./pages/Results";
 import { DetalleHotel } from "./pages/HotelDetail";
@@ -66,7 +65,6 @@ function AppInner() {
             splashVisible ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
-          <LogoMark size={76} />
           <Marca tam="enorme" centrada />
         </div>
       )}
