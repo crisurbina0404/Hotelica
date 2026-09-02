@@ -42,24 +42,38 @@ export function Reveal({
   );
 }
 
-// ----- Bloque de marca unificado: nombre en Libre Baskerville + frase -----
+const logoUrl = '/Logo.svg';
+
+// ----- Bloque de marca unificado: imagen oficial con texto incluido -----
 export function Marca({
   tam = "md",
-  oscura = false,
   centrada = false,
+  conIcono = true,
+  clara = false,
   className = "",
 }: {
   tam?: "chica" | "md" | "grande" | "enorme";
-  oscura?: boolean;
   centrada?: boolean;
+  conIcono?: boolean;
+  clara?: boolean;
   className?: string;
 }) {
-  const claseTam = tam === "md" ? "" : tam;
+  const clases: Record<string, string> = {
+    chica: "h-55 w-auto",
+    md: "h-55 w-auto",
+    grande: "h-50 w-auto",
+    enorme: "h-60 w-auto",
+  };
+
+  const cls = `${clases[tam]} ${centrada ? "mx-auto" : ""} ${className}`.trim();
+
   return (
-    <span className={`brand ${claseTam} ${oscura ? "oscura" : ""} ${centrada ? "items-center" : ""} ${className}`.trim()}>
-      <span className="brand-name">Hotelica</span>
-      <span className="brand-tag">Tu destino en Nicaragua</span>
-    </span>
+    <img
+      src={logoUrl}
+      alt="Hotelica - Tu destino en Nicaragua"
+      className={cls}
+      style={{ aspectRatio: "2 / 1", objectFit: "contain", objectPosition: "left center" }}
+    />
   );
 }
 

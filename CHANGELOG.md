@@ -6,6 +6,58 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.13.0] — 2026-08-31 · Espacios verticales del logo en footer reducidos
+
+### Modificado
+- **Footer** (`src/layout.tsx`): padding vertical reducido a `pt-2`/`pb-2`,
+  gap entre columnas `gap-6`, margen superior del footer `mt-10`, gap del
+  contenedor del logo `gap-1.5`, margen del botón `mt-1`.
+
+---
+
+## [v0.12.0] — 2026-08-31 · Ajuste de logo en footer
+
+### Modificado
+- **Logo en footer** (`src/layout.tsx`): tamaño aumentado a `tam="enorme"` (h-70) y
+  espacios verticales reducidos (`pt-4`/`pb-4`, márgenes `mt-1`/`mt-2`).
+
+---
+
+## [v0.11.0] — 2026-08-31 · Corrección de logotipo: asset oficial
+
+### Agregado
+- **Asset oficial del logo** en `src/assets/logo-hotelica.png` (volcán
+  con sol y humo, diseño del Product Owner).
+- **Componente `Marca` reestructurado** (`src/ui.tsx`):
+  - Layout flex-row: icono del volcán a la izquierda + texto a la derecha.
+  - Icono: `<img>` con el asset oficial, alturas proporcionales (h-8 a h-16).
+  - Título "HOTELICA": Libre Baskerville 700, `#0B3540`, tracking-wide.
+  - Subtítulo: "Tu destino en Nicaragua" con líneas doradas `#D4AF37` a los lados.
+  - 4 variantes de tamaño: chica, md, grande, enorme.
+  - Nueva prop `conIcono` (default true) para controlar la muestra del icono.
+- **Splash y footer** ahora usan `Marca` directamente (sin `LogoMark` separado).
+
+### Eliminado
+- SVG inline del volcán en `LogoMark` (reemplazado por asset PNG).
+- Prop `oscura` del componente `Marca` (ya no se usa; colores unificados).
+
+### Cambiado
+- Header, footer, splash y modal de reserva muestran la marca con
+  el icono del volcán oficial + texto teal + guiones dorados.
+
+## [v0.10.0] — 2026-08-31 · Ajuste de colores de marca
+
+### Cambiado
+- **Marca unificada ajustada a propuesta oficial** (fondo claro):
+  - Nombre "HOTELICA": teal `#0B3540` (antes era el mismo, confirmado).
+  - Subtítulo "Tu destino en Nicaragua": teal `#115E59` (antes `#177E8C`).
+  - Líneas decorativas doradas: `#D4AF37` (antes `#E0A83C`).
+- Variante `.oscura` (footer, header sobre hero): texto blanco `#F8F6F0`,
+  tag celeste `#8FD3DE`, guiones dorados `#D4AF37`.
+- Los 5 puntos de uso de `Marca` (header, selector de rol, splash,
+  footer, modal de reserva) aplican los colores correctos según
+  el fondo subyacente.
+
 ## [v0.9.0] — 2026-08-31 · Product Backlog oficial (36 HUs)
 
 ### Agregado
