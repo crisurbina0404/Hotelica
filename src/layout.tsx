@@ -16,7 +16,7 @@ import { Marca, Modal } from "./ui";
 
 // ----- Barra de navegaci+�n principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
-  const { favoritos, rol, usuario, idioma, cambiarRol, login, loginSocial, logout, cambiarIdioma, avisar, reiniciarDemo } = useApp();
+  const { favoritos, rol, usuario, idioma, cambiarRol, login, registrar, loginSocial, logout, cambiarIdioma, avisar, reiniciarDemo } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [menuRol, setMenuRol] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
@@ -25,6 +25,16 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [loginCargando, setLoginCargando] = useState(false);
+  const [verContrasena, setVerContrasena] = useState(false);
+  // Modal de registro (HU-001)
+  const [registroAbierto, setRegistroAbierto] = useState(false);
+  const [regNombre, setRegNombre] = useState("");
+  const [regCorreo, setRegCorreo] = useState("");
+  const [regContrasena, setRegContrasena] = useState("");
+  const [regError, setRegError] = useState("");
+  const [regCargando, setRegCargando] = useState(false);
+  const [verRegContrasena, setVerRegContrasena] = useState(false);
 
   // La barra se vuelve s+�lida cuando el visitante baja por la p+�gina
   useEffect(() => {
@@ -38,18 +48,52 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   const clara = ruta.nombre === "inicio" && !scrolled && !menuMovil;
   const usuarioDemo = USUARIOS_DEMO[rol];
 
-  // Manejador del formulario de login
-  const manejarLogin = (e: React.FormEvent) => {
+  // Manejador del formulario de login (HU-002)
+  const manejarLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!correo.trim() || !contrasena.trim()) {
       setLoginError(t(idioma, "loginError"));
       return;
     }
     setLoginError("");
-    login(correo, contrasena);
+    setLoginCargando(true);
+    const resultado = await login(correo, contrasena);
+    setLoginCargando(false);
+    if (resultado.error) {
+      setLoginError(resultado.error);
+      return;
+    }
     setLoginAbierto(false);
     setCorreo("");
     setContrasena("");
+  };
+
+  // Manejador del formulario de registro (HU-001)
+  const manejarRegistro = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Validación de campos vacíos
+    if (!regNombre.trim() || !regCorreo.trim() || !regContrasena.trim()) {
+      setRegError("Todos los campos son obligatorios");
+      return;
+    }
+    // Validación de contraseña mínima
+    if (regContrasena.length < 6) {
+      setRegError("La contraseña debe tener al menos 6 caracteres");
+      return;
+    }
+    setRegError("");
+    setRegCargando(true);
+    const resultado = await registrar(regCorreo, regContrasena, regNombre);
+    setRegCargando(false);
+    if (resultado.error) {
+      setRegError(resultado.error);
+      return;
+    }
+    // Registro exitoso: cerrar modal y limpiar campos
+    setRegistroAbierto(false);
+    setRegNombre("");
+    setRegCorreo("");
+    setRegContrasena("");
   };
 
   // Cambia el rol de demostraci+�n y lleva a la pantalla que le corresponde
@@ -129,16 +173,28 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               </button>
             </div>
           ) : (
-            <button
-              onClick={() => setLoginAbierto(true)}
-              className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
-                clara
-                  ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
-                  : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
-              }`}
-            >
-              {t(idioma, "iniciarSesion")}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setRegistroAbierto(true)}
+                className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
+                  clara
+                    ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
+                    : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
+                }`}
+              >
+                Registrarse
+              </button>
+              <button
+                onClick={() => setLoginAbierto(true)}
+                className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
+                  clara
+                    ? "border-accent bg-accent text-white hover:bg-accent-dark"
+                    : "border-accent bg-accent text-white hover:bg-accent-dark hover:shadow-sm"
+                }`}
+              >
+                {t(idioma, "iniciarSesion")}
+              </button>
+            </div>
           )}
           {/* Selector de rol de demostraci+�n */}
           <div className="relative">
@@ -269,13 +325,27 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
             <label className="block">
               <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">{t(idioma, "loginContrasena")}</span>
-              <input
-                type="password"
-                value={contrasena}
-                onChange={(e) => setContrasena(e.target.value)}
-                placeholder="������������������������"
-                className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
-              />
+              <div className="relative">
+                <input
+                  type={verContrasena ? "text" : "password"}
+                  value={contrasena}
+                  onChange={(e) => setContrasena(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full rounded-lg border border-line bg-white px-3 py-2.5 pr-10 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVerContrasena(!verContrasena)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                  aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {verContrasena ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
             </label>
 
             {loginError && (
@@ -286,9 +356,10 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
             <button
               type="submit"
-              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97]"
+              disabled={loginCargando}
+              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
             >
-              {t(idioma, "loginBtn")}
+              {loginCargando ? "Iniciando..." : t(idioma, "loginBtn")}
             </button>
           </form>
 
@@ -308,6 +379,86 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               </button>
             ))}
           </div>
+        </div>
+      </Modal>
+
+      {/* Modal de registro (HU-001) */}
+      <Modal abierto={registroAbierto} alCerrar={() => { setRegistroAbierto(false); setRegError(""); setRegNombre(""); setRegCorreo(""); setRegContrasena(""); }}>
+        <div className="p-6 sm:p-8">
+          <div className="mb-6 text-center">
+            <h2 className="font-display text-xl font-bold text-ink">Crear cuenta</h2>
+            <p className="mt-1 text-sm text-muted">Registrate gratis y empezá a reservar</p>
+          </div>
+
+          <form onSubmit={manejarRegistro} className="grid gap-4">
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Nombre</span>
+              <input
+                type="text"
+                value={regNombre}
+                onChange={(e) => setRegNombre(e.target.value)}
+                placeholder="Tu nombre"
+                className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">{t(idioma, "loginCorreo")}</span>
+              <input
+                type="email"
+                value={regCorreo}
+                onChange={(e) => setRegCorreo(e.target.value)}
+                placeholder="turista@hotelica.ni"
+                className="w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">{t(idioma, "loginContrasena")}</span>
+              <div className="relative">
+                <input
+                  type={verRegContrasena ? "text" : "password"}
+                  value={regContrasena}
+                  onChange={(e) => setRegContrasena(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full rounded-lg border border-line bg-white px-3 py-2.5 pr-10 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVerRegContrasena(!verRegContrasena)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                  aria-label={verRegContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {verRegContrasena ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+            </label>
+
+            {regError && (
+              <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-red-500">
+                {regError}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={regCargando}
+              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
+            >
+              {regCargando ? "Creando cuenta..." : "Registrarse"}
+            </button>
+          </form>
+
+          <p className="mt-4 text-center text-xs text-muted">
+            ¿Ya tenés cuenta?{" "}
+            <button onClick={() => { setRegistroAbierto(false); setLoginAbierto(true); }} className="font-bold text-primary hover:underline">
+              Iniciar sesión
+            </button>
+          </p>
         </div>
       </Modal>
     </header>

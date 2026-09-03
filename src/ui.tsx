@@ -174,23 +174,55 @@ export function Modal({
   children: ReactNode;
   ancho?: string;
 }) {
-  // Bloqueamos el scroll del fondo mientras el modal está abierto
+  const [visible, setVisible] = useState(false);
+  const [cerrando, setCerrando] = useState(false);
+
+  // Sincronizar apertura/cierre con animación
+  useEffect(() => {
+    if (abierto) {
+      // Guardar posición del scroll antes de abrir
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      setVisible(true);
+      setCerrando(false);
+    } else if (visible) {
+      setCerrando(true);
+      const timer = setTimeout(() => {
+        // Restaurar scroll al cerrar
+        const scrollY = parseInt(document.body.style.top || "0", 10) * -1;
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+        setVisible(false);
+        setCerrando(false);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+    };
+  }, [abierto, visible]);
+
+  // Cerrar con Escape
   useEffect(() => {
     if (!abierto) return;
-    document.body.style.overflow = "hidden";
     const teclado = (e: KeyboardEvent) => e.key === "Escape" && alCerrar();
     window.addEventListener("keydown", teclado);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", teclado);
-    };
+    return () => window.removeEventListener("keydown", teclado);
   }, [abierto, alCerrar]);
 
-  if (!abierto) return null;
+  if (!visible) return null;
   return (
-    <div className="fixed inset-0 z-[70] flex items-end justify-center p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true">
+    <div className={`fixed inset-0 z-[100] flex items-end justify-center p-0 transition-opacity duration-200 sm:items-center sm:p-6 ${cerrando ? "opacity-0" : "opacity-100"}`} role="dialog" aria-modal="true">
       <button className="absolute inset-0 bg-primary-ink/70 backdrop-blur-[3px]" onClick={alCerrar} aria-label="Cerrar" />
-      <div className={`anim-pop relative w-full ${ancho} max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white shadow-lift sm:rounded-2xl`}>
+      <div className={`relative w-full ${ancho} max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white shadow-lift sm:rounded-2xl ${cerrando ? "scale-95 transition-transform duration-200" : "anim-pop"}`}>
         <button
           onClick={alCerrar}
           aria-label="Cerrar ventana"
