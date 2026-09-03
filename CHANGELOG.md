@@ -6,6 +6,39 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.15.0] — 2026-09-01 · HU-002: Inicio de sesión con Supabase Auth
+
+### Modificado
+- **`login()`** en `src/store.tsx`: ahora usa `supabase.auth.signInWithPassword()`
+  en lugar de login simulado. Retorna errores amigables.
+- **`manejarLogin()`** en `src/layout.tsx`: handler async con loading state
+  y manejo de errores de Supabase.
+- **Botón de login**: muestra "Iniciando..." mientras carga.
+- **Modal de login**: botón deshabilitado durante la carga.
+
+### Corregido
+- **Modal**: posición del scroll se guarda y restaura al cerrar (no salta al inicio).
+
+---
+
+## [v0.14.0] — 2026-09-01 · HU-001: Registro con Supabase Auth
+
+### Agregado
+- **Función `registrar()`** en `src/store.tsx`: registro real con Supabase Auth,
+  creación automática de perfil via trigger, mensajes de error amigables.
+- **Modal de registro** en `src/layout.tsx`: formulario con nombre, correo y
+  contraseña, validación de campos vacíos y contraseña mínima (6 caracteres).
+- **Botón "Registrarse"** en el header junto al botón de login.
+- **Cliente Supabase** en `src/lib/supabase.ts` con anon key.
+- **Tipos de entorno** en `src/vite-env.d.ts` para `import.meta.env`.
+
+### Modificado
+- `src/store.tsx`: agregada función `registrar()` al contexto y tipo `AppCtx`.
+- `src/layout.tsx`: estados del modal de registro, handler `manejarRegistro`,
+  botón de registro en header.
+
+---
+
 ## [v0.13.0] — 2026-08-31 · Espacios verticales del logo en footer reducidos
 
 ### Modificado

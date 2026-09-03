@@ -10,6 +10,7 @@ import {
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol } from "./data";
 import type { Idioma } from "./i18n";
+import { supabase } from "./lib/supabase";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = { nombre: string; rol: "Turista" | "Hotel" | "Admin" };
@@ -60,7 +61,8 @@ type AppCtx = {
   toasts: Toast[];
   avisar: (texto: string, tono?: Toast["tono"]) => void;
   cambiarRol: (r: Rol) => void;
-  login: (correo: string, contrasena: string) => void;
+  login: (correo: string, contrasena: string) => Promise<{ error?: string }>;
+  registrar: (correo: string, contrasena: string, nombre: string) => Promise<{ error?: string }>;
   loginSocial: (proveedor: string) => void;
   logout: () => void;
   cambiarIdioma: () => void;
@@ -201,13 +203,61 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const cambiarRol = (r: Rol) => setRol(r);
 
-  // Login simulado: si el correo no está vacío, crea un usuario demo
-  const login = (correo: string, _contrasena: string) => {
-    if (!correo.trim()) return; // no debería llegar si la UI valida
-    const nombre = correo.split("@")[0].replace(/[._]/g, " ");
-    const capitalizado = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-    setUsuario({ nombre: capitalizado || "Turista Demo", rol: "Turista" });
-    avisar(`Bienvenido, ${capitalizado || "Turista Demo"}`, "ok");
+  // Login real con Supabase Auth (HU-002)
+  const login = async (correo: string, contrasena: string) => {
+    if (!correo.trim() || !contrasena.trim()) {
+      return { error: "Correo y contraseña son obligatorios" };
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: correo,
+      password: contrasena,
+    });
+
+    if (error) {
+      if (error.message.includes("Invalid login")) {
+        return { error: "Correo o contraseña incorrectos" };
+      }
+      return { error: error.message };
+    }
+
+    // Obtener nombre del perfil
+    if (data.user) {
+      const nombre = data.user.user_metadata?.nombre || correo.split("@")[0];
+      setUsuario({ nombre, rol: "Turista" });
+      avisar(`Bienvenido, ${nombre}`, "ok");
+    }
+
+    return {};
+  };
+
+  // Registro real con Supabase Auth (HU-001)
+  const registrar = async (correo: string, contrasena: string, nombre: string) => {
+    const { data, error } = await supabase.auth.signUp({
+      email: correo,
+      password: contrasena,
+      options: { data: { nombre } },
+    });
+
+    if (error) {
+      // Mensajes amigables según el tipo de error
+      if (error.message.includes("already")) {
+        return { error: "Este correo ya está registrado" };
+      }
+      if (error.message.includes("password")) {
+        return { error: "La contraseña debe tener al menos 6 caracteres" };
+      }
+      return { error: error.message };
+    }
+
+    // Si se creó el usuario, iniciar sesión automáticamente
+    if (data.user) {
+      const nombreDisplay = nombre || correo.split("@")[0];
+      setUsuario({ nombre: nombreDisplay, rol: "Turista" });
+      avisar(`Bienvenido, ${nombreDisplay}`, "ok");
+    }
+
+    return {};
   };
 
   // Login directo con redes sociales simuladas (Google, Facebook, Apple)
@@ -254,6 +304,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       avisar,
       cambiarRol,
       login,
+      registrar,
       loginSocial,
       logout,
       cambiarIdioma,
