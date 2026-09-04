@@ -4,8 +4,8 @@
 |---|---|---|---|---|---|
 | 1 | HU-000 | Infraestructura | Crear la base de datos relacional | Alta | ✅ Terminada |
 | 2 | HU-001 | Autenticación | Registrarse en la plataforma | Alta | ✅ Terminada |
-| 3 | HU-002 | Autenticación | Iniciar sesión | Alta | 🟡 En desarrollo |
-| 4 | HU-003 | Autenticación | Cerrar sesión | Alta | ⬜ Escrita |
+| 3 | HU-002 | Autenticación | Iniciar sesión | Alta | ✅ Terminada |
+| 4 | HU-003 | Autenticación | Cerrar sesión | Alta | ✅ Terminada |
 | 5 | HU-004 | Autenticación | Recuperar contraseña | Media | ⬜ Escrita |
 | 6 | HU-005 | Autenticación | Gestionar perfil | Media | ⬜ Escrita |
 | 7 | HU-006 | Búsqueda | Buscar hoteles por departamento | Alta | ⬜ Escrita |

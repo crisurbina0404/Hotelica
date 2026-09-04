@@ -6,6 +6,14 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.16.0] — 2026-09-02 · HU-003: Cierre de sesión con Supabase
+
+### Modificado
+- **`logout()`** en `src/store.tsx`: ahora llama a `supabase.auth.signOut()`
+  antes de limpiar el estado local.
+
+---
+
 ## [v0.15.0] — 2026-09-01 · HU-002: Inicio de sesión con Supabase Auth
 
 ### Modificado
