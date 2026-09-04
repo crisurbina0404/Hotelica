@@ -267,7 +267,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Cerrar sesión
-  const logout = () => {
+  // Cerrar sesión con Supabase Auth (HU-003)
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUsuario(null);
     setRol("turista");
     avisar("Sesión cerrada", "info");
