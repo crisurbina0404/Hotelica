@@ -5,6 +5,9 @@ export type Ruta =
   | { nombre: "hotel"; id: string }
   | { nombre: "reservas" }
   | { nombre: "favoritos" }
+  | { nombre: "perfil" }
+  | { nombre: "recuperar" }
+  | { nombre: "restablecer"; token?: string }
   | { nombre: "panel" }
   | { nombre: "admin" };
 

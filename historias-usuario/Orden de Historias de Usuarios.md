@@ -6,8 +6,8 @@
 | 2 | HU-001 | Autenticación | Registrarse en la plataforma | Alta | ✅ Terminada |
 | 3 | HU-002 | Autenticación | Iniciar sesión | Alta | ✅ Terminada |
 | 4 | HU-003 | Autenticación | Cerrar sesión | Alta | ✅ Terminada |
-| 5 | HU-004 | Autenticación | Recuperar contraseña | Media | ⬜ Escrita |
-| 6 | HU-005 | Autenticación | Gestionar perfil | Media | ⬜ Escrita |
+| 5 | HU-004 | Autenticación | Recuperar contraseña | Media | ✅ Terminada |
+| 6 | HU-005 | Autenticación | Gestionar perfil | Media | ✅ Terminada |
 | 7 | HU-006 | Búsqueda | Buscar hoteles por departamento | Alta | ⬜ Escrita |
 | 8 | HU-007 | Búsqueda | Filtrar hoteles por precio | Media | ⬜ Escrita |
 | 9 | HU-008 | Búsqueda | Filtrar hoteles por capacidad | Media | ⬜ Escrita |

@@ -172,6 +172,10 @@ export const IconoGrafica = (p: P) => (
   <Base {...p}><path d="M4 4v16h16" /><path d="M8 16v-5m4 5V7m4 9v-3" /></Base>
 );
 
+export const IconoUsuario = (p: P) => (
+  <Base {...p}><circle cx="12" cy="8" r="4.5" /><path d="M4.5 20.5c.8-3.5 3.2-5.5 7.5-5.5s6.7 2 7.5 5.5" /></Base>
+);
+
 // Bandera de Nicaragua simplificada (franjas azul-blanco-azul)
 export function BanderaNI({ size = 16 }: { size?: number }) {
   return (

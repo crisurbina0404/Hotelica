@@ -11,7 +11,7 @@ import {
   BanderaNI, IconoCorazon, IconoChevronAbajo, IconoMenu, IconoX,
   IconoEscudo, IconoHotel, IconoHuespedes, IconoCheck, IconoReiniciar,
 } from "./icons";
-import { IconoBuscar } from "./icons";
+import { IconoBuscar, IconoUsuario } from "./icons";
 import { Marca, Modal } from "./ui";
 
 // ----- Barra de navegaci+�n principal -----
@@ -158,9 +158,18 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
           {/* Bot+�n de login o usuario autenticado */}
           {usuario ? (
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-semibold ${clara ? "text-white" : "text-ink"}`}>
-                {t(idioma, "hola")}, {usuario.nombre}
-              </span>
+              <button
+                onClick={() => navegar({ nombre: "perfil" })}
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+                  clara
+                    ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
+                    : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
+                }`}
+                title="Mi perfil"
+              >
+                <IconoUsuario size={14} />
+                <span className="hidden sm:inline">{usuario.nombre}</span>
+              </button>
               <button
                 onClick={logout}
                 className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
@@ -283,6 +292,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               ["resultados", t(idioma, "explorar")],
               ["reservas", t(idioma, "reservas")],
               ["favoritos", `${t(idioma, "favoritos")} (${favoritos.length})`],
+              ...(usuario ? [["perfil", "Mi perfil"] as [Ruta["nombre"], string]] : []),
             ] as [Ruta["nombre"], string][]).map(([n, texto]) => (
               <button
                 key={n}
@@ -353,6 +363,16 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                 {loginError}
               </p>
             )}
+
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => { setLoginAbierto(false); navegar({ nombre: "recuperar" }); }}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
 
             <button
               type="submit"
