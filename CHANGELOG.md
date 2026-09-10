@@ -6,7 +6,7 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
-## [v0.19.0] — 2026-09-09 · Logos centralizados y con mejor presencia
+## [v0.21.0] — 2026-09-09 · Logos centralizados y con mejor presencia
 
 ### Agregado
 - **`LOGOS` en `src/ui.tsx`**: objeto exportado con las rutas de los 5
@@ -27,7 +27,7 @@ académica del curso.
 
 ---
 
-## [v0.18.0] — 2026-09-09 · Logo adaptativo en la barra sobre el hero
+## [v0.20.0] — 2026-09-09 · Logo adaptativo en la barra sobre el hero
 
 ### Agregado
 - **Logo claro** `public/Logo-blanco.svg`: variante del logo oficial con el
@@ -45,7 +45,7 @@ académica del curso.
 
 ---
 
-## [v0.17.0] — 2026-09-07 · HU-006: Búsqueda por departamento verificada
+## [v0.19.0] — 2026-09-09 · HU-006 verificada en local; HU-004 y HU-005 integradas desde remoto
 
 ### Verificado
 - **HU-006 — Buscar hoteles por departamento**: los 5 escenarios BDD ya
@@ -67,6 +67,65 @@ académica del curso.
   referencian HU-006 (antes citaban HU-001 por numeración antigua).
 - Estado de HU-006 actualizado a ✅ Terminada en su documento y en
   `Orden de Historias de Usuarios.md`.
+
+### Integrado (v0.17.0 y v0.18.0 del remoto, renumeradas en esta fusión)
+- HU-004 Recuperar contraseña y HU-005 Gestionar perfil: páginas
+  `ForgotPassword`, `ResetPassword` y `Profile`, rutas nuevas y
+  funciones de Supabase (`olvidarContrasena`, `restablecerContrasena`,
+  `actualizarPerfil`).
+
+---
+
+## [v0.18.0] — 2026-09-07 · HU-004: Recuperar contraseña
+
+### Agregado
+- **Página "Recuperar contraseña"** (`src/pages/ForgotPassword.tsx`): formulario
+  para ingresar correo y enviar enlace de restablecimiento via Supabase.
+- **Página "Restablecer contraseña"** (`src/pages/ResetPassword.tsx`): formulario
+  para ingresar nueva contraseña con confirmación, validación de 6 caracteres
+  mínimo y toggle de visibilidad.
+- **Función `olvidarContrasena()`** en `src/store.tsx`: llama a
+  `supabase.auth.resetPasswordForEmail()` con redirect a la app.
+- **Función `restablecerContrasena()`** en `src/store.tsx`: llama a
+  `supabase.auth.updateUser({ password })` para guardar la nueva contraseña.
+- **Enlace "¿Olvidaste tu contraseña?"** en el modal de login (`src/layout.tsx`).
+- **Rutas `recuperar` y `restablecer`** agregadas al sistema de rutas.
+- **Archivo `HU-004-recuperar-contrasena.md`** con criterios BDD.
+
+### Modificado
+- `src/store.tsx`: agregadas funciones `olvidarContrasena()` y
+  `restablecerContrasena()` al contexto y tipo `AppCtx`.
+- `src/App.tsx`: import y cases para las nuevas páginas.
+- `src/rutas.ts`: tipos `recuperar` y `restablecer` agregados.
+
+---
+
+## [v0.17.0] — 2026-09-07 · HU-005: Gestionar perfil
+
+### Agregado
+- **Página de perfil** (`src/pages/Profile.tsx`): muestra datos del usuario
+  autenticado (nombre, correo, teléfono, dirección) con diseño Hotelica.
+- **Modo edición**: botón "Editar perfil" habilita inputs para nombre,
+  teléfono y dirección. Correo electrónico bloqueado con candado.
+- **Validaciones frontend**: nombre (mín. 3 chars), teléfono (formato válido),
+  dirección (mín. 5 chars). Mensajes de error debajo de cada campo.
+- **Feedback visual**: toast "¡Guardado exitosamente!" al guardar, toast de
+  error si falla. Botón "Guardando..." deshabilitado durante la carga.
+- **Botón Cancelar**: restaura valores originales y sale del modo edición.
+- **Icono `IconoUsuario`** en `src/icons.tsx` para el perfil.
+- **Ruta `perfil`** agregada al sistema de rutas (`src/rutas.ts`).
+- **Función `actualizarPerfil()`** en `src/store.tsx`: actualiza datos
+  via `supabase.auth.updateUser()` y estado local.
+- **Tipo `Usuario`** extendido con campos `correo`, `telefono` y `direccion`.
+- **Enlace "Mi perfil"** en el navbar (desktop y móvil) cuando hay sesión.
+- **Archivo `HU-005-gestionar-perfil.md`** con criterios BDD.
+
+### Modificado
+- `src/store.tsx`: tipo `Usuario` con nuevos campos, funciones `login()`,
+  `registrar()`, `loginSocial()` actualizadas para incluir correo/teléfono/dirección.
+- `src/App.tsx`: ruta `perfil` agregada como ruta protegida y case en el switch.
+- `src/layout.tsx`: botón de usuario autenticado ahora es un enlace al perfil
+  con icono, y se agregó "Mi perfil" al menú móvil.
 
 ---
 

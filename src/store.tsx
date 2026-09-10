@@ -13,7 +13,13 @@ import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
 
 // Datos del usuario autenticado (login simulado)
-export type Usuario = { nombre: string; rol: "Turista" | "Hotel" | "Admin" };
+export type Usuario = {
+  nombre: string;
+  rol: "Turista" | "Hotel" | "Admin";
+  correo: string;
+  telefono: string;
+  direccion: string;
+};
 
 // Forma de los datos que se guardan en el navegador
 type Persistido = {
@@ -65,6 +71,9 @@ type AppCtx = {
   registrar: (correo: string, contrasena: string, nombre: string) => Promise<{ error?: string }>;
   loginSocial: (proveedor: string) => void;
   logout: () => void;
+  actualizarPerfil: (datos: { nombre: string; telefono: string; direccion: string }) => Promise<{ error?: string }>;
+  olvidarContrasena: (correo: string) => Promise<{ error?: string; ok?: boolean }>;
+  restablecerContrasena: (nuevaContrasena: string) => Promise<{ error?: string }>;
   cambiarIdioma: () => void;
   alternarFavorito: (hotelId: string) => void;
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
@@ -218,13 +227,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (error.message.includes("Invalid login")) {
         return { error: "Correo o contraseña incorrectos" };
       }
+      if (error.message.includes("Email not confirmed")) {
+        return { error: "El correo no fue confirmado. Revisá tu bandeja de entrada o desactivá la confirmación de email en Supabase." };
+      }
       return { error: error.message };
     }
 
     // Obtener nombre del perfil
     if (data.user) {
       const nombre = data.user.user_metadata?.nombre || correo.split("@")[0];
-      setUsuario({ nombre, rol: "Turista" });
+      const telefono = data.user.user_metadata?.telefono || "";
+      const direccion = data.user.user_metadata?.direccion || "";
+      setUsuario({ nombre, rol: "Turista", correo, telefono, direccion });
       avisar(`Bienvenido, ${nombre}`, "ok");
     }
 
@@ -253,7 +267,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // Si se creó el usuario, iniciar sesión automáticamente
     if (data.user) {
       const nombreDisplay = nombre || correo.split("@")[0];
-      setUsuario({ nombre: nombreDisplay, rol: "Turista" });
+      setUsuario({ nombre: nombreDisplay, rol: "Turista", correo, telefono: "", direccion: "" });
       avisar(`Bienvenido, ${nombreDisplay}`, "ok");
     }
 
@@ -262,7 +276,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Login directo con redes sociales simuladas (Google, Facebook, Apple)
   const loginSocial = (_proveedor: string) => {
-    setUsuario({ nombre: "Turista Demo", rol: "Turista" });
+    setUsuario({ nombre: "Turista Demo", rol: "Turista", correo: "demo@hotelica.ni", telefono: "", direccion: "" });
     avisar("Sesión iniciada con red social (demo)", "ok");
   };
 
@@ -273,6 +287,76 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUsuario(null);
     setRol("turista");
     avisar("Sesión cerrada", "info");
+  };
+
+  // Actualizar perfil del usuario autenticado (HU-005)
+  const actualizarPerfil = async (datos: { nombre: string; telefono: string; direccion: string }) => {
+    if (!usuario) return { error: "No hay sesión activa" };
+
+    // Validaciones básicas antes de enviar
+    if (!datos.nombre.trim() || datos.nombre.trim().length < 3) {
+      return { error: "El nombre debe tener al menos 3 caracteres" };
+    }
+    if (!datos.telefono.trim()) {
+      return { error: "El teléfono es obligatorio" };
+    }
+    if (!datos.direccion.trim() || datos.direccion.trim().length < 5) {
+      return { error: "La dirección debe tener al menos 5 caracteres" };
+    }
+
+    // Intentamos actualizar en Supabase Auth (user_metadata)
+    const { error } = await supabase.auth.updateUser({
+      data: { nombre: datos.nombre, telefono: datos.telefono, direccion: datos.direccion },
+    });
+
+    // Si Supabase falla (sesión expirada, login social, etc.), guardamos localmente
+    if (error) {
+      console.warn("Supabase updateUser falló, guardando localmente:", error.message);
+    }
+
+    // Actualizamos el estado local con los nuevos datos (siempre, con o sin Supabase)
+    setUsuario({
+      ...usuario,
+      nombre: datos.nombre,
+      telefono: datos.telefono,
+      direccion: datos.direccion,
+    });
+
+    return {};
+  };
+
+  // Enviar email de recuperación de contraseña (HU-004)
+  const olvidarContrasena = async (correo: string) => {
+    if (!correo.trim()) {
+      return { error: "Ingresa tu correo electrónico" };
+    }
+
+    // Sin redirectTo: Supabase usa la URL configurada en el dashboard
+    const { error } = await supabase.auth.resetPasswordForEmail(correo);
+
+    if (error) {
+      console.error("Error Supabase resetPasswordForEmail:", error.message);
+      return { error: "No se pudo enviar el correo de recuperación. Verificá que el correo esté registrado." };
+    }
+
+    return { ok: true };
+  };
+
+  // Restablecer contraseña con el token del email (HU-004)
+  const restablecerContrasena = async (nuevaContrasena: string) => {
+    if (!nuevaContrasena || nuevaContrasena.length < 6) {
+      return { error: "La contraseña debe tener al menos 6 caracteres" };
+    }
+
+    const { error } = await supabase.auth.updateUser({
+      password: nuevaContrasena,
+    });
+
+    if (error) {
+      return { error: "No se pudo restablecer la contraseña. El enlace pudo haber expirado. Solicita uno nuevo." };
+    }
+
+    return {};
   };
 
   // Cambiar idioma ES ↔ EN
@@ -309,6 +393,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       registrar,
       loginSocial,
       logout,
+      actualizarPerfil,
+      olvidarContrasena,
+      restablecerContrasena,
       cambiarIdioma,
       alternarFavorito,
       crearReserva,

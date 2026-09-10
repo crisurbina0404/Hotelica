@@ -13,14 +13,27 @@ import { DetalleHotel } from "./pages/HotelDetail";
 import { MisReservas, Favoritos } from "./pages/MyReservations";
 import { PanelHotel } from "./pages/HotelPanel";
 import { PanelAdmin } from "./pages/AdminPanel";
+import { Perfil } from "./pages/Profile";
+import { RecuperarContrasena } from "./pages/ForgotPassword";
+import { RestablecerContrasena } from "./pages/ResetPassword";
 
 // Rutas protegidas: requieren usuario autenticado
-const RUTAS_PROTEGIDAS: Ruta["nombre"][] = ["reservas", "panel", "admin"];
+const RUTAS_PROTEGIDAS: Ruta["nombre"][] = ["reservas", "perfil", "panel", "admin"];
 
 function AppInner() {
   const { usuario } = useApp();
   // La pantalla actual se guarda en el estado (sin URL, es una maqueta)
   const [ruta, setRuta] = useState<Ruta>({ nombre: "inicio" });
+
+  // Detectar si Supabase redirigió con token de recuperación de contraseña
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.includes("access_token") && hash.includes("type=recovery")) {
+      // Limpiar el hash de la URL y navegar a restablecer contraseña
+      window.history.replaceState(null, "", window.location.pathname);
+      setRuta({ nombre: "restablecer" });
+    }
+  }, []);
 
   // Splash de entrada con la marca unificada (se desvanece al cargar)
   const [splash, setSplash] = useState(true);
@@ -50,6 +63,9 @@ function AppInner() {
       case "hotel": return <DetalleHotel id={ruta.id} navegar={navegar} />;
       case "reservas": return <MisReservas navegar={navegar} />;
       case "favoritos": return <Favoritos navegar={navegar} />;
+      case "perfil": return <Perfil navegar={navegar} />;
+      case "recuperar": return <RecuperarContrasena navegar={navegar} />;
+      case "restablecer": return <RestablecerContrasena navegar={navegar} />;
       case "panel": return <PanelHotel />;
       case "admin": return <PanelAdmin navegar={navegar} />;
     }
