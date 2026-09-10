@@ -1,5 +1,5 @@
 // ============================================================
-// Hotelica — Inicio (HU-001: buscar hoteles por destino)
+// Hotelica — Inicio (HU-006: buscar hoteles por departamento)
 // ============================================================
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
@@ -31,7 +31,7 @@ const GRADIENTES: Record<string, string> = {
 export function Inicio({ navegar }: { navegar: Navegar }) {
   const { hoteles, resenas, favoritos, idioma, avisar } = useApp();
 
-  // ----- Estado del buscador principal (HU-001) -----
+  // ----- Estado del buscador principal (HU-006) -----
   const [depto, setDepto] = useState("");
   const [muni, setMuni] = useState("");
   const [llegada, setLlegada] = useState(sumarDias(hoyISO(), 7));
@@ -114,7 +114,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         </div>
       </section>
 
-      {/* ============ BUSCADOR PRINCIPAL (HU-001) ============ */}
+      {/* ============ BUSCADOR PRINCIPAL (HU-006) ============ */}
       <section className="relative z-10 mx-auto -mt-28 max-w-6xl px-4 sm:px-6">
         <Reveal>
           <form onSubmit={buscar} className="rounded-2xl border border-line bg-white p-5 shadow-lift sm:p-6" aria-label="Buscador de hoteles">

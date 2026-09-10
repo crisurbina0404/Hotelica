@@ -6,6 +6,70 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.19.0] — 2026-09-09 · Logos centralizados y con mejor presencia
+
+### Agregado
+- **`LOGOS` en `src/ui.tsx`**: objeto exportado con las rutas de los 5
+  recursos de marca (logo completo, claro, texto, texto claro y sello).
+  Un solo lugar para cambiar o agregar logos.
+- **`MarcaFooter` en `src/ui.tsx`**: componente propio para el pie de
+  página, usando la variante clara del texto (antes usaba la versión
+  teal sobre fondo oscuro `#051B21`, casi invisible).
+
+### Corregido
+- **`public/text-subtext-white.svg`** estaba rota: conservaba el texto
+  teal `#044454` en lugar de claro. Regenerada con texto crema `#F8F6F0`
+  y acentos dorados `#e4c46e`.
+- Escala de tamaños de `Marca`: `grande` era igual que `md` y más
+  pequeña de lo previsto. Ahora: `md h-60`, `grande h-60`, `enorme h-72`
+  (los lienzos SVG de 2000x2000 tienen márgenes transparentes enormes,
+  por eso las alturas son grandes: la banda visible es solo ~20%).
+
+---
+
+## [v0.18.0] — 2026-09-09 · Logo adaptativo en la barra sobre el hero
+
+### Agregado
+- **Logo claro** `public/Logo-blanco.svg`: variante del logo oficial con el
+  texto en crema `#F8F6F0` (mismo token que usa `.brand.oscura`) y los
+  acentos dorados intactos.
+
+### Cambiado
+- **`Marca` en `src/ui.tsx`**: ahora sí usa la prop `clara` (antes la
+  ignoraba y el logo teal quedaba invisible sobre la imagen del hero).
+  Las dos variantes se apilan y se cruzan con una transición de opacidad
+  de 300ms sincronizada con el cambio de fondo de la barra.
+- El logo claro lleva una sombra suave (`drop-shadow`) para despegarse
+  del atardecer del hero.
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.17.0] — 2026-09-07 · HU-006: Búsqueda por departamento verificada
+
+### Verificado
+- **HU-006 — Buscar hoteles por departamento**: los 5 escenarios BDD ya
+  estaban implementados desde la maqueta inicial (v0.4.0) y se verificaron
+  contra el código actual:
+  - Escenario 1: búsqueda con departamento, fechas y huéspedes navega a
+    `Resultados` con los parámetros (`src/pages/Home.tsx`).
+  - Escenario 2: error "Selecciona un departamento para comenzar tu
+    búsqueda." si falta el departamento.
+  - Escenario 3: error si la fecha de salida es igual o anterior a la
+    llegada.
+  - Escenario 4: selector de municipio dependiente del departamento y
+    filtro aplicado en `src/pages/Results.tsx`.
+  - Escenario 5: solo hoteles con estado "aprobado" son visibles.
+- `npm run typecheck` sin errores.
+
+### Cambiado
+- Comentarios de `src/pages/Home.tsx` y `src/pages/Results.tsx` ahora
+  referencian HU-006 (antes citaban HU-001 por numeración antigua).
+- Estado de HU-006 actualizado a ✅ Terminada en su documento y en
+  `Orden de Historias de Usuarios.md`.
+
+---
+
 ## [v0.16.0] — 2026-09-02 · HU-003: Cierre de sesión con Supabase
 
 ### Modificado

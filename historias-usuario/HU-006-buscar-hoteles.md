@@ -2,7 +2,7 @@
 
 **Módulo:** Búsqueda  
 **Prioridad:** Alta (Must Have)  
-**Estado:** ⬜ Escrita  
+**Estado:** ✅ Terminada  
 **Sprint:** 1  
 **Interfaz:** Home (buscador principal)
 

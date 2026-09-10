@@ -12,7 +12,7 @@ import {
   IconoEscudo, IconoHotel, IconoHuespedes, IconoCheck, IconoReiniciar,
 } from "./icons";
 import { IconoBuscar } from "./icons";
-import { Marca, Modal } from "./ui";
+import { Marca, Modal, MarcaFooter } from "./ui";
 
 // ----- Barra de navegaci+�n principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
@@ -506,7 +506,7 @@ export function Footer({ navegar }: { navegar: Navegar }) {
       <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-8 pt-10 sm:px-6 lg:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
         <div>
           <div className="flex flex-col items-start gap-1">
-            <img src="/text-subtext.svg" alt="Hotelica — Tu destino en Nicaragua" className="h-40 w-auto" />
+            <MarcaFooter />
           </div>
           <p className="mt-2 flex items-center gap-2 text-sm text-teal-200/90">
             <BanderaNI size={15} /> Donde Nicaragua te recibe

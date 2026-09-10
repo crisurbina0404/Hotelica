@@ -42,7 +42,17 @@ export function Reveal({
   );
 }
 
-const logoUrl = '/Logo.svg';
+// Rutas centralizadas de todos los logos del proyecto (un solo lugar para cambiarlos)
+export const LOGOS = {
+  // Logo completo (ícono + HOTELICA + guiones): navbar, splash y modal de reserva
+  completo: "/Logo.svg",
+  completoClaro: "/Logo-blanco.svg",
+  // Solo texto con guiones: pensado para el footer
+  texto: "/text-subtext.svg",
+  textoClaro: "/text-subtext-white.svg",
+  // Marca del volcán sola: favicon y usos chicos
+  sello: "/favicon.svg",
+};
 
 // ----- Bloque de marca unificado: imagen oficial con texto incluido -----
 export function Marca({
@@ -58,21 +68,63 @@ export function Marca({
   clara?: boolean;
   className?: string;
 }) {
+  // Nota: los SVG vienen en lienzos 2000x2000 con márgenes transparentes enormes,
+  // por eso las alturas son tan grandes: la banda visible del logo es solo ~20% del lienzo
   const clases: Record<string, string> = {
     chica: "h-55 w-auto",
-    md: "h-55 w-auto",
-    grande: "h-50 w-auto",
-    enorme: "h-60 w-auto",
+    md: "h-60 w-auto",
+    grande: "h-60 w-auto",
+    enorme: "h-72 w-auto",
   };
 
   const cls = `${clases[tam]} ${centrada ? "mx-auto" : ""} ${className}`.trim();
 
+  // Estilo común de ambas versiones del logo
+  const estiloLogo: CSSProperties = {
+    aspectRatio: "2 / 1",
+    objectFit: "contain",
+    objectPosition: "left center",
+  };
+
+  return (
+    // Las dos versiones se apilan para cruzarlas con una transición suave al hacer scroll
+    <span className={`relative inline-block ${cls}`}>
+      {/* Logo normal (teal): visible cuando la barra está sobre fondo blanco */}
+      <img
+        src={LOGOS.completo}
+        alt="Hotelica - Tu destino en Nicaragua"
+        className={cls}
+        style={{
+          ...estiloLogo,
+          opacity: clara ? 0 : 1,
+          transition: "opacity 300ms ease",
+        }}
+      />
+      {/* Logo claro (crema): aparece cuando la barra se funde con la imagen del hero */}
+      <img
+        src={LOGOS.completoClaro}
+        alt=""
+        aria-hidden="true"
+        className={`absolute inset-0 ${cls}`}
+        style={{
+          ...estiloLogo,
+          opacity: clara ? 1 : 0,
+          transition: "opacity 300ms ease, filter 300ms ease",
+          filter: clara ? "drop-shadow(0 2px 6px rgba(5, 27, 33, 0.55))" : undefined,
+        }}
+      />
+    </span>
+  );
+}
+
+// ----- Marca del footer: solo texto claro, más grande para cerrar la página -----
+// Misma lógica de márgenes: h-48 muestra el texto un poco más grande que el h-40 anterior
+export function MarcaFooter({ className = "" }: { className?: string }) {
   return (
     <img
-      src={logoUrl}
-      alt="Hotelica - Tu destino en Nicaragua"
-      className={cls}
-      style={{ aspectRatio: "2 / 1", objectFit: "contain", objectPosition: "left center" }}
+      src={LOGOS.textoClaro}
+      alt="Hotelica — Tu destino en Nicaragua"
+      className={`h-48 w-auto ${className}`.trim()}
     />
   );
 }

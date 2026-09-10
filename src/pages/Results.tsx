@@ -1,5 +1,5 @@
 // ============================================================
-// Hotelica — Resultados de búsqueda (HU-001)
+// Hotelica — Resultados de búsqueda (HU-006: resultados por departamento)
 // ============================================================
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";

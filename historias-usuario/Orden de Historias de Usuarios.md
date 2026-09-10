@@ -8,7 +8,7 @@
 | 4 | HU-003 | Autenticación | Cerrar sesión | Alta | ✅ Terminada |
 | 5 | HU-004 | Autenticación | Recuperar contraseña | Media | ⬜ Escrita |
 | 6 | HU-005 | Autenticación | Gestionar perfil | Media | ⬜ Escrita |
-| 7 | HU-006 | Búsqueda | Buscar hoteles por departamento | Alta | ⬜ Escrita |
+| 7 | HU-006 | Búsqueda | Buscar hoteles por departamento | Alta | ✅ Terminada |
 | 8 | HU-007 | Búsqueda | Filtrar hoteles por precio | Media | ⬜ Escrita |
 | 9 | HU-008 | Búsqueda | Filtrar hoteles por capacidad | Media | ⬜ Escrita |
 | 10 | HU-009 | Búsqueda | Consultar detalles del hotel | Alta | ⬜ Escrita |
