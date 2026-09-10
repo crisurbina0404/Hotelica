@@ -1,13 +1,13 @@
 # 🗝️ Hotelica — Tu destino en Nicaragua
 
-> *Donde Nicaragua te recibe 🇳*
+> *Donde Nicaragua te recibe 🇳🇮*
 
 **Hotelica** es un sistema de reservación de hoteles enfocado en hoteles pequeños y familiares de Nicaragua. Proyecto académico desarrollado para el curso de **Ingeniería del Software II** (Grupo #08 · Recinto Central Managua "Carlos Fonseca Amador").
 
-![Estado](https://img.shields.io/badge/Estado-Fase%201%20(Demo)-177E8C?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Estado-Fase%201%20(Demo%20+%20Auth)-177E8C?style=for-the-badge)
 ![Metodología](https://img.shields.io/badge/Metodología-Scrum%20Ágil-F4502C?style=for-the-badge)
 ![Frontend](https://img.shields.io/badge/Frontend-React%20+%20TypeScript-E08E0B?style=for-the-badge)
-![Base de Datos](https://img.shields.io/badge/BD-|%20Supabase-0B3540?style=for-the-badge)
+![Auth](https://img.shields.io/badge/Auth-Supabase-0B3540?style=for-the-badge)
 
 ---
 
@@ -66,7 +66,7 @@ El backlog completo está priorizado mediante **MoSCoW** y estimado con **Planni
 | **Gestión Hotel** | `HU-021` Registrar hotel · `HU-022` Editar info · `HU-023` Habitaciones · `HU-024` Precios · `HU-025` Fotos · `HU-026` Ver reservas · `HU-027` Confirmar/Rechazar · `HU-028` Check-in · `HU-029` Check-out · `HU-030` Ocupación |
 | **Administración**| `HU-031` Aprobar hotel · `HU-032` Rechazar hotel · `HU-033` Gestionar usuarios · `HU-034` Estadísticas · `HU-035` Notificaciones |
 
-*(Ver detalle completo, wireframes y criterios BDD en el documento `HOTELICA- T01 UserStory.pdf` y la carpeta `/historias-usuario/`)*.
+**Progreso actual:** ✅ `HU-000` – `HU-006` terminadas (BD, autenticación completa con Supabase y búsqueda por departamento). El estado historia por historia está en [`historias-usuario/Orden de Historias de Usuarios.md`](./historias-usuario/Orden%20de%20Historias%20de%20Usuarios.md) y el detalle de cada avance en [`CHANGELOG.md`](./CHANGELOG.md).
 
 ---
 
@@ -74,48 +74,67 @@ El backlog completo está priorizado mediante **MoSCoW** y estimado con **Planni
 
 | Capa | Tecnología |
 |---|---|
-| **Frontend (Demo)** | React 18 · TypeScript · Vite · Tailwind CSS v4 |
-| **Base de Datos** | MySQL (`Base de Datos Hotelica.sql`) / Supabase (PostgreSQL) |
-| **Backend (Fase 2)** | Node.js + Express (o API REST de Supabase) |
+| **Frontend** | React 18 · TypeScript · Vite · Tailwind CSS v4 |
+| **Autenticación** | Supabase Auth (registro, login, logout, recuperar/restablecer contraseña, perfil) |
+| **Datos (Fase 1)** | Catálogo simulado en `src/data.ts` · cliente de Supabase en `src/lib/supabase.ts` |
+| **Base de Datos (Fase 2)** | PostgreSQL vía Supabase (modelo relacional documentado en `HU-000`) |
+| **Backend (Fase 2)** | API REST de Supabase |
 | **Gestión Ágil** | Jira (Sprints) · Google Sheets (Backlog/Poker) |
-| **Diseño/Diagramas**| Draw.io (PERT, Casos de Uso, Clases) |
+| **Despliegue** | Vercel (SPA con rewrites a `index.html`) |
 
 ---
 
 ## 📁 Estructura del Repositorio
 
 ```text
-Hotelica - Demo/
+Hotelica/
 ├── index.html                  # Entrada principal de Vite
-├── package.json                # Dependencias del proyecto
-├── vite.config.js              # Configuración de Vite
-├── tsconfig.json               # Configuración de TypeScript
-├── CHANGELOG.md                # Historial de cambios (v0.1.0+)
-├── Orden de Historias de Usuarios.md # Índice de construcción (36 HUs)
-├── Hotelica.md                 # Guía maestra del proyecto
-├── Base de Datos Hotelica.sql  # Esquema MySQL + Seeds
+├── package.json                # Dependencias y scripts
+├── vite.config.js              # Vite + Tailwind (puerto 3000)
+├── vercel.json                 # Rewrites para SPA en Vercel
+├── CHANGELOG.md                # Bitácora de versiones (v0.1.0+)
 │
-├── dist/                       # Build de producción (Vite)
+├── historias-usuario/          # Product Backlog con criterios BDD
+│   ├── Orden de Historias de Usuarios.md   # Índice oficial (36 HUs)
+│   ├── HU-000-base-datos.md
+│   ├── HU-001-registrarse.md
+│   ├── HU-002-iniciar-sesion.md
+│   ├── HU-003-cerrar-sesion.md
+│   ├── HU-004-recuperar-contrasena.md
+│   ├── HU-005-gestionar-perfil.md
+│   └── HU-006-buscar-hoteles.md
 │
-└── src/                        # Código fuente (11 archivos base)
+├── public/                     # Marca e imágenes
+│   ├── Logo.svg                # Logo completo (teal + dorado)
+│   ├── Logo-blanco.svg         # Variante clara (hero / fondos oscuros)
+│   ├── text-subtext.svg        # Texto + guiones (footer claro)
+│   ├── text-subtext-white.svg  # Texto + guiones claro
+│   └── favicon.svg             # Sello del volcán
+│
+└── src/
     ├── App.tsx                 # Componente raíz y enrutamiento
     ├── main.tsx                # Punto de entrada de React
-    ├── layout.tsx              # Layout global (Header, Footer, Marca)
-    ├── rutas.ts                # Definición de rutas
-    ├── store.tsx               # Estado global (Context API)
-    ├── data.ts                 # Datos simulados (hoteles, destinos)
-    ├── ui.tsx                  # Componentes base reutilizables
-    ├── tarjeta.tsx             # Componente de tarjeta de hotel
+    ├── layout.tsx              # Navbar adaptativa, Footer, Toasts, modales de sesión
+    ├── rutas.ts                # Definición de rutas (turista, hotel, admin, auth)
+    ├── store.tsx               # Estado global (Context API) + funciones de Supabase
+    ├── data.ts                 # Datos simulados (hoteles, municipios, reseñas)
+    ├── i18n.ts                 # Internacionalización ES/EN
+    ├── ui.tsx                  # Componentes base (Marca, Modales, Estrellas, LOGOS)
+    ├── tarjeta.tsx             # Tarjeta de hotel
     ├── icons.tsx               # Iconos SVG inline
     ├── siluetas.tsx            # Siluetas SVG de departamentos
-    ├── index.css               # Estilos globales y Tailwind
-    │
-    └── pages/                  # 7 páginas principales
-        ├── Home.tsx            # Portada turística (buscador)
+    ├── index.css               # Tokens de la guía de estilo + Tailwind
+    ├── lib/
+    │   └── supabase.ts         # Cliente de Supabase (variables VITE_)
+    └── pages/                  # 10 pantallas
+        ├── Home.tsx            # Portada turística (buscador, HU-006)
         ├── Results.tsx         # Resultados de búsqueda
         ├── HotelDetail.tsx     # Detalle del hotel y habitaciones
         ├── BookingModal.tsx    # Modal de reserva (3 pasos)
         ├── MyReservations.tsx  # Historial del turista
+        ├── ForgotPassword.tsx  # Recuperar contraseña (HU-004)
+        ├── ResetPassword.tsx   # Restablecer contraseña (HU-004)
+        ├── Profile.tsx         # Gestionar perfil (HU-005)
         ├── HotelPanel.tsx      # Dashboard del hotelero
         └── AdminPanel.tsx      # Consola del administrador
 ```
@@ -124,36 +143,68 @@ Hotelica - Demo/
 
 ## 🚀 Cómo ejecutar el proyecto
 
+### Requisitos
+- Node.js 18+ y npm.
+
 ### Frontend (Demo React)
+
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/tu-usuario/hotelica.git
-cd "Hotelica - Demo"
+git clone https://github.com/crisurbina0404/Hotelica.git
+cd Hotelica
 
 # 2. Instalar dependencias
 npm install
 
-# 3. Iniciar servidor de desarrollo
+# 3. Configurar las variables de entorno (ver sección siguiente)
+cp .env.example .env   # y completar con tus credenciales de Supabase
+
+# 4. Iniciar servidor de desarrollo
 npm run dev
 
-# 4. Abrir en el navegador (generalmente http://localhost:5173)
+# 5. Abrir en el navegador
+# http://localhost:3000
 ```
 
-### Base de Datos (MySQL)
-```bash
-# Cargar el esquema y datos de prueba
-mysql -u root -p < "Base de Datos Hotelica.sql"
+### Scripts disponibles
+
+| Comando | Descripción |
+|---|---|
+| `npm run dev` | Servidor de desarrollo en `http://localhost:3000` |
+| `npm run build` | Typecheck + build de producción (carpeta `dist/`) |
+| `npm run preview` | Sirve el build de producción localmente |
+| `npm run typecheck` | Verificación de tipos sin emitir archivos |
+
+### Variables de entorno
+
+La autenticación usa Supabase. Crear un archivo `.env` en la raíz (ver `.env.example`):
+
+```env
+VITE_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+VITE_SUPABASE_ANON_KEY=TU_CLAVE_ANONIMA
 ```
+
+> El archivo `.env` está en `.gitignore` y **nunca** se sube al repositorio. La clave *anon* es pública por diseño, pero cada proyecto de Supabase tiene la suya.
 
 ---
 
-## 🗄️ Base de Datos (MySQL)
+## ☁️ Despliegue (Vercel)
 
-El esquema relacional (`Base de Datos Hotelica.sql`) cuenta con **11 tablas principales** normalizadas, restricciones `ENUM` para controlar los estados y datos de prueba (seeds) de Nicaragua:
+El proyecto se despliega en Vercel como SPA:
 
-- **Catálogos:** `roles`, `departamentos` (8 deptos de Nicaragua), `municipios`, `tipos_habitacion`.
-- **Entidades:** `usuarios`, `hoteles` (con estado *Pendiente/Aprobado/Rechazado*), `habitaciones`, `fotografias`.
-- **Transacciones:** `reservas` (con cálculo de noches, subtotal, IVA y total), `pagos` (*Pagado/Pendiente/Reembolsado*), `calificaciones` (1 a 5 estrellas).
+- `vite.config.js` compila con base relativa (`base: './'`) para evitar rutas absolutas.
+- `vercel.json` reescribe todas las rutas (excepto `assets/`) hacia `index.html`, para que la navegación por estado funcione al recargar.
+
+---
+
+## 🗄️ Datos y Base de Datos
+
+- **Fase 1 (actual):** el catálogo de hoteles, habitaciones, reservas y reseñas es **simulado** en `src/data.ts`, diseñado para reflejar el esquema relacional. La autenticación (usuarios y perfiles) es **real** con Supabase Auth.
+- **Modelo relacional (HU-000):** entidades `usuarios`, `hoteles`, `habitaciones`, `reservas`, `pagos`, `calificaciones`, más catálogos de `departamentos` (8 de Nicaragua) y `municipios`, con estados controlados por `ENUM`:
+  - Hotel: *Pendiente → Aprobado / Rechazado*
+  - Reserva: *Pendiente → Confirmada → Check-in → Completada / Cancelada*
+  - Pago: *Pagado / Pendiente / Reembolsado*
+- **Fase 2 (planeada):** migrar el catálogo a PostgreSQL vía Supabase.
 
 ---
 
@@ -170,18 +221,26 @@ El esquema relacional (`Base de Datos Hotelica.sql`) cuenta con **11 tablas prin
 | 7 | Calificación Promedio | `((calif_actual × reseñas) + nueva_calif) ÷ (reseñas + 1)` |
 | 8 | Ingresos Totales | `SUM(total) WHERE estado_reserva != 'Cancelada'` |
 
+**Validaciones activas:** fecha de salida posterior a la llegada, huéspedes ≤ capacidad de la habitación, disponibilidad > 0 antes de reservar, precio por noche > 0 y solo hoteles *Aprobado* visibles en la búsqueda.
+
 ---
 
 ## 📈 Changelog
 
-El progreso detallado versión por versión se encuentra en [`CHANGELOG.md`](./CHANGELOG.md).
-- **v0.3.0** (2026-07-31): Estructura de carpetas, plantillas HU y BD inicial.
-- **v0.2.0** (2026-07-30): Rebrand a Hotelica y pantalla de éxito.
-- **v0.1.0** (2026-07-28): Maqueta funcional inicial con flujo de reserva e IVA.
+El progreso detallado versión por versión está en [`CHANGELOG.md`](./CHANGELOG.md). Hitos recientes:
+
+- **v0.21.0** (2026-09-09): Logos centralizados (`LOGOS`), `MarcaFooter` y tamaños de marca ajustados.
+- **v0.20.0** (2026-09-09): Logo adaptativo con cross-fade en la barra sobre el hero.
+- **v0.19.0** (2026-09-09): HU-006 verificada contra sus 5 escenarios BDD.
+- **v0.18.0** (2026-09-07): HU-004 Recuperar/restablecer contraseña con Supabase.
+- **v0.17.0** (2026-09-07): HU-005 Gestionar perfil con modo edición.
+- **v0.16.0** (2026-09-02): HU-003 Cierre de sesión con Supabase.
+- **v0.15.0** (2026-09-01): HU-002 Inicio de sesión con Supabase Auth.
+- **v0.14.0** (2026-09-01): HU-001 Registro con Supabase Auth.
 
 ---
 
-## 👨💻 Equipo (Grupo #08)
+## 👨‍💻 Equipo (Grupo #08)
 
 | Nombre | Rol Scrum |
 |---|---|
