@@ -1,5 +1,9 @@
 // ============================================================
-// Hotelica — Tarjeta de hotel (HU-001 resultados / HU-010 favoritos)
+// Hotelica — Tarjeta de hotel (HU-006, HU-008, HU-009, HU-010)
+// HU-006: resultados de búsqueda
+// HU-008: indicador de habitaciones por capacidad
+// HU-009: tarjeta con info del hotel
+// HU-010: favoritos
 // ============================================================
 import { useState } from "react";
 import { useApp } from "./store";

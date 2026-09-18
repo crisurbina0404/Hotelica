@@ -1,5 +1,8 @@
 // ============================================================
-// Hotelica — Detalle de hotel (HU-002: habitaciones disponibles)
+// Hotelica — Detalle de hotel (HU-009, HU-010, HU-011)
+// HU-009: consultar detalles del hotel
+// HU-010: favoritos
+// HU-011: calendario de disponibilidad
 // ============================================================
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
@@ -15,6 +18,7 @@ import { ModalReserva } from "./BookingModal";
 import {
   IconoFlechaAtras, IconoPin, IconoCorazon, IconoCama, IconoHuespedes,
   IconoWifi, IconoCafe, IconoSendero, IconoCheck, IconoCalendario, IconoPalmera,
+  IconoTelefono, IconoCorreo,
 } from "../icons";
 
 // Icono según la amenidad (iconografía propia del proyecto)
@@ -44,7 +48,21 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   if (!hotel) {
     return (
       <main className="mx-auto max-w-3xl px-4 pt-40 text-center">
-        <h1 className="font-display text-2xl font-bold text-ink">Este hotel no existe o aún no está aprobado.</h1>
+        <h1 className="font-display text-2xl font-bold text-ink">Este hotel no existe o ya no está disponible.</h1>
+        <p className="mt-3 text-sm text-muted">El hotel puede haber sido removido de la plataforma o aún no ha sido aprobado.</p>
+        <button onClick={() => navegar({ nombre: "resultados" })} className="mt-6 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
+          Volver a la búsqueda
+        </button>
+      </main>
+    );
+  }
+
+  // Edge case: hotel desactivado o no aprobado
+  if (hotel.aprobado !== "aprobado") {
+    return (
+      <main className="mx-auto max-w-3xl px-4 pt-40 text-center">
+        <h1 className="font-display text-2xl font-bold text-ink">Este hotel ya no está disponible</h1>
+        <p className="mt-3 text-sm text-muted">El hotel "{hotel.nombre}" fue desactivado y no puede mostrarse en este momento.</p>
         <button onClick={() => navegar({ nombre: "resultados" })} className="mt-6 rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-dark">
           Volver a la búsqueda
         </button>
@@ -166,6 +184,10 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
               <p className="flex items-center gap-2"><IconoCalendario size={15} className="text-primary" /> Check-in 2:00 pm · Check-out 11:00 am</p>
               <p className="flex items-center gap-2"><IconoPalmera size={15} className="text-primary" /> Hotel familiar verificado por Hotelica</p>
               <p className="flex items-center gap-2"><IconoHuespedes size={15} className="text-primary" /> Grupos pequeños, trato personal</p>
+            </div>
+            <div className="mt-4 grid gap-2.5 border-t border-line pt-4 text-sm text-muted">
+              <p className="flex items-center gap-2"><IconoTelefono size={15} className="text-primary" /> +505 2222-3333</p>
+              <p className="flex items-center gap-2"><IconoCorreo size={15} className="text-primary" /> contacto@{hotel.nombre.toLowerCase().replace(/\s+/g, "")}.com</p>
             </div>
             <a href="#habitaciones" className="mt-5 flex items-center justify-center rounded-lg bg-primary py-3 text-sm font-bold text-white transition-colors hover:bg-primary-dark">
               Ver habitaciones disponibles

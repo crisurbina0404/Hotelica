@@ -1,5 +1,8 @@
 // ============================================================
-// Hotelica — Resultados de búsqueda (HU-006: resultados por departamento)
+// Hotelica — Resultados de búsqueda (HU-006, HU-007, HU-008)
+// HU-006: buscar hoteles por departamento
+// HU-007: filtrar hoteles por precio
+// HU-008: filtrar hoteles por capacidad
 // ============================================================
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";

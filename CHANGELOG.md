@@ -6,6 +6,37 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.25.0] — 2026-09-18 · HU-009: Consultar detalles del hotel
+
+### Verificado
+- **HU-009 — Consultar detalles del hotel**: los 5 escenarios BDD ya
+  estaban implementados desde la maqueta inicial y se verificaron:
+  - Escenario 1: nombre, descripción, ubicación, servicios, fotos y
+    calificación promedio en `HotelDetail.tsx:111-153`.
+  - Escenario 2: hotel desactivado/eliminado muestra mensaje claro.
+  - Escenario 3: galería de imágenes con efecto hover zoom.
+  - Escenario 4: lista de amenidades con iconos descriptivos.
+  - Escenario 5: calificación, reseñas y distribución por estrellas.
+
+### Agregado
+- **Información de contacto directa** (`src/pages/HotelDetail.tsx`):
+  Teléfono y correo electrónico del hotel en la tarjeta lateral.
+- **Iconos `IconoTelefono` y `IconoCorreo`** (`src/icons.tsx`):
+  Iconos SVG inline para información de contacto.
+
+### Modificado
+- `src/pages/HotelDetail.tsx`: actualizado comentario a HU-009,
+  mejorado manejo de hotel desactivado/eliminado (edge case BDD),
+  agregada información de contacto directa.
+- `src/icons.tsx`: agregados iconos de teléfono y correo.
+- `historias-usuario/HU-009-consultar-detalles-del-hotel.md`: creado
+  con criterios BDD del Product Backlog.
+
+### Cambiado
+- Estado de HU-009 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+---
+
 ## [v0.24.0] — 2026-09-18 · HU-008: Filtrar hoteles por capacidad
 
 ### Agregado
