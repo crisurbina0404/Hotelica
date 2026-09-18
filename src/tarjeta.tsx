@@ -9,7 +9,7 @@ import type { Navegar } from "./rutas";
 import { Estrellas } from "./ui";
 import { IconoCorazon, IconoPin } from "./icons";
 
-export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida }: { hotel: Hotel; navegar: Navegar; retraso?: number; llegada?: string; salida?: string }) {
+export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, huespedes = 2 }: { hotel: Hotel; navegar: Navegar; retraso?: number; llegada?: string; salida?: string; huespedes?: number }) {
   const { favoritos, alternarFavorito, avisar } = useApp();
   const [latido, setLatido] = useState(false);
   const esFavorito = favoritos.includes(hotel.id);
@@ -17,6 +17,9 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida }: {
   // Calculamos disponibilidad solo si tenemos fechas
   const hayFechas = llegada && salida;
   const disponibles = hayFechas ? totalDisponibles(hotel.id, llegada, salida) : 0;
+
+  // Habitaciones aptas para la cantidad de huéspedes
+  const aptas = hayFechas ? habitacionesAptas(hotel.id, llegada, salida, huespedes) : 0;
 
   const muni = MUNICIPIOS.find((m) => m.id === hotel.municipioId);
   const depto = DEPARTAMENTOS.find((d) => d.id === hotel.departamentoId);
@@ -110,6 +113,22 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida }: {
           </p>
         )}
 
+        {/* Indicador de habitaciones aptas para los huéspedes */}
+        {hayFechas && aptas > 0 && (
+          <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-primary">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 22V8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14" />
+              <path d="M3 22h18" />
+              <path d="M6 10v4" />
+              <path d="M10 10v4" />
+              <path d="M14 10v4" />
+              <path d="M18 10v4" />
+              <path d="M6 10a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2" />
+            </svg>
+            {aptas} habitaci{aptas === 1 ? "ón" : "ones"} para {huespedes} huéspede{huespedes > 1 ? "s" : ""}
+          </p>
+        )}
+
         <div className="mt-4 flex items-end justify-between border-t border-line pt-3.5">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Desde</p>
@@ -141,4 +160,13 @@ function totalDisponibles(hotelId: string, llegada: string, salida: string): num
   const { disponiblesDe } = useApp();
   const habitaciones = HABITACIONES_SEED.filter((h) => h.hotelId === hotelId && h.estado === "disponible");
   return habitaciones.reduce((suma, h) => suma + disponiblesDe(h.id, llegada, salida), 0);
+}
+
+// Cuenta habitaciones aptas para una cantidad de huéspedes
+function habitacionesAptas(hotelId: string, llegada: string, salida: string, huespedes: number): number {
+  const { disponiblesDe } = useApp();
+  const habitaciones = HABITACIONES_SEED.filter(
+    (h) => h.hotelId === hotelId && h.estado === "disponible" && h.capacidad >= huespedes
+  );
+  return habitaciones.filter((h) => disponiblesDe(h.id, llegada, salida) > 0).length;
 }

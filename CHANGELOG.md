@@ -6,6 +6,39 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.24.0] — 2026-09-18 · HU-008: Filtrar hoteles por capacidad
+
+### Agregado
+- **Filtro de huéspedes en barra lateral** (`src/pages/Results.tsx`):
+  Botones +/- para ajustar la cantidad de huéspedes (1-10) con
+  indicador visual del valor seleccionado.
+- **Distinción entre adultos y niños**: selectores separados en barra
+  de búsqueda y barra lateral para adultos (1-10) y niños (0-8).
+- **Indicador de habitaciones aptas** (`src/tarjeta.tsx`): cada tarjeta
+  muestra cuántas habitaciones son aptas para la cantidad de huéspedes.
+- **Icono de capacidad**: SVG inline de cama junto al indicador de
+  habitaciones encontradas.
+- **Mensaje específico para edge case**: cuando no hay resultados por
+  capacidad (más de 4 huéspedes), se muestra un mensaje detallado
+  sugiriendo reducir el número de personas.
+
+### Verificado
+- **Selector de huéspedes en barra de búsqueda**: ya existía (línea 122).
+- **Filtrado por capacidad**: ya existía (líneas 66-72).
+- **Actualización en tiempo real**: el estado `huespedes` ya estaba en
+  las dependencias del useEffect.
+
+### Modificado
+- `src/pages/Results.tsx`: agregado filtro de huéspedes en barra lateral
+  con botones +/-, distinción adultos/niños, mejorado mensaje de estado
+  vacío para edge case.
+- `src/tarjeta.tsx`: agregada prop `huespedes`, función `habitacionesAptas()`,
+  indicador visual con icono de cama.
+- `historias-usuario/HU-008-filtrar-hoteles-por-capacidad.md`: creado
+  con criterios BDD del Product Backlog.
+
+---
+
 ## [v0.23.0] — 2026-09-18 · HU-011: Calendario visual y sugerencias de fechas
 
 ### Agregado

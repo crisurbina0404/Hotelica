@@ -19,7 +19,9 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
   const [muni, setMuni] = useState(ruta.muni ?? "");
   const [llegada, setLlegada] = useState(ruta.llegada ?? sumarDias(hoyISO(), 7));
   const [salida, setSalida] = useState(ruta.salida ?? sumarDias(hoyISO(), 10));
-  const [huespedes, setHuespedes] = useState(ruta.huespedes ?? 2);
+  const [adultos, setAdultos] = useState(ruta.huespedes ?? 2);
+  const [ninos, setNinos] = useState(0);
+  const huespedes = adultos + ninos;
 
   // Si llega una nueva búsqueda desde otra pantalla, sincronizamos los campos
   useEffect(() => {
@@ -27,7 +29,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
     setMuni(ruta.muni ?? "");
     if (ruta.llegada) setLlegada(ruta.llegada);
     if (ruta.salida) setSalida(ruta.salida);
-    if (ruta.huespedes) setHuespedes(ruta.huespedes);
+    if (ruta.huespedes) setAdultos(ruta.huespedes);
   }, [ruta]);
 
   // Filtros adicionales de la barra lateral
@@ -89,7 +91,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
   // Limpia todos los filtros y vuelve a la búsqueda completa
   const limpiar = () => {
     setDepto(""); setMuni(""); setPrecioMax(3500); setRatingMin(0); setSoloDestacados(false);
-    setOrden("destacados"); setHuespedes(2);
+    setOrden("destacados"); setAdultos(2); setNinos(0);
   };
 
   const claseCampo = "w-full rounded-lg border border-line bg-white px-3 py-2 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
@@ -104,7 +106,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             <h1 className="mt-1.5 font-display text-3xl font-bold text-ink sm:text-4xl">{titulo}</h1>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-muted">
               <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-primary-dark"><IconoCalendario size={13} /> {fmtFecha(llegada)} → {fmtFecha(salida)}</span>
-              <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-primary-dark"><IconoHuespedes size={13} /> {huespedes} huésped{huespedes > 1 ? "es" : ""}</span>
+              <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-primary-dark"><IconoHuespedes size={13} /> {adultos} adulto{adultos > 1 ? "s" : ""}{ninos > 0 ? `, ${ninos} niño${ninos > 1 ? "s" : ""}` : ""}</span>
             </div>
           </div>
 
@@ -119,7 +121,10 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             </select>
             <input type="date" value={llegada} min={hoyISO()} onChange={(e) => setLlegada(e.target.value)} className={`${claseCampo} lg:w-36`} aria-label="Fecha de llegada" />
             <input type="date" value={salida} min={llegada} onChange={(e) => setSalida(e.target.value)} className={`${claseCampo} lg:w-36`} aria-label="Fecha de salida" />
-            <input type="number" min={1} max={10} value={huespedes} onChange={(e) => setHuespedes(Number(e.target.value))} className={`${claseCampo} lg:w-20`} aria-label="Huéspedes" />
+            <div className="flex items-center gap-1">
+              <input type="number" min={1} max={10} value={adultos} onChange={(e) => setAdultos(Number(e.target.value))} className={`${claseCampo} lg:w-16`} aria-label="Adultos" placeholder="Adultos" />
+              <input type="number" min={0} max={8} value={ninos} onChange={(e) => setNinos(Number(e.target.value))} className={`${claseCampo} lg:w-16`} aria-label="Niños" placeholder="Niños" />
+            </div>
             <button type="submit" className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-dark" >
               <IconoBuscar size={15} /> Buscar
             </button>
@@ -175,6 +180,50 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             </div>
           </div>
 
+          <div className="mt-5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Adultos</p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={() => setAdultos(Math.max(1, adultos - 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
+                aria-label="Reducir adultos"
+              >
+                −
+              </button>
+              <span className="w-8 text-center font-display text-lg font-bold text-ink">{adultos}</span>
+              <button
+                onClick={() => setAdultos(Math.min(10, adultos + 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
+                aria-label="Aumentar adultos"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1 text-[10px] text-muted">1 a 10 adultos</p>
+          </div>
+
+          <div className="mt-5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Niños</p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={() => setNinos(Math.max(0, ninos - 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
+                aria-label="Reducir niños"
+              >
+                −
+              </button>
+              <span className="w-8 text-center font-display text-lg font-bold text-ink">{ninos}</span>
+              <button
+                onClick={() => setNinos(Math.min(8, ninos + 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
+                aria-label="Aumentar niños"
+              >
+                +
+              </button>
+            </div>
+            <p className="mt-1 text-[10px] text-muted">0 a 8 niños</p>
+          </div>
+
           <label className="mt-5 flex cursor-pointer items-center gap-2.5 rounded-lg border border-line px-3 py-2.5 transition-colors hover:border-primary/40">
             <input type="checkbox" checked={soloDestacados} onChange={(e) => setSoloDestacados(e.target.checked)} className="h-4 w-4 accent-[#0B3540]" />
             <span className="text-sm font-semibold text-ink">Solo destacados</span>
@@ -195,10 +244,14 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
               <p className="mt-1 text-sm text-muted">Revisando disponibilidad en {nombreDepto ?? "toda Nicaragua"}</p>
             </div>
           ) : resultados.length === 0 ? (
-            // Estado vacío con el mensaje oficial del proyecto
+            // Estado vacío según la cantidad de huéspedes
             <EstadoVacio
               titulo="Sin resultados por ahora"
-              detalle="No encontramos hoteles para tu búsqueda. Intenta con otro destino u otras fechas."
+              detalle={
+                huespedes > 4
+                  ? `No encontramos habitaciones para ${huespedes} huéspedes. Intenta con menos personas o prueba otro destino.`
+                  : "No encontramos hoteles para tu búsqueda. Intenta con otro destino u otras fechas."
+              }
               accion={
                 <button onClick={limpiar} className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-primary-dark">
                   Limpiar filtros
@@ -213,7 +266,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {resultados.map((h, i) => (
                   <Reveal key={h.id} delay={(i % 3) * 90}>
-                    <TarjetaHotel hotel={h} navegar={navegar} llegada={llegada} salida={salida} />
+                    <TarjetaHotel hotel={h} navegar={navegar} llegada={llegada} salida={salida} huespedes={huespedes} />
                   </Reveal>
                 ))}
               </div>
