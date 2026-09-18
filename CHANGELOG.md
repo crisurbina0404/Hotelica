@@ -6,6 +6,31 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.26.0] — 2026-09-18 · HU-010: Consultar habitaciones y precios
+
+### Verificado
+- **HU-010 — Consultar habitaciones y precios**: los 3 escenarios BDD ya
+  estaban implementados y se verificaron:
+  - Escenario 1: listado de habitaciones con capacidad, amenities y precio.
+  - Escenario 2: indicador visual de disponibilidad con badges.
+  - Escenario 3: hotel sin habitaciones muestra mensaje informativo.
+
+### Agregado
+- **Vista comparativa lado a lado** (`src/pages/HotelDetail.tsx`):
+  Botón "Comparar" que alterna entre vista de lista (vertical) y
+  vista comparativa (cuadrícula 2-3 columnas) para comparar
+  habitaciones fácilmente.
+
+### Modificado
+- `src/pages/HotelDetail.tsx`: actualizado comentario a HU-010,
+  agregado estado `vistaComparativa` y botón de alternar vista.
+- `historias-usuario/HU-010-consultar-habitaciones-y-precios.md`: creado.
+
+### Cambiado
+- Estado de HU-010 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+---
+
 ## [v0.25.0] — 2026-09-18 · HU-009: Consultar detalles del hotel
 
 ### Verificado

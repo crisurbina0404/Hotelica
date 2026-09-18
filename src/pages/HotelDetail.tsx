@@ -1,7 +1,7 @@
 // ============================================================
 // Hotelica — Detalle de hotel (HU-009, HU-010, HU-011)
 // HU-009: consultar detalles del hotel
-// HU-010: favoritos
+// HU-010: consultar habitaciones y precios
 // HU-011: calendario de disponibilidad
 // ============================================================
 import { useMemo, useState } from "react";
@@ -39,6 +39,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   const [huespedes, setHuespedes] = useState(2);
   const [habitacion, setHabitacion] = useState<Habitacion | null>(null);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
+  const [vistaComparativa, setVistaComparativa] = useState(false);
 
   // Cálculo de noches para sugerencias
   const noches = calcularNoches(llegada, salida);
@@ -196,7 +197,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
         </Reveal>
       </div>
 
-      {/* ===== Habitaciones (HU-002) ===== */}
+      {/* ===== Habitaciones (HU-010) ===== */}
       <section id="habitaciones" className="mt-16 scroll-mt-24">
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-5">
@@ -211,13 +212,19 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
               <label className="flex items-center gap-2 text-xs font-bold text-muted">
                 Huéspedes <input type="number" min={1} max={10} value={huespedes} onChange={(e) => setHuespedes(Number(e.target.value))} className={`${claseCampo} w-20`} />
               </label>
+              <button
+                onClick={() => setVistaComparativa(!vistaComparativa)}
+                className={`rounded-lg border px-3 py-2 text-xs font-bold transition-colors ${vistaComparativa ? "border-primary bg-primary text-white" : "border-line text-muted hover:border-primary/50"}`}
+              >
+                {vistaComparativa ? "Vista lista" : "Comparar"}
+              </button>
             </div>
           </div>
         </Reveal>
 
-        <div className="mt-7 grid gap-4">
+        <div className={`mt-7 ${vistaComparativa ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-4"}`}>
           {rooms.every((r) => r.estado !== "disponible" || disponiblesDe(r.id, llegada, salida) === 0 || r.capacidad < huespedes) && (
-            <p className="rounded-xl border border-[#FCD34D] bg-accent-light px-5 py-4 text-sm font-semibold text-[#92400E]">
+            <p className="rounded-xl border border-[#FCD34D] bg-accent-light px-5 py-4 text-sm font-semibold text-[#92400E] sm:col-span-2 lg:col-span-3">
               Por ahora este hotel no tiene habitaciones disponibles para las fechas seleccionadas. Prueba con otras fechas.
             </p>
           )}
@@ -228,10 +235,10 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
             const sePuede = r.estado === "disponible" && disponibles > 0 && sirveCapacidad && salida > llegada;
             return (
               <Reveal key={r.id} delay={i * 80}>
-                <div className={`flex flex-col gap-4 rounded-xl border bg-white p-5 transition-all hover:shadow-card sm:flex-row sm:items-center ${sePuede ? "border-line hover:border-primary/35" : "border-line opacity-80"}`}>
+                <div className={`flex flex-col gap-4 rounded-xl border bg-white p-5 transition-all hover:shadow-card ${vistaComparativa ? "flex-col" : "sm:flex-row sm:items-center"} ${sePuede ? "border-line hover:border-primary/35" : "border-line opacity-80"}`}>
                   {/* Miniatura ilustrada del tipo de habitación */}
-                  <div className="flex h-24 w-full shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-soft to-primary-light text-primary sm:w-32">
-                    <IconoCama size={38} />
+                  <div className={`flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-soft to-primary-light text-primary ${vistaComparativa ? "h-32" : "h-24 w-full sm:w-32"}`}>
+                    <IconoCama size={vistaComparativa ? 44 : 38} />
                   </div>
 
                   <div className="min-w-0 flex-1">
@@ -240,7 +247,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                       <BadgeHabitacion estado={r.estado} />
                       {r.estado === "disponible" && (
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${disponibles > 0 ? "bg-primary-light text-primary-dark" : "bg-[#FEE2E2] text-[#B91C1C]"}`}>
-                          {disponibles > 0 ? `${disponibles} disponible${disponibles > 1 ? "s" : ""}` : "Agotado para tus fechas"}
+                          {disponibles > 0 ? `${disponibles} disponible${disponibles > 1 ? "s" : ""}` : "Agotado"}
                         </span>
                       )}
                     </div>
@@ -248,11 +255,11 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                     <p className="mt-2 flex items-center gap-3 text-xs font-semibold text-muted">
                       <span className="flex items-center gap-1"><IconoHuespedes size={13} /> Hasta {r.capacidad} huéspedes</span>
                       <span className="flex items-center gap-1"><IconoCama size={13} /> {r.unidades} unidades</span>
-                      {!sirveCapacidad && <span className="text-[#B91C1C]">No admite {huespedes} huéspedes</span>}
+                      {!sirveCapacidad && <span className="text-[#B91C1C]">No admite {huespedes}</span>}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 border-t border-line pt-4 sm:flex-col sm:items-end sm:border-0 sm:pt-0">
+                  <div className={`flex items-center justify-between gap-4 border-t border-line pt-4 ${vistaComparativa ? "flex-row" : "sm:flex-col sm:items-end sm:border-0 sm:pt-0"}`}>
                     <p className="text-right">
                       <span className="font-display text-xl font-bold text-primary">{fmtDinero(r.precio)}</span>
                       <span className="block text-[11px] font-semibold text-muted">por noche · + IVA</span>
