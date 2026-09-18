@@ -4,7 +4,7 @@
 **Prioridad:** Alta (Must Have)  
 **Estado:** ✅ Terminada  
 **Sprint:** 1  
-**Interfaz:** HotelDetail, BookingModal, Results
+**Interfaz:** HotelDetail, BookingModal, Results, CalendarioDisponibilidad
 
 ## Redacción estándar
 
@@ -45,7 +45,7 @@ El turista necesita saber cuántas habitaciones de un tipo están libres para la
 
 - **Must Have:** Cálculo de unidades disponibles por habitación, indicador visual de disponibilidad, filtrado por fechas.
 - **Should Have:** Mensaje "Agotado para tus fechas" cuando no hay disponibilidad.
-- **Could Have:** Calendario visual de disponibilidad, historial de ocupación.
+- **Could Have:** ✅ Calendario visual de disponibilidad, historial de ocupación.
 - **Won't Have:** Reserva en tiempo real, sincronización con sistemas externos.
 
 ## Notas de implementación
@@ -55,3 +55,10 @@ El turista necesita saber cuántas habitaciones de un tipo están libres para la
 - Filtrado en `src/pages/Results.tsx:69-71`: `disponiblesDe(hab.id, llegada, salida) > 0`.
 - Visualización en `src/pages/HotelDetail.tsx:185-202`: muestra cantidad disponible o "Agotado".
 - Validación en `src/pages/BookingModal.tsx:56-57`: bloquea reserva si disponibles <= 0.
+
+### Could Have implementados (v0.23.0)
+
+- **Calendario visual** (`src/pages/CalendarioDisponibilidad.tsx`): componente con vista mensual, colores por estado (libre/parcial/bloqueado/pasado/seleccionado), navegación entre meses y selección por clic.
+- **Sugerencias de fechas alternativas** (`src/data.ts:sugerirFechasAlternativas()`): busca hasta 3 rangos cercanos (±30 días) con disponibilidad.
+- **Integración en HotelDetail.tsx**: sección expandible con calendario + panel de sugerencias azul cuando no hay disponibilidad.
+- **Integración en BookingModal.tsx**: sugerencias de fechas dentro del modal de reserva.

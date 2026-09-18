@@ -6,9 +6,10 @@ import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
   AMENIDADES, DEPARTAMENTOS, MUNICIPIOS, ETIQUETA_HABITACION,
-  fmtDinero, fmtFecha, hoyISO, sumarDias,
+  fmtDinero, fmtFecha, hoyISO, sumarDias, calcularNoches, sugerirFechasAlternativas,
 } from "../data";
 import type { Habitacion, Hotel } from "../data";
+import { CalendarioDisponibilidad } from "./CalendarioDisponibilidad";
 import { Reveal, Estrellas, BadgeHabitacion, TituloSeccion } from "../ui";
 import { ModalReserva } from "./BookingModal";
 import {
@@ -33,6 +34,10 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   const [salida, setSalida] = useState(sumarDias(hoyISO(), 10));
   const [huespedes, setHuespedes] = useState(2);
   const [habitacion, setHabitacion] = useState<Habitacion | null>(null);
+  const [mostrarCalendario, setMostrarCalendario] = useState(false);
+
+  // Cálculo de noches para sugerencias
+  const noches = calcularNoches(llegada, salida);
 
   const resenasHotel = useMemo(() => resenas.filter((r) => r.hotelId === id), [resenas, id]);
 
@@ -59,6 +64,20 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
 
   // Importa las habitaciones del hotel desde el catálogo de semillas
   const rooms = HABITACIONES.filter((h) => h.hotelId === hotel.id);
+
+  // Sugerencias de fechas alternativas cuando no hay disponibilidad
+  const sugerencias = useMemo(() => {
+    const hayDisponibilidad = rooms.some(
+      (r) => r.estado === "disponible" && disponiblesDe(r.id, llegada, salida) > 0 && r.capacidad >= huespedes
+    );
+    if (hayDisponibilidad || noches <= 0) return [];
+    return sugerirFechasAlternativas(
+      rooms.map((r) => ({ id: r.id, unidades: r.unidades })),
+      disponiblesDe,
+      noches,
+      llegada
+    );
+  }, [rooms, llegada, salida, huespedes, noches, disponiblesDe]);
 
   const claseCampo = "rounded-lg border border-line bg-white px-3 py-2 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
 
@@ -234,6 +253,66 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
           })}
         </div>
       </section>
+
+      {/* ===== Calendario visual de disponibilidad ===== */}
+      <section className="mt-10">
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-primary">Calendario de disponibilidad</p>
+              <h3 className="mt-1 font-display text-lg font-bold text-ink">Consulta los días libres del hotel</h3>
+            </div>
+            <button
+              onClick={() => setMostrarCalendario((v) => !v)}
+              className="rounded-lg border border-primary px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary-soft"
+            >
+              {mostrarCalendario ? "Ocultar calendario" : "Ver calendario"}
+            </button>
+          </div>
+        </Reveal>
+        {mostrarCalendario && (
+          <Reveal delay={60}>
+            <CalendarioDisponibilidad
+              habitaciones={rooms.map((r) => ({ id: r.id, unidades: r.unidades }))}
+              disponiblesDe={disponiblesDe}
+              llegada={llegada}
+              salida={salida}
+              alSeleccionar={(fecha) => {
+                setLlegada(fecha);
+                setSalida(sumarDias(fecha, 3));
+              }}
+            />
+          </Reveal>
+        )}
+      </section>
+
+      {/* ===== Sugerencias de fechas alternativas ===== */}
+      {sugerencias.length > 0 && (
+        <section className="mt-8">
+          <Reveal>
+            <div className="rounded-xl border border-[#93C5FD] bg-[#DBEAFE] p-5">
+              <p className="text-sm font-bold text-[#1D4ED8]">Fechas alternativas con disponibilidad</p>
+              <p className="mt-1 text-sm text-[#1E40AF]">
+                No hay habitaciones disponibles para las fechas seleccionadas. Prueba con estas opciones:
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {sugerencias.map((s) => (
+                  <button
+                    key={s.llegada}
+                    onClick={() => {
+                      setLlegada(s.llegada);
+                      setSalida(s.salida);
+                    }}
+                    className="rounded-lg border border-[#93C5FD] bg-white px-4 py-2 text-xs font-bold text-[#1D4ED8] transition-all hover:bg-[#BFDBFE] hover:shadow-sm"
+                  >
+                    {fmtFecha(s.llegada)} → {fmtFecha(s.salida)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        </section>
+      )}
 
       {/* ===== Ubicación ===== */}
       <section className="mt-16 grid gap-6 lg:grid-cols-[1fr_1.2fr]">

@@ -1,11 +1,11 @@
 // ============================================================
 // Hotelica — Modal de reserva (HU-003: reservar con cálculo de total)
 // ============================================================
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import type { Habitacion, Hotel, Reserva } from "../data";
-import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO } from "../data";
+import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas } from "../data";
 import { Modal, Spinner, Marca } from "../ui";
 import {
   IconoLlave, IconoTarjeta, IconoBillete, IconoBanco, IconoCheck,
@@ -38,6 +38,17 @@ export function ModalReserva({
   const noches = calcularNoches(llegada, salida);
   const { subtotal, iva, total } = calcularTotales(habitacion.precio, Math.max(0, noches));
   const disponibles = disponiblesDe(habitacion.id, llegada, salida);
+
+  // Sugerencias de fechas alternativas cuando no hay disponibilidad
+  const sugerencias = useMemo(() => {
+    if (disponibles > 0 || noches <= 0) return [];
+    return sugerirFechasAlternativas(
+      [{ id: habitacion.id, unidades: habitacion.unidades }],
+      disponiblesDe,
+      noches,
+      llegada
+    );
+  }, [disponibles, noches, llegada, habitacion, disponiblesDe]);
 
   // Valida las reglas de negocio antes de confirmar
   const confirmar = () => {
@@ -131,6 +142,32 @@ export function ModalReserva({
               <p role="alert" className="anim-pop mt-4 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C]">
                 {error}
               </p>
+            )}
+
+            {/* Sugerencias de fechas alternativas */}
+            {sugerencias.length > 0 && (
+              <div className="mt-4 rounded-lg border border-[#93C5FD] bg-[#DBEAFE] p-4">
+                <p className="text-xs font-bold text-[#1D4ED8]">Fechas alternativas disponibles</p>
+                <p className="mt-1 text-xs text-[#1E40AF]">
+                  Prueba con estas fechas para esta habitación:
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {sugerencias.map((s) => (
+                    <button
+                      key={s.llegada}
+                      type="button"
+                      onClick={() => {
+                        setLlegada(s.llegada);
+                        setSalida(s.salida);
+                        setError("");
+                      }}
+                      className="rounded-lg border border-[#93C5FD] bg-white px-3 py-1.5 text-[11px] font-bold text-[#1D4ED8] transition-all hover:bg-[#BFDBFE]"
+                    >
+                      {fmtFecha(s.llegada)} → {fmtFecha(s.salida)}
+                    </button>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 

@@ -379,6 +379,45 @@ export function seTraslapan(aIni: string, aFin: string, bIni: string, bFin: stri
   return aIni < bFin && bIni < aFin;
 }
 
+// Busca rangos de fechas alternativas con disponibilidad para una habitación
+// Devuelve hasta 3 opciones cercanas a la fecha original
+export function sugerirFechasAlternativas(
+  habitaciones: { id: string; unidades: number }[],
+  disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number,
+  noches: number,
+  fechaOriginal: string
+): { llegada: string; salida: string }[] {
+  if (noches <= 0) return [];
+
+  const sugerencias: { llegada: string; salida: string }[] = [];
+  const hoy = hoyISO();
+
+  // Buscamos hacia adelante y hacia atrás, empezando desde 1 día de diferencia
+  for (let delta = 1; delta <= 30 && sugerencias.length < 3; delta++) {
+    // Hacia adelante
+    const candidataAdelante = sumarDias(fechaOriginal, delta);
+    const salidaAdelante = sumarDias(candidataAdelante, noches);
+    const todasLibres = habitaciones.some((hab) => {
+      return disponiblesDe(hab.id, candidataAdelante, salidaAdelante) > 0;
+    });
+    if (todasLibres && candidataAdelante >= hoy && sugerencias.length < 3) {
+      sugerencias.push({ llegada: candidataAdelante, salida: salidaAdelante });
+    }
+
+    // Hacia atrás
+    const candidataAtras = sumarDias(fechaOriginal, -delta);
+    const salidaAtras = sumarDias(candidataAtras, noches);
+    const todasLibresAtras = habitaciones.some((hab) => {
+      return disponiblesDe(hab.id, candidataAtras, salidaAtras) > 0;
+    });
+    if (todasLibresAtras && candidataAtras >= hoy && sugerencias.length < 3) {
+      sugerencias.push({ llegada: candidataAtras, salida: salidaAtras });
+    }
+  }
+
+  return sugerencias;
+}
+
 // ----- Reservas de demostración (fechas relativas a hoy) -----
 
 const HOY = hoyISO();
@@ -418,6 +457,22 @@ export const RESERVAS_SEED: Reserva[] = [
   demo("HC-1043", "h-sanjuan", "s1", "Jorge Salinas", sumarDias(HOY, -1), 3, 1, "efectivo", "checkin"),
   demo("HC-1038", "h-sanjuan", "s3", "Marta Ruiz", sumarDias(HOY, -9), 4, 3, "tarjeta", "completada", true),
   demo("HC-1036", "h-sanjuan", "s1", "Pedro Vega", sumarDias(HOY, -4), 2, 2, "efectivo", "cancelada"),
+  // Reservas para probar sugerencias: llenan Brisas del Pacífico del HOY+7 al HOY+10
+  // s1 tiene 6 unidades → 6 reservas
+  demo("HC-1050", "h-sanjuan", "s1", "Ana López", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-1051", "h-sanjuan", "s1", "Carlos Ruiz", sumarDias(HOY, 7), 3, 2, "efectivo", "confirmada"),
+  demo("HC-1052", "h-sanjuan", "s1", "María García", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-1053", "h-sanjuan", "s1", "Pedro López", sumarDias(HOY, 7), 3, 2, "transferencia", "confirmada"),
+  demo("HC-1054", "h-sanjuan", "s1", "Laura Martínez", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-1055", "h-sanjuan", "s1", "José Hernández", sumarDias(HOY, 7), 3, 2, "efectivo", "confirmada"),
+  // s2 tiene 4 unidades → 4 reservas
+  demo("HC-1056", "h-sanjuan", "s2", "Sofía Torres", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-1057", "h-sanjuan", "s2", "Diego Vargas", sumarDias(HOY, 7), 3, 2, "efectivo", "confirmada"),
+  demo("HC-1058", "h-sanjuan", "s2", "Isabella Reyes", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-1059", "h-sanjuan", "s2", "Andrés Castillo", sumarDias(HOY, 7), 3, 2, "transferencia", "confirmada"),
+  // s3 tiene 2 unidades → 2 reservas
+  demo("HC-1060", "h-sanjuan", "s3", "Camila Ortiz", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-1061", "h-sanjuan", "s3", "Roberto Méndez", sumarDias(HOY, 7), 3, 2, "efectivo", "confirmada"),
 ];
 
 // ----- Reseñas iniciales de los hoteles -----

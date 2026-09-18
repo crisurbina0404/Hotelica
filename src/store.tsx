@@ -49,7 +49,7 @@ function cargar(): Persistido {
     reservas: RESERVAS_SEED,
     resenas: RESENAS_SEED,
     favoritos: ["h-ometepe", "h-granada"],
-    folio: 1043,
+    folio: 1061,
   };
 }
 
@@ -372,7 +372,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reservas: RESERVAS_SEED,
       resenas: RESENAS_SEED,
       favoritos: ["h-ometepe", "h-granada"],
-      folio: 1043,
+      folio: 1061,
     });
     avisar("Datos de demostración restaurados", "info");
   };

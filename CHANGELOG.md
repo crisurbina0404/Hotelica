@@ -6,6 +6,33 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.23.0] — 2026-09-18 · HU-011: Calendario visual y sugerencias de fechas
+
+### Agregado
+- **Calendario visual de disponibilidad** (`src/pages/CalendarioDisponibilidad.tsx`):
+  Componente que muestra un calendario mensual con días codificados por color:
+  - Verde: libre (todas las habitaciones disponibles)
+  - Amarillo: parcial (algunas habitaciones disponibles)
+  - Rojo: bloqueado (sin disponibilidad)
+  - Gris: pasado (fechas anteriores a hoy)
+  - Azul: seleccionado (rango de fechas activo)
+  Navegación entre meses y selección de fecha por clic.
+- **Función `sugerirFechasAlternativas()`** (`src/data.ts`):
+  Busca hasta 3 rangos de fechas cercanas (±30 días) con disponibilidad
+  para las mismas habitaciones, priorizando fechas más cercanas.
+- **Sugerencias en HotelDetail.tsx**: cuando no hay disponibilidad para las
+  fechas seleccionadas, se muestra un panel azul con botones de fechas
+  alternativas que el turista puede seleccionar con un clic.
+- **Sugerencias en BookingModal.tsx**: mismo comportamiento dentro del
+  modal de reserva cuando la habitación seleccionada no está disponible.
+
+### Modificado
+- `src/pages/HotelDetail.tsx`: import de `CalendarioDisponibilidad`,
+  `sugerirFechasAlternativas` y `calcularNoches`. Agregado estado
+  `mostrarCalendario` y sección de calendario + sugerencias.
+- `src/pages/BookingModal.tsx`: import de `sugerirFechasAlternativas`,
+  agregado `useMemo` para cálculo de sugerencias y UI de alternativas.
+
 ## [v0.22.0] — 2026-09-18 · HU-011: Consultar disponibilidad por fechas
 
 ### Verificado
