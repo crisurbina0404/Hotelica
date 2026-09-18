@@ -277,9 +277,9 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
               disponiblesDe={disponiblesDe}
               llegada={llegada}
               salida={salida}
-              alSeleccionar={(fecha) => {
-                setLlegada(fecha);
-                setSalida(sumarDias(fecha, 3));
+              alSeleccionar={(nuevaLlegada, nuevaSalida) => {
+                setLlegada(nuevaLlegada);
+                setSalida(nuevaSalida);
               }}
             />
           </Reveal>

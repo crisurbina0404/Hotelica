@@ -28,13 +28,15 @@ export function CalendarioDisponibilidad({
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
   llegada: string;
   salida: string;
-  alSeleccionar?: (fecha: string) => void;
+  alSeleccionar: (llegada: string, salida: string) => void;
 }) {
   const hoy = hoyISO();
   const [mesActual, setMesActual] = useState(() => {
     const d = new Date(`${llegada}T12:00:00`);
     return { anio: d.getFullYear(), mes: d.getMonth() };
   });
+  // Controla el modo de selección: null = esperando primera fecha, string = primera fecha seleccionada
+  const [primeraFecha, setPrimeraFecha] = useState<string | null>(null);
 
   // Genera los días del mes actual con su estado de disponibilidad
   const dias = useMemo(() => {
@@ -109,6 +111,25 @@ export function CalendarioDisponibilidad({
     });
   };
 
+  // Maneja la selección de fechas (primer clic = llegada, segundo clic = salida)
+  const seleccionarFecha = (fecha: string) => {
+    if (primeraFecha === null) {
+      // Primer clic: establecer llegada
+      setPrimeraFecha(fecha);
+    } else {
+      // Segundo clic: establecer salida
+      let nuevaLlegada = primeraFecha;
+      let nuevaSalida = fecha;
+      // Si la segunda fecha es anterior, las intercambiamos
+      if (fecha < primeraFecha) {
+        nuevaLlegada = fecha;
+        nuevaSalida = primeraFecha;
+      }
+      alSeleccionar(nuevaLlegada, nuevaSalida);
+      setPrimeraFecha(null);
+    }
+  };
+
   // Colores de cada estado según la paleta oficial
   const colorEstado: Record<EstadoDia, string> = {
     libre: "bg-[#DCFCE7] text-[#166534] hover:bg-[#BBF7D0] cursor-pointer",
@@ -158,10 +179,10 @@ export function CalendarioDisponibilidad({
             <button
               key={d.fecha}
               disabled={d.estado === "pasado" || d.estado === "bloqueado" || d.estado === "seleccionado"}
-              onClick={() => alSeleccionar?.(d.fecha)}
+              onClick={() => seleccionarFecha(d.fecha)}
               className={`h-9 rounded-lg text-xs font-semibold transition-all ${colorEstado[d.estado]} ${
                 d.estado === "seleccionado" ? "ring-2 ring-accent ring-offset-1" : ""
-              }`}
+              } ${primeraFecha === d.fecha ? "ring-2 ring-accent ring-offset-1" : ""}`}
               title={
                 d.estado === "bloqueado"
                   ? "Sin disponibilidad"
@@ -193,6 +214,11 @@ export function CalendarioDisponibilidad({
           <span className="h-3 w-3 rounded bg-primary" /> Seleccionado
         </span>
       </div>
+      <p className="mt-2 text-[10px] text-muted">
+        {primeraFecha === null
+          ? "Haz clic en una fecha de llegada"
+          : "Ahora selecciona la fecha de salida"}
+      </p>
     </div>
   );
 }
