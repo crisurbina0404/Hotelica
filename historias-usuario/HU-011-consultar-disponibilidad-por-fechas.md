@@ -58,7 +58,7 @@ El turista necesita saber cuántas habitaciones de un tipo están libres para la
 
 ### Could Have implementados (v0.23.0)
 
-- **Calendario visual** (`src/pages/CalendarioDisponibilidad.tsx`): componente con vista mensual, colores por estado (libre/parcial/bloqueado/pasado/seleccionado), navegación entre meses y selección por clic.
+- **Calendario visual** (`src/pages/CalendarioDisponibilidad.tsx`): componente con vista mensual, colores por estado (libre/parcial/bloqueado/pasado/seleccionado), navegación entre meses y selección por dos clics (primero llegada, luego salida).
 - **Sugerencias de fechas alternativas** (`src/data.ts:sugerirFechasAlternativas()`): busca hasta 3 rangos cercanos (±30 días) con disponibilidad.
 - **Integración en HotelDetail.tsx**: sección expandible con calendario + panel de sugerencias azul cuando no hay disponibilidad.
 - **Integración en BookingModal.tsx**: sugerencias de fechas dentro del modal de reserva.
