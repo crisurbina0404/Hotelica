@@ -6,6 +6,36 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.22.0] — 2026-09-18 · HU-011: Consultar disponibilidad por fechas
+
+### Verificado
+- **HU-011 — Consultar disponibilidad por fechas**: los 5 escenarios BDD ya
+  estaban implementados desde la maqueta inicial (v0.4.0) y se verificaron
+  contra el código actual:
+  - Escenario 1: cantidad de unidades disponibles se muestra en `HotelDetail.tsx:185-202`.
+  - Escenario 2: "Agotado para tus fechas" cuando disponibles = 0.
+  - Escenario 3: fechas inválidas bloquean la búsqueda.
+  - Escenario 4: solo hoteles con disponibilidad aparecen en `Results.tsx:69-71`.
+  - Escenario 5: botón bloqueado en `BookingModal.tsx:56-57` si disponibles <= 0.
+
+### Agregado
+- **Archivo `HU-011-consultar-disponibilidad-por-fechas.md`** con criterios BDD.
+- **Badge de disponibilidad en tarjetas** (`src/tarjeta.tsx`): ahora cada tarjeta
+  muestra la cantidad de unidades disponibles para las fechas seleccionadas:
+  - Verde: ">5 unidades disponibles"
+  - Amarillo: "¡Solo X disponibles!" (1-5)
+  - Rojo: "Sin disponibilidad" (0)
+
+### Modificado
+- `src/tarjeta.tsx`: agregadas props `llegada` y `salida`, función `totalDisponibles()`.
+- `src/pages/Results.tsx`: pasa fechas a `TarjetaHotel`.
+- Escenario 4 de HU-011 actualizado con nueva funcionalidad.
+
+### Cambiado
+- Estado de HU-011 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+---
+
 ## [v0.21.0] — 2026-09-09 · Logos centralizados y con mejor presencia
 
 ### Agregado

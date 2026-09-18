@@ -213,7 +213,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {resultados.map((h, i) => (
                   <Reveal key={h.id} delay={(i % 3) * 90}>
-                    <TarjetaHotel hotel={h} navegar={navegar} />
+                    <TarjetaHotel hotel={h} navegar={navegar} llegada={llegada} salida={salida} />
                   </Reveal>
                 ))}
               </div>

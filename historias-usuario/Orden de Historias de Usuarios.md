@@ -8,11 +8,11 @@
 | 4 | HU-003 | Autenticación | Cerrar sesión | Alta | ✅ Terminada |
 | 5 | HU-004 | Autenticación | Recuperar contraseña | Media | ✅ Terminada |
 | 6 | HU-005 | Autenticación | Gestionar perfil | Media | ✅ Terminada |
-| 7 | HU-006 | Búsqueda | Buscar hoteles por departamento | Alta | ✅ Terminada || 8 | HU-007 | Búsqueda | Filtrar hoteles por precio | Media | ⬜ Escrita |
+| 7 | HU-006 | Búsqueda | Buscar hoteles por departamento | Alta | ✅ Terminada || 8 | HU-007 | Búsqueda | Filtrar hoteles por precio | Media | ✅ Terminada |
 | 9 | HU-008 | Búsqueda | Filtrar hoteles por capacidad | Media | ⬜ Escrita |
 | 10 | HU-009 | Búsqueda | Consultar detalles del hotel | Alta | ⬜ Escrita |
 | 11 | HU-010 | Búsqueda | Consultar habitaciones y precios | Alta | ⬜ Escrita |
-| 12 | HU-011 | Búsqueda | Consultar disponibilidad por fechas | Alta | ⬜ Escrita |
+| 12 | HU-011 | Búsqueda | Consultar disponibilidad por fechas | Alta | ✅ Terminada |
 | 13 | HU-012 | Búsqueda | Ver destinos y actividades turísticas | Baja | ⬜ Escrita |
 | 14 | HU-013 | Reservas | Crear una reserva | Alta | ⬜ Escrita |
 | 15 | HU-014 | Reservas | Calcular subtotal, IVA y total | Alta | ⬜ Escrita |

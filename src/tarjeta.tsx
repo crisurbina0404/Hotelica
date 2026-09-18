@@ -9,10 +9,14 @@ import type { Navegar } from "./rutas";
 import { Estrellas } from "./ui";
 import { IconoCorazon, IconoPin } from "./icons";
 
-export function TarjetaHotel({ hotel, navegar, retraso = 0 }: { hotel: Hotel; navegar: Navegar; retraso?: number }) {
+export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida }: { hotel: Hotel; navegar: Navegar; retraso?: number; llegada?: string; salida?: string }) {
   const { favoritos, alternarFavorito, avisar } = useApp();
   const [latido, setLatido] = useState(false);
   const esFavorito = favoritos.includes(hotel.id);
+
+  // Calculamos disponibilidad solo si tenemos fechas
+  const hayFechas = llegada && salida;
+  const disponibles = hayFechas ? totalDisponibles(hotel.id, llegada, salida) : 0;
 
   const muni = MUNICIPIOS.find((m) => m.id === hotel.municipioId);
   const depto = DEPARTAMENTOS.find((d) => d.id === hotel.departamentoId);
@@ -95,6 +99,17 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0 }: { hotel: Hotel; na
           ))}
         </div>
 
+        {/* Disponibilidad para las fechas seleccionadas */}
+        {hayFechas && (
+          <p className={`mt-2.5 text-xs font-bold ${disponibles === 0 ? "text-danger" : disponibles <= 5 ? "text-accent-dark" : "text-success"}`}>
+            {disponibles === 0
+              ? "Sin disponibilidad"
+              : disponibles <= 5
+                ? `¡Solo ${disponibles} disponible${disponibles > 1 ? "s" : ""}!`
+                : `${disponibles} unidades disponibles`}
+          </p>
+        )}
+
         <div className="mt-4 flex items-end justify-between border-t border-line pt-3.5">
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Desde</p>
@@ -114,7 +129,16 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0 }: { hotel: Hotel; na
 
 // El precio "desde" es el de la habitación más económica del hotel
 import { HABITACIONES_SEED } from "./data";
+
+// Precio más económico del hotel
 function precioDesde(hotelId: string): number {
   const precios = HABITACIONES_SEED.filter((h) => h.hotelId === hotelId).map((h) => h.precio);
   return precios.length ? Math.min(...precios) : 0;
+}
+
+// Suma todas las unidades disponibles del hotel para unas fechas
+function totalDisponibles(hotelId: string, llegada: string, salida: string): number {
+  const { disponiblesDe } = useApp();
+  const habitaciones = HABITACIONES_SEED.filter((h) => h.hotelId === hotelId && h.estado === "disponible");
+  return habitaciones.reduce((suma, h) => suma + disponiblesDe(h.id, llegada, salida), 0);
 }
