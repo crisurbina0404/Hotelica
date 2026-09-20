@@ -539,3 +539,175 @@ export const USUARIOS_DEMO = {
 } as const;
 
 export type Rol = keyof typeof USUARIOS_DEMO;
+
+// ----- Destinos y actividades turísticas (HU-012) -----
+
+export type CategoriaActividad = "aventura" | "cultura" | "naturaleza" | "playa";
+
+export type Actividad = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  categoria: CategoriaActividad;
+  dificultad: "baja" | "media" | "alta";
+  duracion: string;
+  precio: number; // en córdobas, 0 = gratuita
+};
+
+export type DestinoTuristico = {
+  id: string;
+  nombre: string;
+  departamentoId: string;
+  descripcion: string;
+  imagen: string;
+  actividades: Actividad[];
+};
+
+export const ETIQUETA_CATEGORIA: Record<CategoriaActividad, string> = {
+  aventura: "Aventura",
+  cultura: "Cultura",
+  naturaleza: "Naturaleza",
+  playa: "Playa",
+};
+
+export const ETIQUETA_DIFICULTAD: Record<string, string> = {
+  baja: "Fácil",
+  media: "Moderada",
+  alta: "Difícil",
+};
+
+export const DESTINOS_TURISTICOS: DestinoTuristico[] = [
+  // Granada
+  {
+    id: "dt-granada-centro",
+    nombre: "Centro Colonial de Granada",
+    departamentoId: "granada",
+    descripcion: "La ciudad colonial más antigua de América continental, con arquitectura colorida, iglesias monumentales y la icónica Calle La Calzada frente al lago.",
+    imagen: IMG.granada,
+    actividades: [
+      { id: "a-granada-1", nombre: "Recorrido por Calle La Calzada", descripcion: "Paseo peatonal junto al lago con restaurantes, bares y artesanías.", categoria: "cultura", dificultad: "baja", duracion: "1-2 horas", precio: 0 },
+      { id: "a-granada-2", nombre: "Visita a la Catedral de Granada", descripcion: "Catedral neoclásica del siglo XIX, joya arquitectónica de la ciudad.", categoria: "cultura", dificultad: "baja", duracion: "45 min", precio: 0 },
+      { id: "a-granada-3", nombre: "Paseo en lancha por Las Isletas", descripcion: "365 isletas volcánicas en el lago de Nicaragua, con avifauna y restaurantes flotantes.", categoria: "naturaleza", dificultad: "baja", duracion: "2-3 horas", precio: 500 },
+    ],
+  },
+  {
+    id: "dt-mombacho",
+    nombre: "Volcán Mombacho",
+    departamentoId: "granada",
+    descripcion: "Volcán dormido a 1,344 msnm con senderos en la neblina, orquídeas endémicas y mirador con vista al lago y Las Isletas.",
+    imagen: IMG.granada,
+    actividades: [
+      { id: "a-mombacho-1", nombre: "Sendero El Cráter", descripcion: "Camino de 1.5 km alrededor del cráter principal con miradores.", categoria: "aventura", dificultad: "media", duracion: "2 horas", precio: 250 },
+      { id: "a-mombacho-2", nombre: "Sendero La Leyenda", descripcion: "Ruta de 4 km por bosque nublado con observation de aves.", categoria: "naturaleza", dificultad: "alta", duracion: "3-4 horas", precio: 250 },
+    ],
+  },
+  // León
+  {
+    id: "dt-leon-centro",
+    nombre: "Centro Histórico de León",
+    departamentoId: "leon",
+    descripcion: "Ciudad universitaria llena de murales revolucionarios, iglesias barrocas y la monumental Catedral Basílica, Patrimonio de la Humanidad.",
+    imagen: IMG.leon,
+    actividades: [
+      { id: "a-leon-1", nombre: "Visita a la Catedral Basílica", descripcion: "La iglesia más grande de Centroamérica, sube al techo para vista panorámica.", categoria: "cultura", dificultad: "media", duracion: "1.5 horas", precio: 100 },
+      { id: "a-leon-2", nombre: "Ruta de los Murales", descripcion: "Recorrido a pie por los murales revolucionarios del barrio Sutiava.", categoria: "cultura", dificultad: "baja", duracion: "2 horas", precio: 0 },
+    ],
+  },
+  {
+    id: "dt-telica",
+    nombre: "Volcán Telica",
+    departamentoId: "leon",
+    descripcion: "Volcán activo donde puedes ver lava incandescente al atardecer. Una de las experiencias nocturnas más impresionantes de Nicaragua.",
+    imagen: IMG.ometepe,
+    actividades: [
+      { id: "a-telica-1", nombre: "Ascenso al Telica", descripcion: "Caminata de 3 horas hasta el cráter con vista de lava.", categoria: "aventura", dificultad: "alta", duracion: "6-8 horas", precio: 350 },
+      { id: "a-telica-2", nombre: "Observación nocturna de lava", descripcion: "Experiencia guiada al cráter al atardecer para ver la lava.", categoria: "aventura", dificultad: "alta", duracion: "5 horas", precio: 450 },
+    ],
+  },
+  // Rivas
+  {
+    id: "dt-ometepe",
+    nombre: "Isla de Ometepe",
+    departamentoId: "rivas",
+    descripcion: "Isla formada por dos volcanes en el lago de Nicaragua: Concepción y Midero. Paraíso de senderismo, kayak y ecoturismo.",
+    imagen: IMG.ometepe,
+    actividades: [
+      { id: "a-ometepe-1", nombre: "Ascenso al Volcán Concepción", descripcion: "Volcán activo de 1,610 msnm con vista al lago y Costa Rica.", categoria: "aventura", dificultad: "alta", duracion: "6-8 horas", precio: 400 },
+      { id: "a-ometepe-2", nombre: "Cascada San Ramón", descripcion: "Caminata de 2.5 km hasta una cascada de 60 metros en plena selva.", categoria: "naturaleza", dificultad: "media", duracion: "3 horas", precio: 200 },
+      { id: "a-ometepe-3", nombre: "Kayak en el Lago", descripcion: "Recorrido en kayak por la costa de la isla con vista a los volcanes.", categoria: "aventura", dificultad: "baja", duracion: "2 horas", precio: 350 },
+    ],
+  },
+  {
+    id: "dt-sanjuan",
+    nombre: "San Juan del Sur",
+    departamentoId: "rivas",
+    descripcion: "Pueblo pesquero con playa de arena dorada, malecón animado y los mejores atardeceres del Pacífico nicaragüense.",
+    imagen: IMG.sanjuan,
+    actividades: [
+      { id: "a-sanjuan-1", nombre: "Surf en Playa Maderas", descripcion: "Una de las mejores playas de surf de Centroamérica, olas consistentes todo el año.", categoria: "playa", dificultad: "media", duracion: "3-4 horas", precio: 0 },
+      { id: "a-sanjuan-2", nombre: "Atardecer en el Malecón", descripcion: "Paseo por el malecón con restaurants y vista al atardecer sobre el Pacífico.", categoria: "cultura", dificultad: "baja", duracion: "1-2 horas", precio: 0 },
+      { id: "a-sanjuan-3", nombre: "Tour de ballenas", descripcion: "Avistamiento de ballenas jorobadas de julio a diciembre.", categoria: "naturaleza", dificultad: "baja", duracion: "3 horas", precio: 800 },
+    ],
+  },
+  // Managua
+  {
+    id: "dt-managua-centro",
+    nombre: "Managua Histórica",
+    departamentoId: "managua",
+    descripcion: "Capital de Nicaragua con el Lago de Managua, el Malecón de Tierra Popayana y ruinas de la antigua catedral destruida por el terremoto de 1972.",
+    imagen: IMG.leon,
+    actividades: [
+      { id: "a-managua-1", nombre: "Malecón de Tierra Popayana", descripcion: "Atracciones turísticas, restaurantes y artesanías junto al lago.", categoria: "cultura", dificultad: "baja", duracion: "2 horas", precio: 0 },
+      { id: "a-managua-2", nombre: "Ruinas de la Catedral Vieja", descripcion: "Restos de la catedral destruida en 1972, símbolo de resistencia.", categoria: "cultura", dificultad: "baja", duracion: "30 min", precio: 0 },
+    ],
+  },
+  // Masaya
+  {
+    id: "dt-masaya",
+    nombre: "Masaya y la Laguna de Apoyo",
+    departamentoId: "masaya",
+    descripcion: "Ciudad de las flores y el mercado de artesanías, junto a la laguna de Apoyo, un cráter volcánico convertido en lago de aguas termales.",
+    imagen: IMG.matagalpa,
+    actividades: [
+      { id: "a-masaya-1", nombre: "Mercado de Artesanías de Masaya", descripcion: "El mercado indígena más grande de Nicaragua, artesanías en madera, barro y textiles.", categoria: "cultura", dificultad: "baja", duracion: "2 horas", precio: 0 },
+      { id: "a-masaya-2", nombre: "Natación en la Laguna de Apoyo", descripcion: "Lago de cráter volcánico con aguas cálidas y minerales, perfecto para relajarse.", categoria: "naturaleza", dificultad: "baja", duracion: "3-4 horas", precio: 150 },
+    ],
+  },
+  // Estelí
+  {
+    id: "dt-esteli",
+    nombre: "Estelí y las Reservas Naturales",
+    departamentoId: "esteli",
+    descripcion: "Ciudad de los puros artesanales y las montañas verdes, puerta de entrada a las Reservas de Biosfera de la Cordillera Isabelia.",
+    imagen: IMG.matagalpa,
+    actividades: [
+      { id: "a-esteli-1", nombre: "Ruta de los Puros Artesanales", descripcion: "Visita a fábricas de puros hechos a mano, tradición de Estelí.", categoria: "cultura", dificultad: "baja", duracion: "1.5 horas", precio: 0 },
+      { id: "a-esteli-2", nombre: "Cascada de Tisey", descripcion: "Caminata por bosque nublado hasta una cascada en las montañas.", categoria: "naturaleza", dificultad: "media", duracion: "4 horas", precio: 200 },
+    ],
+  },
+  // Matagalpa
+  {
+    id: "dt-matagalpa",
+    nombre: "Matagalpa y las Montañas del Café",
+    departamentoId: "matagalpa",
+    descripcion: "Tierra de café y neblina, con fincas cafetaleras, senderos en la montaña y el clima fresco más agradable de Nicaragua.",
+    imagen: IMG.matagalpa,
+    actividades: [
+      { id: "a-matagalpa-1", nombre: "Tour del Café", descripcion: "Recorrido por una finca cafetalera desde la semilla hasta la taza.", categoria: "cultura", dificultad: "baja", duracion: "3 horas", precio: 350 },
+      { id: "a-matagalpa-2", nombre: "Sendero al Cerro Apante", descripcion: "Mirador natural con vista panorámica de la ciudad y montañas.", categoria: "naturaleza", dificultad: "media", duracion: "2.5 horas", precio: 100 },
+    ],
+  },
+  // Caribe
+  {
+    id: "dt-corn",
+    nombre: "Corn Island",
+    departamentoId: "caribe",
+    descripcion: "Islas caribeñas con agua turquesa, arena blanca y arrecifes de coral. Paraíso de snorkel, buceo y relax total.",
+    imagen: IMG.corn,
+    actividades: [
+      { id: "a-corn-1", nombre: "Snorkel en el Arrecife", descripcion: "Explora los arrecifes de coral con peces tropicales y tortugas.", categoria: "playa", dificultad: "baja", duracion: "2 horas", precio: 400 },
+      { id: "a-corn-2", nombre: "Playa Long Beach", descripcion: "La play más grande y tranquila de Little Corn, ideal para nadar.", categoria: "playa", dificultad: "baja", duracion: "3-4 horas", precio: 0 },
+      { id: "a-corn-3", nombre: "Paseo en bote a Great Corn", descripcion: "Visita a la isla principal con playa y restaurantes caribeños.", categoria: "aventura", dificultad: "baja", duracion: "4 horas", precio: 300 },
+    ],
+  },
+];

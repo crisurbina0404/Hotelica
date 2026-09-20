@@ -10,6 +10,7 @@ import { Marca } from "./ui";
 import { Inicio } from "./pages/Home";
 import { Resultados } from "./pages/Results";
 import { DetalleHotel } from "./pages/HotelDetail";
+import { Destinos } from "./pages/Destinos";
 import { MisReservas, Favoritos } from "./pages/MyReservations";
 import { PanelHotel } from "./pages/HotelPanel";
 import { PanelAdmin } from "./pages/AdminPanel";
@@ -61,6 +62,7 @@ function AppInner() {
       case "inicio": return <Inicio navegar={navegar} />;
       case "resultados": return <Resultados ruta={ruta} navegar={navegar} />;
       case "hotel": return <DetalleHotel id={ruta.id} navegar={navegar} />;
+      case "destinos": return <Destinos navegar={navegar} />;
       case "reservas": return <MisReservas navegar={navegar} />;
       case "favoritos": return <Favoritos navegar={navegar} />;
       case "perfil": return <Perfil navegar={navegar} />;

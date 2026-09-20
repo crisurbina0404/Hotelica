@@ -197,8 +197,8 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <TituloSeccion ceja="Destinos que enamoran" titulo="De la colonia al Caribe, un departamento a la vez" />
-            <button onClick={() => navegar({ nombre: "resultados" })} className="nav-link text-sm font-bold text-primary">
-              {t(idioma, "verTodos")}
+            <button onClick={() => navegar({ nombre: "destinos" })} className="nav-link text-sm font-bold text-primary">
+              Ver todos los destinos
             </button>
           </div>
         </Reveal>
