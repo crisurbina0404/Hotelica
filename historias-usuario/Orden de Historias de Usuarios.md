@@ -15,7 +15,7 @@
 | 11 | HU-010 | Búsqueda | Consultar habitaciones y precios | Alta | ✅ Terminada |
 | 12 | HU-011 | Búsqueda | Consultar disponibilidad por fechas | Alta | ✅ Terminada |
 | 13 | HU-012 | Búsqueda | Ver destinos y actividades turísticas | Baja | ✅ Terminada |
-| 14 | HU-013 | Reservas | Crear una reserva | Alta | ⬜ Escrita |
+| 14 | HU-013 | Reservas | Crear una reserva | Alta | ✅ Terminada |
 | 15 | HU-014 | Reservas | Calcular subtotal, IVA y total | Alta | ⬜ Escrita |
 | 16 | HU-015 | Reservas | Consultar historial de reservas | Media | ⬜ Escrita |
 | 17 | HU-016 | Reservas | Cancelar una reserva | Alta | ⬜ Escrita |
