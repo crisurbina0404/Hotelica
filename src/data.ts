@@ -473,6 +473,68 @@ export const RESERVAS_SEED: Reserva[] = [
   // s3 tiene 2 unidades → 2 reservas
   demo("HC-1060", "h-sanjuan", "s3", "Camila Ortiz", sumarDias(HOY, 7), 3, 2, "tarjeta", "confirmada"),
   demo("HC-1061", "h-sanjuan", "s3", "Roberto Méndez", sumarDias(HOY, 7), 3, 2, "efectivo", "confirmada"),
+
+  // Reservas de demostración: fechas ocupadas para mostrar sugerencias
+  // Hotel San Juan del Sur - Llenar TODAS las unidades para fechas específicas
+  // s1 = 6 unidades, s2 = 4 unidades, s3 = 2 unidades = 12 total
+
+  // OCTUBRE - Fechas completamente bloqueadas para demostración
+
+  // 3 Oct (HOY+12) - COMPLETAMENTE LLENO
+  demo("HC-3001", "h-sanjuan", "s1", "Pedro Martínez", sumarDias(HOY, 12), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3002", "h-sanjuan", "s1", "María López", sumarDias(HOY, 12), 3, 2, "efectivo", "confirmada"),
+  demo("HC-3003", "h-sanjuan", "s1", "Carlos Ruiz", sumarDias(HOY, 12), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3004", "h-sanjuan", "s1", "Ana García", sumarDias(HOY, 12), 3, 2, "transferencia", "confirmada"),
+  demo("HC-3005", "h-sanjuan", "s1", "José Martínez", sumarDias(HOY, 12), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3006", "h-sanjuan", "s1", "Laura Sánchez", sumarDias(HOY, 12), 3, 2, "efectivo", "confirmada"),
+  demo("HC-3007", "h-sanjuan", "s2", "Carlos Ramírez", sumarDias(HOY, 12), 4, 3, "tarjeta", "confirmada"),
+  demo("HC-3008", "h-sanjuan", "s2", "María Herrera", sumarDias(HOY, 12), 4, 3, "efectivo", "confirmada"),
+  demo("HC-3009", "h-sanjuan", "s2", "Pedro López", sumarDias(HOY, 12), 4, 3, "tarjeta", "confirmada"),
+  demo("HC-3010", "h-sanjuan", "s2", "Ana Castillo", sumarDias(HOY, 12), 4, 3, "transferencia", "confirmada"),
+  demo("HC-3011", "h-sanjuan", "s3", "Sofía Torres", sumarDias(HOY, 12), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3012", "h-sanjuan", "s3", "Diego Vargas", sumarDias(HOY, 12), 3, 2, "efectivo", "confirmada"),
+
+  // 4 Oct (HOY+13) - COMPLETAMENTE LLENO
+  demo("HC-3013", "h-sanjuan", "s1", "Laura Martínez", sumarDias(HOY, 13), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3014", "h-sanjuan", "s1", "José Hernández", sumarDias(HOY, 13), 2, 2, "efectivo", "confirmada"),
+  demo("HC-3015", "h-sanjuan", "s1", "María García", sumarDias(HOY, 13), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3016", "h-sanjuan", "s1", "Pedro López", sumarDias(HOY, 13), 2, 2, "transferencia", "confirmada"),
+  demo("HC-3017", "h-sanjuan", "s1", "Ana Martínez", sumarDias(HOY, 13), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3018", "h-sanjuan", "s1", "Carlos Ruiz", sumarDias(HOY, 13), 2, 2, "efectivo", "confirmada"),
+  demo("HC-3019", "h-sanjuan", "s2", "Sofía Torres", sumarDias(HOY, 13), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3020", "h-sanjuan", "s2", "Diego Vargas", sumarDias(HOY, 13), 3, 2, "efectivo", "confirmada"),
+  demo("HC-3021", "h-sanjuan", "s2", "Laura Gómez", sumarDias(HOY, 13), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3022", "h-sanjuan", "s2", "Carlos Ramírez", sumarDias(HOY, 13), 3, 2, "transferencia", "confirmada"),
+  demo("HC-3023", "h-sanjuan", "s3", "María Herrera", sumarDias(HOY, 13), 4, 3, "tarjeta", "confirmada"),
+  demo("HC-3024", "h-sanjuan", "s3", "Pedro López", sumarDias(HOY, 13), 4, 3, "efectivo", "confirmada"),
+
+  // 5 Oct (HOY+14) - COMPLETAMENTE LLENO
+  demo("HC-3025", "h-sanjuan", "s1", "Ana Castillo", sumarDias(HOY, 14), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3026", "h-sanjuan", "s1", "José Martínez", sumarDias(HOY, 14), 3, 2, "efectivo", "confirmada"),
+  demo("HC-3027", "h-sanjuan", "s1", "Laura Sánchez", sumarDias(HOY, 14), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3028", "h-sanjuan", "s1", "María López", sumarDias(HOY, 14), 3, 2, "transferencia", "confirmada"),
+  demo("HC-3029", "h-sanjuan", "s1", "Pedro Martínez", sumarDias(HOY, 14), 3, 2, "tarjeta", "confirmada"),
+  demo("HC-3030", "h-sanjuan", "s1", "Carlos García", sumarDias(HOY, 14), 3, 2, "efectivo", "confirmada"),
+  demo("HC-3031", "h-sanjuan", "s2", "María García", sumarDias(HOY, 14), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3032", "h-sanjuan", "s2", "Pedro López", sumarDias(HOY, 14), 2, 2, "efectivo", "confirmada"),
+  demo("HC-3033", "h-sanjuan", "s2", "Ana Martínez", sumarDias(HOY, 14), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3034", "h-sanjuan", "s2", "Carlos Ruiz", sumarDias(HOY, 14), 2, 2, "transferencia", "confirmada"),
+  demo("HC-3035", "h-sanjuan", "s3", "Laura Martínez", sumarDias(HOY, 14), 3, 3, "tarjeta", "confirmada"),
+  demo("HC-3036", "h-sanjuan", "s3", "José Hernández", sumarDias(HOY, 14), 3, 3, "efectivo", "confirmada"),
+
+  // 10 Oct (HOY+19) - COMPLETAMENTE LLENO
+  demo("HC-3037", "h-sanjuan", "s1", "Sofía Torres", sumarDias(HOY, 19), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3038", "h-sanjuan", "s1", "Diego Vargas", sumarDias(HOY, 19), 2, 2, "efectivo", "confirmada"),
+  demo("HC-3039", "h-sanjuan", "s1", "Laura Gómez", sumarDias(HOY, 19), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3040", "h-sanjuan", "s1", "Carlos Ramírez", sumarDias(HOY, 19), 2, 2, "transferencia", "confirmada"),
+  demo("HC-3041", "h-sanjuan", "s1", "María Herrera", sumarDias(HOY, 19), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3042", "h-sanjuan", "s1", "Pedro López", sumarDias(HOY, 19), 2, 2, "efectivo", "confirmada"),
+  demo("HC-3043", "h-sanjuan", "s2", "Ana Castillo", sumarDias(HOY, 19), 3, 3, "tarjeta", "confirmada"),
+  demo("HC-3044", "h-sanjuan", "s2", "José Martínez", sumarDias(HOY, 19), 3, 3, "efectivo", "confirmada"),
+  demo("HC-3045", "h-sanjuan", "s2", "Laura Sánchez", sumarDias(HOY, 19), 3, 3, "tarjeta", "confirmada"),
+  demo("HC-3046", "h-sanjuan", "s2", "María López", sumarDias(HOY, 19), 3, 3, "transferencia", "confirmada"),
+  demo("HC-3047", "h-sanjuan", "s3", "Pedro Martínez", sumarDias(HOY, 19), 2, 2, "tarjeta", "confirmada"),
+  demo("HC-3048", "h-sanjuan", "s3", "Carlos García", sumarDias(HOY, 19), 2, 2, "efectivo", "confirmada"),
 ];
 
 // ----- Reseñas iniciales de los hoteles -----
