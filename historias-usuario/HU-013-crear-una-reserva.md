@@ -44,8 +44,8 @@ El turista necesita completar el proceso de reserva después de haber selecciona
 ## MoSCoW
 
 - **Must Have:** Wizard de 3 pasos, validación de disponibilidad, registro con folio HC-XXXX, resumen de confirmación.
-- **Should Have:** Cálculo automático de precio total (noches × precio + IVA 15%), sugerencias de fechas alternativas.
-- **Could Have:** Campo de comentarios o solicitudes especiales.
+- **Should Have:** ✅ Cálculo automático de precio total (noches × precio + IVA 15%), sugerencias de fechas alternativas, auto-rellenar datos del usuario logiado, ✅ envío de correo de confirmación.
+- **Could Have:** ✅ Campo de comentarios o solicitudes especiales.
 - **Won't Have:** Reserva grupal con pagos divididos, integración con agencias de viaje.
 
 ## Flujo del wizard
@@ -53,15 +53,17 @@ El turista necesita completar el proceso de reserva después de haber selecciona
 ### Paso 1: Datos de la reserva
 - Selección de fechas de llegada y salida
 - Número de huéspedes
+- Datos del usuario logiado (solo lectura: nombre, correo, teléfono)
 - Indicador de disponibilidad en tiempo real
 - Sugerencias de fechas alternativas si no hay disponibilidad
 
 ### Paso 2: Método de pago
 - Selección de método: Tarjeta, Efectivo o Transferencia
+- **Campo de comentarios o solicitudes especiales (opcional)**
 - Resumen de precio parcial
 
 ### Paso 3: Confirmación
-- Resumen completo de la reserva
+- Resumen completo de la reserva (incluyendo datos del usuario y comentarios)
 - Botón "Confirmar reserva"
 - Animación de procesamiento
 - Pantalla de éxito con folio HC-XXXX
@@ -69,7 +71,8 @@ El turista necesita completar el proceso de reserva después de haber selecciona
 ## Notas de implementación
 
 - Componente: `src/pages/BookingModal.tsx`
-- Función de creación: `crearReserva()` en `src/store.tsx:139-150`
+- Función de creación: `crearReserva()` en `src/store.tsx:139-151`
+- Envío de correo: `enviarCorreoReserva()` en `src/store.tsx:153` + Edge Function `supabase/functions/enviar-correo-reserva/index.ts`
 - Cálculos: `calcularNoches()`, `calcularTotales()` en `src/data.ts`
-- Sugerencias: `sugerirFechasAlternativas()` en `src/data.ts:384-419`
-- Integración con: `src/pages/HotelDetail.tsx:438-449`
+- Sugerencias: `sugerirFechasAlternativas()` en `src/data.ts:387`
+- Integración con: `src/pages/HotelDetail.tsx:440-449`

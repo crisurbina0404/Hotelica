@@ -6,6 +6,79 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.30.0] — 2026-09-22 · HU-013: Correo de confirmación, datos del usuario y comentarios
+
+### Agregado
+- **Edge Function `enviar-correo-reserva`** (`supabase/functions/enviar-correo-reserva/index.ts`):
+  envía el correo de confirmación con Resend (folio, hotel, fechas, noches,
+  huéspedes y total) con plantilla de marca Hotelica.
+- **`enviarCorreoReserva()`** en `src/store.tsx`: llama a la Edge Function
+  con el token de la sesión de Supabase.
+- **Datos del usuario en el paso 1** (`src/pages/BookingModal.tsx`):
+  recuadro "Reservando como" con nombre, correo y teléfono (solo lectura).
+- **Campo de comentarios o solicitudes especiales** (paso 2): opcional,
+  se muestra en el resumen del paso 3 y se guarda en la reserva.
+- **Feedback del correo** en la pantalla de éxito: aviso verde si se envió,
+  aviso ámbar con el folio si falló (la reserva queda registrada igual).
+
+### Modificado
+- `src/data.ts`: tipo `Reserva` con los campos `correo`, `telefono` y `comentarios`.
+- `src/pages/BookingModal.tsx`: `confirmar()` ahora es async, usa el usuario
+  logueado en lugar del nombre fijo "María Fernández".
+- `historias-usuario/HU-013-crear-una-reserva.md`: MoSCoW y flujo del wizard
+  actualizados con las mejoras.
+
+### Verificado
+- Los 5 escenarios BDD de HU-013 (ver detalle en v0.29.0) siguen cumpliéndose.
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.29.0] — 2026-09-21 · HU-013: Wizard de 3 pasos para crear reserva
+
+### Agregado
+- **Wizard de 3 pasos** (`src/pages/BookingModal.tsx`): paso 1 datos de la
+  reserva, paso 2 método de pago, paso 3 confirmación con resumen completo.
+- **Validaciones en el paso 1**: fechas inválidas, huéspedes < 1, huéspedes
+  sobre la capacidad de la habitación y sin disponibilidad.
+- **Pantalla de éxito** con folio HC-XXXX y animación de procesamiento.
+- **Archivo `HU-013-crear-una-reserva.md`** con los 5 criterios BDD.
+
+### Verificado
+- Escenario 1: reserva registrada con estado "Pendiente" y folio HC-XXXX
+  (`src/store.tsx:139-151`).
+- Escenario 2: error al avanzar + panel de fechas alternativas sugeridas.
+- Escenario 3: error "no admite esa cantidad de huéspedes".
+- Escenario 4: tarjeta, efectivo o transferencia en el paso 2.
+- Escenario 5: resumen completo en el paso 3.
+
+### Cambiado
+- Estado de HU-013 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+---
+
+## [v0.28.0] — 2026-09-21 · Reservas de demostración para el calendario
+
+### Agregado
+- **Reservas demo bloqueadas y confirmadas** (`src/data.ts`): fechas ocupadas
+  en Hotel San Juan para que el calendario de HU-011 muestre días rojos/amarillos
+  y las sugerencias de fechas alternativas tengan con qué trabajar.
+
+---
+
+## [v0.27.0] — 2026-09-19 · HU-012: Ver destinos y actividades turísticas
+
+### Agregado
+- **Página de destinos** (`src/pages/Destinos.tsx`): departamentos de
+  Nicaragua con actividades turísticas destacadas.
+- **Datos de destinos** en `src/data.ts` y ruta `destinos` en `src/rutas.ts`.
+- **Archivo `HU-012-ver-destinos-y-actividades.md`** con criterios BDD.
+
+### Cambiado
+- Estado de HU-012 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+---
+
 ## [v0.26.0] — 2026-09-18 · HU-010: Consultar habitaciones y precios
 
 ### Verificado

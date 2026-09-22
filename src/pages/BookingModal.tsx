@@ -33,7 +33,7 @@ export function ModalReserva({
   navegar: Navegar;
   alCerrar: () => void;
 }) {
-  const { crearReserva, disponiblesDe, avisar } = useApp();
+  const { crearReserva, enviarCorreoReserva, disponiblesDe, avisar, usuario } = useApp();
   const [llegada, setLlegada] = useState(l0);
   const [salida, setSalida] = useState(s0);
   const [huespedes, setHuespedes] = useState(h0);
@@ -42,6 +42,10 @@ export function ModalReserva({
   const [fase, setFase] = useState<Fase>("wizard");
   const [pasoActual, setPasoActual] = useState<Paso>(1);
   const [reserva, setReserva] = useState<Reserva | null>(null);
+  const [correoEnviado, setCorreoEnviado] = useState<boolean | null>(null);
+
+  // Campo opcional de comentarios
+  const [comentarios, setComentarios] = useState("");
 
   // Cálculos de negocio
   const noches = calcularNoches(llegada, salida);
@@ -102,21 +106,36 @@ export function ModalReserva({
   };
 
   // Confirmar la reserva (paso 3)
-  const confirmar = () => {
+  const confirmar = async () => {
     setFase("procesando");
+    setCorreoEnviado(null);
 
-    setTimeout(() => {
-      const nueva = crearReserva({
-        hotelId: hotel.id,
-        habitacionId: habitacion.id,
-        turista: "María Fernández",
-        llegada, salida, huespedes,
-        noches, subtotal, iva, total, pago,
-      });
-      setReserva(nueva);
-      setFase("exito");
-      avisar(`Reserva ${nueva.folio} creada correctamente`, "ok");
-    }, 900);
+    // Primero creamos la reserva
+    const nueva = crearReserva({
+      hotelId: hotel.id,
+      habitacionId: habitacion.id,
+      turista: usuario?.nombre ?? "Turista",
+      correo: usuario?.correo ?? "",
+      telefono: usuario?.telefono ?? "",
+      comentarios,
+      llegada, salida, huespedes,
+      noches, subtotal, iva, total, pago,
+    });
+    setReserva(nueva);
+    avisar(`Reserva ${nueva.folio} creada correctamente`, "ok");
+
+    // Luego intentamos enviar el correo
+    const resultadoCorreo = await enviarCorreoReserva(nueva, hotel.nombre);
+
+    if (resultadoCorreo.ok) {
+      setCorreoEnviado(true);
+      avisar(`Correo de confirmación enviado a ${usuario?.correo}`, "ok");
+    } else {
+      setCorreoEnviado(false);
+      avisar(`Reserva creada pero no se pudo enviar el correo: ${resultadoCorreo.error}`, "error");
+    }
+
+    setFase("exito");
   };
 
   const claseCampo = "w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
@@ -137,6 +156,24 @@ export function ModalReserva({
           </span>
           <h2 className="mt-5 font-display text-2xl font-bold text-ink sm:text-3xl">¡Tu reserva fue realizada con éxito!</h2>
           <p className="mt-2 text-sm text-muted">Guarda tu folio: lo necesitarás para el check-in en recepción.</p>
+
+          {/* Confirmación de correo enviado */}
+          {correoEnviado === true && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-[#DCFCE7] px-4 py-2.5 text-sm font-semibold text-[#166534]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+              </svg>
+              Correo de confirmación enviado a <b>{usuario?.correo}</b>
+            </div>
+          )}
+          {correoEnviado === false && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-[#FEF3C7] px-4 py-2.5 text-sm font-semibold text-[#92400E]">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+              </svg>
+              No se pudo enviar el correo. Tu reserva está registrada con folio <b>{reserva?.folio}</b>
+            </div>
+          )}
 
           <p className="mt-5 rounded-xl border-2 border-dashed border-accent bg-accent-light px-8 py-3 font-display text-3xl font-extrabold tracking-wider text-accent-dark">
             {reserva?.folio}
@@ -232,6 +269,15 @@ export function ModalReserva({
                     </label>
                   </div>
 
+                  {/* Datos del usuario logiado (solo lectura) */}
+                  {usuario && (
+                    <div className="mt-4 rounded-lg bg-primary-soft p-3 text-sm">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Reservando como</p>
+                      <p className="mt-1 font-semibold text-ink">{usuario.nombre}</p>
+                      <p className="text-xs text-muted">{usuario.correo} · {usuario.telefono}</p>
+                    </div>
+                  )}
+
                   {/* Disponibilidad en tiempo real */}
                   <div className={`mt-4 rounded-lg p-3 text-sm font-semibold ${disponibles > 0 ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#FEE2E2] text-[#B91C1C]"}`}>
                     {disponibles > 0 ? `${disponibles} disponible${disponibles > 1 ? "s" : ""} para estas fechas` : "No hay disponibilidad para estas fechas"}
@@ -268,6 +314,19 @@ export function ModalReserva({
                       </button>
                     ))}
                   </div>
+
+                  {/* Comentarios o solicitudes especiales */}
+                  <div className="mt-5 border-t border-line pt-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Comentarios o solicitudes especiales (opcional)</p>
+                    <textarea
+                      value={comentarios}
+                      onChange={(e) => setComentarios(e.target.value)}
+                      placeholder="Ej: Necesito cama extra, llego tarde, piso alto..."
+                      rows={3}
+                      className={`${claseCampo} mt-2 resize-none`}
+                    />
+                  </div>
+
                   <p className="mt-4 text-xs text-muted">Selecciona cómo deseas pagar tu reserva.</p>
                 </div>
               )}
@@ -281,11 +340,15 @@ export function ModalReserva({
                     <div className="grid gap-2.5">
                       <p className="flex justify-between"><span className="text-muted">Hotel</span><b className="text-ink">{hotel.nombre}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Habitación</span><b className="text-ink">{habitacion.tipo}</b></p>
+                      <p className="flex justify-between"><span className="text-muted">Huésped</span><b className="text-ink">{usuario?.nombre}</b></p>
+                      <p className="flex justify-between"><span className="text-muted">Correo</span><b className="text-ink">{usuario?.correo}</b></p>
+                      <p className="flex justify-between"><span className="text-muted">Teléfono</span><b className="text-ink">{usuario?.telefono}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Llegada</span><b className="text-ink">{fmtFecha(llegada)}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Salida</span><b className="text-ink">{fmtFecha(salida)}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Noches</span><b className="text-ink">{noches}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Huéspedes</span><b className="text-ink">{huespedes}</b></p>
-                      <p className="flex justify-between border-t border-line pt-2"><span className="text-muted">Método de pago</span><b className="text-ink capitalize">{pago}</b></p>
+                      <p className="flex justify-between"><span className="text-muted">Método de pago</span><b className="text-ink capitalize">{pago}</b></p>
+                      {comentarios && <p className="flex justify-between"><span className="text-muted">Comentarios</span><b className="text-ink text-right max-w-[200px]">{comentarios}</b></p>}
                     </div>
                   </div>
 

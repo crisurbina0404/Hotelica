@@ -49,6 +49,9 @@ export type Reserva = {
   hotelId: string;
   habitacionId: string;
   turista: string;
+  correo: string;
+  telefono: string;
+  comentarios: string;
   llegada: string; // formato ISO (yyyy-mm-dd)
   salida: string;
   huespedes: number;
@@ -438,7 +441,11 @@ function demo(
   const hab = HABITACIONES_SEED.find((h) => h.id === habitacionId)!;
   const t = calcularTotales(hab.precio, noches);
   return {
-    folio, hotelId, habitacionId, turista, llegada,
+    folio, hotelId, habitacionId, turista,
+    correo: `${turista.toLowerCase().replace(/\s+/g, ".")}@correo.com`,
+    telefono: "8888-1234",
+    comentarios: "",
+    llegada,
     salida: sumarDias(llegada, noches),
     huespedes, noches, ...t, pago, estado,
     creada: sumarDias(llegada, -12),
