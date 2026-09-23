@@ -87,7 +87,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   // Sugerencias de fechas alternativas cuando no hay disponibilidad
   const sugerencias = useMemo(() => {
     const hayDisponibilidad = rooms.some(
-      (r) => r.estado === "disponible" && disponiblesDe(r.id, llegada, salida) > 0 && r.capacidad >= huespedes
+      (r) => r.estado === "disponible" && disponiblesDe(r.id, llegada, salida) > 0
     );
     if (hayDisponibilidad || noches <= 0) return [];
     return sugerirFechasAlternativas(

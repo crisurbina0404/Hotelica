@@ -77,6 +77,7 @@ type AppCtx = {
   cambiarIdioma: () => void;
   alternarFavorito: (hotelId: string) => void;
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
+  enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => void;
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => void;
@@ -172,6 +173,53 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setDatos((d) => ({ ...d, folio: d.folio + 1, reservas: [nueva, ...d.reservas] }));
     return nueva;
+  };
+
+  // Envía correo de confirmación vía Edge Function (Resend API)
+  const enviarCorreoReserva = async (reserva: Reserva, hotelNombre: string): Promise<{ ok?: boolean; error?: string }> => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { error: "Configuración de Supabase no encontrada" };
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? supabaseAnonKey;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/enviar-correo-reserva`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          folio: reserva.folio,
+          hotelNombre,
+          turista: reserva.turista,
+          correo: reserva.correo,
+          llegada: reserva.llegada,
+          salida: reserva.salida,
+          noches: reserva.noches,
+          huespedes: reserva.huespedes,
+          total: reserva.total,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Error al enviar correo:", data);
+        return { error: data.error || "Error al enviar el correo" };
+      }
+
+      return { ok: true };
+    } catch (error) {
+      console.error("Error de red al enviar correo:", error);
+      return { error: "No se pudo conectar con el servidor de correos" };
+    }
   };
 
   // Cambia el estado de una reserva (confirmar, check-in, check-out, cancelar)
@@ -435,6 +483,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cambiarIdioma,
       alternarFavorito,
       crearReserva,
+      enviarCorreoReserva,
       cambiarEstadoReserva,
       calificar,
       decidirHotel,
