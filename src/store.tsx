@@ -69,7 +69,7 @@ type AppCtx = {
   cambiarRol: (r: Rol) => void;
   login: (correo: string, contrasena: string) => Promise<{ error?: string }>;
   registrar: (correo: string, contrasena: string, nombre: string) => Promise<{ error?: string }>;
-  loginSocial: (proveedor: string) => void;
+  loginSocial: (proveedor: string) => Promise<{ error?: string }>;
   logout: () => void;
   actualizarPerfil: (datos: { nombre: string; telefono: string; direccion: string }) => Promise<{ error?: string }>;
   olvidarContrasena: (correo: string) => Promise<{ error?: string; ok?: boolean }>;
@@ -117,6 +117,31 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem("hotelica-idioma", idioma);
   }, [idioma]);
+
+  // Escucha los cambios de sesión de Supabase (HU-002):
+  // cuando el usuario vuelve de Google / Facebook / Apple (OAuth), recibimos su sesión aquí
+  useEffect(() => {
+    const { data: escucha } = supabase.auth.onAuthStateChange((evento, sesion) => {
+      const u = sesion?.user;
+      if (!u) return;
+      const meta = u.user_metadata ?? {};
+      const correo = u.email ?? "";
+      const nombre = meta.nombre || meta.full_name || meta.name || correo.split("@")[0];
+      const telefono = meta.telefono || meta.phone || "";
+      const direccion = meta.direccion || "";
+      setUsuario((actual) => {
+        // Evita re-render si ya es el mismo usuario (p. ej. refresco de token)
+        if (actual?.correo === correo && actual.nombre === nombre) return actual;
+        return { nombre, rol: "Turista", correo, telefono, direccion };
+      });
+      // Bienvenida cuando el usuario regresa de un proveedor social (OAuth)
+      if (evento === "SIGNED_IN" && sessionStorage.getItem("hotelica-oauth")) {
+        sessionStorage.removeItem("hotelica-oauth");
+        avisar(`Bienvenido, ${nombre}`, "ok");
+      }
+    });
+    return () => escucha.subscription.unsubscribe();
+  }, []);
 
   // Muestra un aviso y lo retira automáticamente a los 3.5 segundos
   const avisar = (texto: string, tono: Toast["tono"] = "ok") => {
@@ -274,10 +299,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
-  // Login directo con redes sociales simuladas (Google, Facebook, Apple)
-  const loginSocial = (_proveedor: string) => {
-    setUsuario({ nombre: "Turista Demo", rol: "Turista", correo: "demo@hotelica.ni", telefono: "", direccion: "" });
-    avisar("Sesión iniciada con red social (demo)", "ok");
+  // Login real con Google vía Supabase Auth (HU-002)
+  // Abre el flujo OAuth; al volver al sitio, onAuthStateChange recibe la sesión
+  const loginSocial = async (_proveedor: string) => {
+    sessionStorage.setItem("hotelica-oauth", "google"); // para saludar al volver
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+
+    if (error) {
+      sessionStorage.removeItem("hotelica-oauth");
+      console.error("Error OAuth con Google:", error.message);
+      return { error: "El acceso con Google no está disponible. Verificá que el proveedor esté habilitado en Supabase (Authentication → Providers)." };
+    }
+    return {}; // el navegador redirige a Google
   };
 
   // Cerrar sesión

@@ -6,6 +6,32 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.27.0] — 2026-09-22 · Login con Google vía Supabase Auth
+
+### Cambiado
+- **`src/store.tsx` — `loginSocial`**: ya no es simulado. Ahora usa
+  `supabase.auth.signInWithOAuth({ provider: "google" })` con la suscripción
+  real de Supabase y `redirectTo: window.location.origin`.
+- **`src/store.tsx` — nuevo listener `onAuthStateChange`**: al volver de
+  Google recibe la sesión, arma el `Usuario` desde `user_metadata`
+  (nombre, teléfono, dirección) y muestra la bienvenida con toast.
+- **`src/layout.tsx` — modal de login**: los 3 botones sociales se
+  reemplazaron por un único botón "Continuar con Google" con el logo oficial
+  de la marca; los errores se muestran inline en el modal.
+- **`src/i18n.ts`**: `loginGoogle` ahora dice "Continuar con Google" /
+  "Continue with Google"; se quitaron las claves sin uso de Facebook/Apple.
+
+### Agregado
+- **`src/icons.tsx`**: icono de marca `LogoGoogle` (colores oficiales,
+  dibujado en SVG sin librerías).
+
+### Requisitos en el dashboard de Supabase
+- Authentication → Providers → habilitar **Google** con el Client ID y
+  Client Secret de Google Cloud Console (credencial OAuth tipo Web).
+- Authentication → URL Configuration → agregar el dominio del sitio
+  (p. ej. `http://localhost:3000` y el dominio de producción en Vercel)
+  a **Site URL** y **Redirect URLs**.
+
 ## [v0.26.0] — 2026-09-18 · HU-010: Consultar habitaciones y precios
 
 ### Verificado

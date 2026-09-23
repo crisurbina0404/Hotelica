@@ -30,9 +30,7 @@ export const traducciones = {
     loginBtn: "Iniciar sesión",
     loginError: "Ingresa tu correo y contraseña para continuar.",
     loginRedes: "O continúa con",
-    loginGoogle: "Google",
-    loginFacebook: "Facebook",
-    loginApple: "Apple",
+    loginGoogle: "Continuar con Google",
   },
   en: {
     // Header
@@ -62,9 +60,7 @@ export const traducciones = {
     loginBtn: "Log in",
     loginError: "Enter your email and password to continue.",
     loginRedes: "Or continue with",
-    loginGoogle: "Google",
-    loginFacebook: "Facebook",
-    loginApple: "Apple",
+    loginGoogle: "Continue with Google",
   },
 } as const;
 

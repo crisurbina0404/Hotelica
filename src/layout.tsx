@@ -10,6 +10,7 @@ import { t } from "./i18n";
 import {
   BanderaNI, IconoCorazon, IconoChevronAbajo, IconoMenu, IconoX,
   IconoEscudo, IconoHotel, IconoHuespedes, IconoCheck, IconoReiniciar,
+  LogoGoogle,
 } from "./icons";
 import { IconoBuscar, IconoUsuario } from "./icons";
 import { Marca, Modal, MarcaFooter } from "./ui";
@@ -387,16 +388,22 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             <div className="relative flex justify-center text-xs"><span className="bg-white px-3 text-muted">{t(idioma, "loginRedes")}</span></div>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 gap-3">
-            {(["Google", "Facebook", "Apple"] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => { loginSocial(p); setLoginAbierto(false); }}
-                className="flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-semibold text-ink transition-all hover:border-primary/40 hover:shadow-sm"
-              >
-                {p}
-              </button>
-            ))}
+          <div className="mt-4">
+            <button
+              onClick={async () => {
+                setLoginError("");
+                const { error } = await loginSocial("Google");
+                if (error) {
+                  setLoginError(error);
+                } else {
+                  setLoginAbierto(false); // el navegador redirige a Google
+                }
+              }}
+              className="flex w-full items-center justify-center gap-3 rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-semibold text-ink transition-all hover:border-primary/40 hover:shadow-sm"
+            >
+              <LogoGoogle size={18} />
+              {t(idioma, "loginGoogle")}
+            </button>
           </div>
         </div>
       </Modal>
