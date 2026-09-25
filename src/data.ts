@@ -365,10 +365,17 @@ export function fmtFecha(iso: string): string {
   });
 }
 
-// Reglas de negocio del cálculo de reserva (IVA 15%)
+// Tasa de IVA aplicada a las reservas (15% según la regla de negocio de HU-014)
+export const TASA_IVA = 0.15;
+
+// Reglas de negocio del cálculo de reserva (subtotal + IVA + total)
+// Entradas inválidas (negativas, NaN o infinitas) se tratan como 0 para
+// garantizar que el total nunca resulte negativo o indeterminado.
 export function calcularTotales(precioNoche: number, noches: number) {
-  const subtotal = precioNoche * noches;
-  const iva = Math.round(subtotal * 0.15);
+  const precio = Number.isFinite(precioNoche) && precioNoche > 0 ? precioNoche : 0;
+  const n = Number.isFinite(noches) && noches > 0 ? Math.round(noches) : 0;
+  const subtotal = precio * n;
+  const iva = Math.round(subtotal * TASA_IVA);
   return { subtotal, iva, total: subtotal + iva };
 }
 

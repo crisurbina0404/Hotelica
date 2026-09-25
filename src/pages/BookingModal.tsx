@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import type { Habitacion, Hotel, Reserva } from "../data";
-import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas } from "../data";
+import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas, TASA_IVA as TASA_IVA_PCT } from "../data";
 import { Modal, Spinner, Marca } from "../ui";
 import {
   IconoLlave, IconoTarjeta, IconoBillete, IconoBanco, IconoCheck,
@@ -185,6 +185,11 @@ export function ModalReserva({
               <p className="flex justify-between py-1"><span className="text-muted">Habitación</span><b className="text-ink">{habitacion.tipo}</b></p>
               <p className="flex justify-between py-1"><span className="text-muted">Fechas</span><b className="text-ink">{fmtFecha(reserva.llegada)} → {fmtFecha(reserva.salida)}</b></p>
               <p className="flex justify-between py-1"><span className="text-muted">Huéspedes</span><b className="text-ink">{reserva.huespedes}</b></p>
+              {/* Desglose subtotal + IVA + total (HU-014) */}
+              <p className="flex justify-between py-1"><span className="text-muted">Precio por noche</span><b className="text-ink">{fmtDinero(reserva.subtotal / Math.max(1, reserva.noches))}</b></p>
+              <p className="flex justify-between py-1"><span className="text-muted">Noches</span><b className="text-ink">{reserva.noches}</b></p>
+              <p className="flex justify-between py-1"><span className="text-muted">Subtotal</span><b className="text-ink">{fmtDinero(reserva.subtotal)}</b></p>
+              <p className="flex justify-between py-1"><span className="text-muted">IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(reserva.iva)}</b></p>
               <p className="flex justify-between border-t border-line py-2 text-base"><span className="font-semibold text-muted">Total (IVA incluido)</span><b className="font-display text-primary">{fmtDinero(reserva.total)}</b></p>
             </div>
           )}
@@ -371,7 +376,7 @@ export function ModalReserva({
                 <p className="flex justify-between text-muted"><span>Precio por noche</span><b className="text-ink">{fmtDinero(habitacion.precio)}</b></p>
                 <p className="flex justify-between text-muted"><span>Noches</span><b className="text-ink">{noches > 0 ? noches : "—"}</b></p>
                 <p className="flex justify-between text-muted"><span>Subtotal</span><b className="text-ink">{fmtDinero(subtotal)}</b></p>
-                <p className="flex justify-between text-muted"><span>IVA (15%)</span><b className="text-ink">{fmtDinero(iva)}</b></p>
+                <p className="flex justify-between text-muted"><span>IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(iva)}</b></p>
                 <p className="flex justify-between text-muted"><span>Disponibles</span><b className={disponibles > 0 ? "text-success" : "text-danger"}>{disponibles}</b></p>
               </div>
 

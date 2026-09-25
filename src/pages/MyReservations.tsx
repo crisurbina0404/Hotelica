@@ -6,7 +6,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
-  ETIQUETA_ESTADO, HABITACIONES_SEED, fmtDinero, fmtFecha, hoyISO,
+  ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
 } from "../data";
 import type { EstadoReserva, Reserva } from "../data";
 import { Reveal, BadgeEstado, Modal, Estrellas, EstrellasInput, EstadoVacio, TituloSeccion } from "../ui";
@@ -214,8 +214,7 @@ function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
         <p className="flex justify-between"><span className="text-muted">Llegada</span><b className="text-ink">{fmtFecha(r.llegada)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Salida</span><b className="text-ink">{fmtFecha(r.salida)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Noches</span><b className="text-ink">{r.noches}</b></p>
-        <p className="flex justify-between"><span className="text-muted">Subtotal</span><b className="text-ink">{fmtDinero(r.subtotal)}</b></p>
-        <p className="flex justify-between"><span className="text-muted">IVA (15%)</span><b className="text-ink">{fmtDinero(r.iva)}</b></p>
+        <p className="flex justify-between"><span className="text-muted">Subtotal</span><b className="text-ink">{fmtDinero(r.subtotal)}</b></p>                        <p className="flex justify-between"><span className="text-muted">IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(r.iva)}</b></p>
         <p className="flex justify-between border-t border-line pt-2 text-base"><span className="font-semibold text-muted">Total</span><b className="font-display text-primary">{fmtDinero(r.total)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Método de pago</span><b className="text-ink">{pagoTxt}</b></p>
       </div>

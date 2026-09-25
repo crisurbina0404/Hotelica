@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import {
   calcularNoches,
   calcularTotales,
+  TASA_IVA,
   nuevoPromedio,
   seTraslapan,
   fmtDinero,
@@ -66,6 +67,53 @@ describe("calcularTotales", () => {
     expect(resultado.subtotal).toBe(0);
     expect(resultado.iva).toBe(0);
     expect(resultado.total).toBe(0);
+  });
+
+  // ----- Edge cases de HU-014: entradas inválidas ----- //
+
+  it("devuelve ceros cuando el precio es negativo (HU-014)", () => {
+    const resultado = calcularTotales(-1200, 3);
+    expect(resultado.subtotal).toBe(0);
+    expect(resultado.iva).toBe(0);
+    expect(resultado.total).toBe(0);
+  });
+
+  it("devuelve ceros cuando las noches son negativas (HU-014)", () => {
+    const resultado = calcularTotales(1200, -3);
+    expect(resultado.subtotal).toBe(0);
+    expect(resultado.iva).toBe(0);
+    expect(resultado.total).toBe(0);
+  });
+
+  it("devuelve ceros cuando el precio es NaN (HU-014)", () => {
+    const resultado = calcularTotales(NaN, 3);
+    expect(resultado.subtotal).toBe(0);
+    expect(resultado.iva).toBe(0);
+    expect(resultado.total).toBe(0);
+  });
+
+  it("devuelve ceros cuando las noches son Infinity (HU-014)", () => {
+    const resultado = calcularTotales(1200, Infinity);
+    expect(resultado.subtotal).toBe(0);
+    expect(resultado.iva).toBe(0);
+    expect(resultado.total).toBe(0);
+  });
+
+  it("redondea noches fraccionales al entero más cercano (HU-014)", () => {
+    // calcularNoches puede devolver valores como 2.5 con husos horarios mixtos
+    const resultado = calcularTotales(1000, 2.5);
+    expect(resultado.subtotal).toBe(3000); // Math.round(2.5) = 3 → 1000 × 3
+    expect(resultado.iva).toBe(450);       // 3000 × 0.15
+    expect(resultado.total).toBe(3450);
+  });
+
+  it("garantiza que el total nunca sea negativo (HU-014)", () => {
+    const resultado = calcularTotales(-500, -2);
+    expect(resultado.total).toBeGreaterThanOrEqual(0);
+  });
+
+  it("exporta la tasa de IVA como constante 0.15 (HU-014)", () => {
+    expect(TASA_IVA).toBe(0.15);
   });
 });
 

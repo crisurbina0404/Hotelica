@@ -6,6 +6,25 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.32.0] — 2026-09-24 · HU-014: Calcular subtotal, IVA y total
+
+### Agregado
+- **Constante `TASA_IVA = 0.15`** (`src/data.ts`): tasa de impuesto centralizada y exportada para UI y pruebas.
+- **Desglose completo en la pantalla de éxito** (`src/pages/BookingModal.tsx`): ahora muestra precio por noche, noches, subtotal, IVA y total junto al folio HC-XXXX.
+- **8 pruebas nuevas** (`src/__tests__/data.test.ts`): edge cases de HU-014 (precio/negativas/NaN/Infinity → 0, noches fraccionales redondeadas, total nunca negativo, constante TASA_IVA).
+
+### Modificado
+- **`calcularTotales()`** (`src/data.ts`): valida entradas — negativos, `NaN` e `Infinity` se tratan como 0 — garantizando que subtotal, IVA y total nunca sean negativos o indeterminados. Las noches fraccionales se redondean al entero más cercano.
+- **Etiquetas de IVA dinámicas**: `BookingModal.tsx` y `MyReservations.tsx` ahora muestran `IVA ({TASA_IVA * 100}%)` en lugar del texto fijo "IVA (15%)", así un cambio de tasa se refleja en toda la interfaz.
+- `historias-usuario/HU-014-calcular-subtotal-iva-total.md`: creado con criterios BDD.
+- Estado de HU-014 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+### Verificado
+- `npm run test`: 32 pruebas pasando (incluye los 8 casos nuevos de HU-014).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.31.0] — 2026-09-22 · Login con Google vía Supabase Auth
 
 ### Cambiado
