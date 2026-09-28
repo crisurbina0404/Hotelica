@@ -16,6 +16,7 @@ import {
   sugerirFechasAlternativas,
   historialDeReservas,
   TURISTA_DEMO,
+  sePuedeCancelar,
 } from "../data";
 import type { Reserva } from "../data";
 
@@ -295,5 +296,36 @@ describe("historialDeReservas", () => {
   it("devuelve lista vacía cuando el usuario no tiene reservas", () => {
     const resultado = historialDeReservas(lista, { nombre: "Pedro Vega", correo: "pedro@correo.com" });
     expect(resultado).toEqual([]);
+  });
+});
+
+// =====================================================
+// 9. Cancelación de reservas (HU-016)
+// =====================================================
+describe("sePuedeCancelar", () => {
+  const hoy = "2026-09-28";
+
+  it("permite cancelar una reserva pendiente con llegada futura", () => {
+    expect(sePuedeCancelar({ estado: "pendiente", llegada: "2026-10-05" }, hoy)).toBe(true);
+  });
+
+  it("permite cancelar una reserva confirmada que llega hoy", () => {
+    expect(sePuedeCancelar({ estado: "confirmada", llegada: hoy }, hoy)).toBe(true);
+  });
+
+  it("no permite cancelar una reserva en check-in", () => {
+    expect(sePuedeCancelar({ estado: "checkin", llegada: "2026-09-27" }, hoy)).toBe(false);
+  });
+
+  it("no permite cancelar una reserva completada", () => {
+    expect(sePuedeCancelar({ estado: "completada", llegada: "2026-09-20" }, hoy)).toBe(false);
+  });
+
+  it("no permite cancelar una reserva que ya está cancelada", () => {
+    expect(sePuedeCancelar({ estado: "cancelada", llegada: "2026-10-05" }, hoy)).toBe(false);
+  });
+
+  it("no permite cancelar si la llegada ya pasó", () => {
+    expect(sePuedeCancelar({ estado: "pendiente", llegada: "2026-09-27" }, hoy)).toBe(false);
   });
 });

@@ -634,6 +634,13 @@ export function historialDeReservas(
   return [...mias].sort((a, b) => b.creada.localeCompare(a.creada));
 }
 
+// Solo se puede cancelar antes del check-in y si la reserva sigue abierta
+// (pendiente o confirmada) — regla de negocio de HU-016
+export function sePuedeCancelar(reserva: Pick<Reserva, "estado" | "llegada">, hoy: string): boolean {
+  const estadoPermitido = reserva.estado === "pendiente" || reserva.estado === "confirmada";
+  return estadoPermitido && reserva.llegada >= hoy;
+}
+
 // ----- Destinos y actividades turísticas (HU-012) -----
 
 export type CategoriaActividad = "aventura" | "cultura" | "naturaleza" | "playa";

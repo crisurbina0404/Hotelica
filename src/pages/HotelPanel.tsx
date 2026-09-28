@@ -1,6 +1,6 @@
 // ============================================================
-// Hotelica — Panel del hotel (HU-007 confirmar/cancelar,
-// HU-008 check-in / check-out)
+// Hotelica — Panel del hotel (HU-026 reservas recibidas,
+// HU-027 confirmar, HU-028 check-in, HU-029 check-out)
 // ============================================================
 import { useMemo } from "react";
 import { useApp } from "../store";
@@ -11,13 +11,20 @@ import type { Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, TituloSeccion } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica,
-  IconoCalendario, IconoHotel, IconoHuespedes,
+  IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana,
 } from "../icons";
 
 export function PanelHotel() {
-  const { reservas, cambiarEstadoReserva, avisar } = useApp();
+  const { reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas } = useApp();
   const HOTEL_ID = "h-sanjuan"; // hotel de demostración: Brisas del Pacífico
   const hoy = hoyISO();
+
+  // Avisos que dejaron los turistas (por ejemplo, cancelaciones) — HU-016
+  const avisos = useMemo(
+    () => notificaciones.filter((n) => n.hotelId === HOTEL_ID),
+    [notificaciones]
+  );
+  const avisosSinLeer = avisos.filter((n) => !n.leida).length;
 
   // Reservas que administra este hotel
   const delHotel = useMemo(
@@ -122,7 +129,53 @@ export function PanelHotel() {
         </div>
       </Reveal>
 
-      {/* ===== Gestión de reservas (HU-007 / HU-008) ===== */}
+      {/* ===== Avisos del hotel (HU-016) ===== */}
+      <Reveal delay={200}>
+        <div className="mt-5 rounded-xl border border-line bg-white p-5 shadow-card">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm font-bold text-ink">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FEF3C7] text-hotel"><IconoCampana size={17} /></span>
+              Avisos recientes
+              {avisosSinLeer > 0 && (
+                <span className="rounded-full bg-danger px-2 py-0.5 text-[11px] font-bold text-white">{avisosSinLeer}</span>
+              )}
+            </span>
+            {avisosSinLeer > 0 && (
+              <button
+                onClick={() => marcarNotificacionesLeidas(HOTEL_ID)}
+                className="text-xs font-bold text-hotel underline-offset-2 hover:underline"
+              >
+                Marcar como leídos
+              </button>
+            )}
+          </div>
+
+          {avisos.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">
+              Todavía no hay avisos. Cuando un turista cancele una reserva va a aparecer aquí.
+            </p>
+          ) : (
+            <ul className="mt-3 grid gap-2">
+              {avisos.map((n) => (
+                <li
+                  key={n.id}
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3.5 py-2.5 text-sm ${
+                    n.leida ? "border-line bg-white" : "border-[#FCD34D] bg-[#FEF3C7]"
+                  }`}
+                >
+                  <span className="flex items-center gap-2 font-semibold text-ink">
+                    <IconoCampana size={15} className={n.leida ? "text-muted" : "text-hotel"} />
+                    {n.texto}
+                  </span>
+                  <span className="text-xs text-muted">{fmtFecha(n.fecha)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Reveal>
+
+      {/* ===== Gestión de reservas (HU-027 / HU-028 / HU-029) ===== */}
       <section className="mt-12">
         <Reveal>
           <TituloSeccion ceja="Flujo: Pendiente → Confirmada → Check-in → Completada" titulo="Gestión de reservas" />

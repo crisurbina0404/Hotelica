@@ -21,12 +21,23 @@ export type Usuario = {
   direccion: string;
 };
 
+// Aviso que queda para el hotel en su panel (HU-016)
+export type Notificacion = {
+  id: string;
+  hotelId: string;
+  folio: string;
+  texto: string;
+  fecha: string; // ISO (yyyy-mm-dd)
+  leida: boolean;
+};
+
 // Forma de los datos que se guardan en el navegador
 type Persistido = {
   hoteles: Hotel[];
   reservas: Reserva[];
   resenas: Resena[];
   favoritos: string[];
+  notificaciones: Notificacion[];
   folio: number; // último número de folio usado
 };
 
@@ -39,7 +50,10 @@ function cargar(): Persistido {
     const crudo = localStorage.getItem(CLAVE_LS);
     if (crudo) {
       const d = JSON.parse(crudo) as Persistido;
-      if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) return d;
+      // Los guardados viejos pueden no traer notificaciones: arrancamos con la lista vacía
+      if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) {
+        return { ...d, notificaciones: d.notificaciones ?? [] };
+      }
     }
   } catch {
     // Si el guardado está corrupto, arrancamos con las semillas
@@ -49,6 +63,7 @@ function cargar(): Persistido {
     reservas: RESERVAS_SEED,
     resenas: RESENAS_SEED,
     favoritos: ["h-ometepe", "h-granada"],
+    notificaciones: [],
     folio: 1061,
   };
 }
@@ -61,6 +76,7 @@ type AppCtx = {
   reservas: Reserva[];
   resenas: Resena[];
   favoritos: string[];
+  notificaciones: Notificacion[];
   rol: Rol;
   usuario: Usuario | null;
   idioma: Idioma;
@@ -79,6 +95,8 @@ type AppCtx = {
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
   enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva) => void;
+  avisarHotel: (hotelId: string, folio: string, texto: string) => void;
+  marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => void;
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => void;
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
@@ -227,6 +245,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDatos((d) => ({
       ...d,
       reservas: d.reservas.map((r) => (r.folio === folio ? { ...r, estado } : r)),
+    }));
+  };
+
+  // Deja un aviso en el panel del hotel (por ejemplo: "Reserva cancelada por el turista")
+  const avisarHotel: AppCtx["avisarHotel"] = (hotelId, folio, texto) => {
+    setDatos((d) => ({
+      ...d,
+      notificaciones: [
+        { id: `n-${Date.now()}`, hotelId, folio, texto, fecha: hoyISO(), leida: false },
+        ...d.notificaciones,
+      ],
+    }));
+  };
+
+  // Marca todos los avisos de un hotel como leídos
+  const marcarNotificacionesLeidas: AppCtx["marcarNotificacionesLeidas"] = (hotelId) => {
+    setDatos((d) => ({
+      ...d,
+      notificaciones: d.notificaciones.map((n) => (n.hotelId === hotelId ? { ...n, leida: true } : n)),
     }));
   };
 
@@ -456,6 +493,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reservas: RESERVAS_SEED,
       resenas: RESENAS_SEED,
       favoritos: ["h-ometepe", "h-granada"],
+      notificaciones: [],
       folio: 1061,
     });
     avisar("Datos de demostración restaurados", "info");
@@ -467,6 +505,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reservas: datos.reservas,
       resenas: datos.resenas,
       favoritos: datos.favoritos,
+      notificaciones: datos.notificaciones,
       rol,
       usuario,
       idioma,
@@ -485,6 +524,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       crearReserva,
       enviarCorreoReserva,
       cambiarEstadoReserva,
+      avisarHotel,
+      marcarNotificacionesLeidas,
       calificar,
       decidirHotel,
       disponiblesDe,

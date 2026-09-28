@@ -7,7 +7,7 @@ import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
   ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
-  historialDeReservas, TURISTA_DEMO,
+  historialDeReservas, TURISTA_DEMO, sePuedeCancelar,
 } from "../data";
 import type { EstadoReserva, Reserva } from "../data";
 import { Reveal, BadgeEstado, Modal, Estrellas, EstrellasInput, EstadoVacio, TituloSeccion } from "../ui";
@@ -18,7 +18,7 @@ import {
 } from "../icons";
 
 export function MisReservas({ navegar }: { navegar: Navegar }) {
-  const { reservas, hoteles, cambiarEstadoReserva, calificar, avisar, usuario } = useApp();
+  const { reservas, hoteles, cambiarEstadoReserva, calificar, avisar, avisarHotel, usuario } = useApp();
   const [filtro, setFiltro] = useState<EstadoReserva | "todas">("todas");
   const [detalle, setDetalle] = useState<Reserva | null>(null);
   const [porCancelar, setPorCancelar] = useState<Reserva | null>(null);
@@ -30,18 +30,16 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
   const visibles = filtro === "todas" ? mias : mias.filter((r) => r.estado === filtro);
   const hoy = hoyISO();
 
-  // Una reserva se puede cancelar antes del check-in y si la llegada no pasó
-  const sePuedeCancelar = (r: Reserva) =>
-    (r.estado === "pendiente" || r.estado === "confirmada") && r.llegada >= hoy;
-
   const hotelDe = (r: Reserva) => hoteles.find((h) => h.id === r.hotelId);
   const habDe = (r: Reserva) => HABITACIONES_SEED.find((h) => h.id === r.habitacionId);
 
-  // Ejecuta la cancelación confirmada por el turista
+  // Ejecuta la cancelación confirmada por el turista (HU-016)
   const cancelar = () => {
     if (!porCancelar) return;
     cambiarEstadoReserva(porCancelar.folio, "cancelada");
-    avisar("La reserva fue cancelada correctamente.", "ok");
+    // El hotel se entera en su panel de que el turista canceló
+    avisarHotel(porCancelar.hotelId, porCancelar.folio, `Reserva ${porCancelar.folio} cancelada por el turista`);
+    avisar("La reserva fue cancelada correctamente. Le avisamos al hotel.", "ok");
     setPorCancelar(null);
   };
 
@@ -122,7 +120,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                     <button onClick={() => setDetalle(r)} className="flex items-center justify-center gap-1.5 rounded-lg border border-primary/40 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary-soft">
                       <IconoOjo size={14} /> Ver detalle
                     </button>
-                    {sePuedeCancelar(r) && (
+                    {sePuedeCancelar(r, hoy) && (
                       <button onClick={() => setPorCancelar(r)} className="flex items-center justify-center gap-1.5 rounded-lg border border-danger/30 px-4 py-2 text-xs font-bold text-danger transition-colors hover:bg-[#FEF2F2]">
                         <IconoX size={14} /> Cancelar reserva
                       </button>
@@ -159,6 +157,9 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
           <h3 className="mt-4 font-display text-xl font-bold text-ink">¿Cancelar la reserva {porCancelar?.folio}?</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             ¿Seguro que deseas cancelar esta reserva? Esta acción no se puede deshacer.
+          </p>
+          <p className="mt-3 rounded-lg border border-line bg-canvas px-3.5 py-2.5 text-left text-xs font-semibold leading-relaxed text-muted">
+            Política de cancelación: no hay cargos por cancelar, la habitación queda libre para esas fechas y el hotel recibe el aviso.
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <button onClick={() => setPorCancelar(null)} className="rounded-lg border-2 border-line px-5 py-2.5 text-sm font-bold text-muted transition-colors hover:border-ink/30 hover:text-ink">

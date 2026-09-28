@@ -6,6 +6,28 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.34.0] — 2026-09-28 · HU-016: Cancelar una reserva
+
+### Agregado
+- **`historias-usuario/HU-016-cancelar-una-reserva.md`**: historia con 8 escenarios BDD (botón, modal con política, cambio de estado, estados no cancelables, llegada pasada, disponibilidad liberada, aviso al hotel y persistencia).
+- **Función `sePuedeCancelar(reserva, hoy)`** (`src/data.ts`): regla central de la cancelación — solo estados **Pendiente** o **Confirmada** y con la llegada aún no pasada.
+- **Avisos para el hotel**: tipo `Notificacion` y lista `notificaciones` persistida en `src/store.tsx` con `avisarHotel()` y `marcarNotificacionesLeidas()`; al cancelar, el turista deja el aviso "Reserva HC-XXXX cancelada por el turista".
+- **Tarjeta "Avisos recientes"** (`src/pages/HotelPanel.tsx`): lista los avisos del hotel con contador de no leídos y botón "Marcar como leídos".
+- **Icono `IconoCampana`** (`src/icons.tsx`): SVG inline propio.
+- **6 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("sePuedeCancelar")`): pendiente/confirmada futura, llegada de hoy, check-in, completada, cancelada y llegada pasada.
+
+### Modificado
+- `src/pages/MyReservations.tsx`: el botón y la validación usan `sePuedeCancelar()`; el modal de confirmación ahora incluye la política de cancelación (sin cargos, libera la habitación y avisa al hotel); `cancelar()` llama a `avisarHotel()` y el toast informa que se avisó al hotel.
+- `src/store.tsx`: `notificaciones` se carga con `?? []` para no romper los guardados viejos del `localStorage`.
+- Comentarios de `src/pages/HotelPanel.tsx` actualizados al backlog oficial (HU-026 a HU-029).
+- Estado de HU-016 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+### Verificado
+- `npm run test`: 43 pruebas pasando (6 nuevas de HU-016).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.33.0] — 2026-09-28 · HU-015: Consultar historial de reservas
 
 ### Agregado
