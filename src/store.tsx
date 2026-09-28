@@ -262,6 +262,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           noches: reserva.noches,
           huespedes: reserva.huespedes,
           total: reserva.total,
+          // Extras para que el comprobante salga completo (HU comprobantes)
+          habitacion: HABITACIONES_SEED.find((h) => h.id === reserva.habitacionId)?.tipo ?? "",
+          subtotal: reserva.subtotal,
+          iva: reserva.iva,
+          pago: reserva.pago,
+          estado: reserva.estado,
+          estadoPago: datos.pagos.find((p) => p.folio === reserva.folio)?.estado ?? "",
+          referencia: datos.pagos.find((p) => p.folio === reserva.folio)?.referencia ?? "",
         }),
       });
 

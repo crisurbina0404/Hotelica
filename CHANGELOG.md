@@ -6,6 +6,24 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.39.0] — 2026-09-28 · Comprobantes con la marca Hotelica
+
+### Agregado
+- **Logo de Hotelica en el correo**: la cabecera muestra `public/logo-email.png` (PNG generado desde `Logo-blanco.svg` y recortado al tamaño real del logo) apuntando al archivo publicado en el repositorio, ya que los clientes de correo no renderizan imágenes en `data URI` — por eso salía la imagen rota. Si la imagen está bloqueada se muestra "HOTELICA" como texto alternativo con la tipografía de la marca.
+- **Datos completos del comprobante en el correo**: el frontend envía habitación, subtotal, IVA, método de pago, estado de la reserva, estado del pago y referencia; la plantilla suma bloques de **Detalle de la reserva**, **Pago**, **Resumen del pago** y chips de estado con la paleta oficial.
+- **Copia interna del logo** (`src/assets/Logo-blanco.svg`) para incrustarlo en el comprobante descargable.
+
+### Modificado
+- **Plantilla del correo** (`supabase/fn enviar-correo-reserva`): rediseño con tablas (el espaciado de las filas ahora se respeta en cualquier cliente), cabecera teal con logo y filete dorado, folio en bloque dorado, resumen con subtotal/IVA, total en bloque oscuro con monto dorado, nota de check-in y pie de marca.
+- **Comprobante descargable** (`src/pages/BookingModal.tsx` → `descargarComprobante`): mismo diseño que el correo, con el SVG del logo incrustado, bloques de reserva/pago/resumen, chips de estado, referencia y fecha de pago, y pie HOTELICA.
+- `src/store.tsx`: `enviarCorreoReserva()` arma el cuerpo con los datos extra de la reserva y del pago.
+
+### Verificado
+- `npm run typecheck` y `npm run build` sin errores; `npm run test`: 75 pruebas pasando.
+- Para que el correo nuevo se vea hay que subir el PNG al repositorio (`main`) y luego redesplegar la función: `supabase functions deploy enviar-correo-reserva`.
+
+---
+
 ## [v0.38.0] — 2026-09-28 · HU-020: Gestionar hoteles favoritos
 
 ### Agregado

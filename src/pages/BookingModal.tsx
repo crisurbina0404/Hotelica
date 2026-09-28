@@ -7,6 +7,8 @@ import type { Navegar } from "../rutas";
 import type { Habitacion, Hotel, Reserva, DatosPago, Pago } from "../data";
 import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas, TASA_IVA as TASA_IVA_PCT, validarPago } from "../data";
 import { Modal, Spinner, Marca } from "../ui";
+// Copia interna del logo para incrustarlo en el comprobante descargable
+import logoBlanco from "../assets/Logo-blanco.svg?raw";
 import {
   IconoLlave, IconoTarjeta, IconoBillete, IconoBanco, IconoCheck,
   IconoCalendario, IconoHuespedes, IconoCama, IconoFlechaAtras, IconoDescargar,
@@ -39,40 +41,124 @@ function referenciaDe(metodo: Reserva["pago"], datos: DatosPago): string {
   return "Pago en recepción";
 }
 
-// Arma el comprobante en HTML y lo descarga desde el navegador (HU-018)
-function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: string) {
+// Arma el comprobante en HTML con la marca de Hotelica y lo descarga (HU-018)
+function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: string, pago?: Pago | null) {
+  // Paleta oficial: mismos colores de badge que en la aplicación
+  const CHIP: Record<string, [string, string]> = {
+    pendiente: ["#FEF3C7", "#92400E"],
+    confirmada: ["#DBEAFE", "#1D4ED8"],
+    checkin: ["#D9E9EC", "#0B3540"],
+    completada: ["#DCFCE7", "#166534"],
+    cancelada: ["#FEE2E2", "#B91C1C"],
+    pagado: ["#DCFCE7", "#166534"],
+  };
+  const ETIQUETA: Record<string, string> = {
+    pendiente: "Pendiente", confirmada: "Confirmada", checkin: "Check-in",
+    completada: "Completada", cancelada: "Cancelada", pagado: "Pagado", reembolsado: "Reembolsado",
+  };
+  const chip = (clave: string) => {
+    const [fondo, tinta] = CHIP[clave] ?? ["#EFF5F6", "#0B3540"];
+    const texto = ETIQUETA[clave] ?? clave;
+    return `<span style="display:inline-block;padding:4px 13px;border-radius:999px;background:${fondo};color:${tinta};font-size:12px;font-weight:700;">${texto}</span>`;
+  };
+  const fila = (etiqueta: string, valor: string) =>
+    `<tr><td class="etiqueta">${etiqueta}</td><td class="valor">${valor}</td></tr>`;
+  const metodo = r.pago === "tarjeta" ? "Tarjeta" : r.pago === "efectivo" ? "Efectivo en recepción" : "Transferencia bancaria";
+
   const comprobante = `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><title>Comprobante ${r.folio}</title>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprobante ${r.folio} — Hotelica</title>
 <style>
-  body{font-family:Arial,sans-serif;background:#F8F6F0;color:#1C2B30;margin:0;padding:40px}
-  .caja{max-width:560px;margin:auto;background:#fff;border:1px solid #E4DFD2;border-radius:12px;padding:32px}
-  h1{font-size:22px;color:#0B3540;letter-spacing:3px;margin:0}
-  .folio{font-size:30px;font-weight:bold;color:#D98A0B;margin:16px 0}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  td{padding:7px 0;border-bottom:1px solid #E4DFD2}
-  td:last-child{text-align:right;font-weight:bold}
-  .total td{font-size:17px;color:#0B3540;border-bottom:0}
-  .pie{margin-top:18px;font-size:12px;color:#5D6E73}
+  body { font-family: 'Outfit', 'Segoe UI', Arial, sans-serif; background: #F8F6F0; color: #1C2B30; margin: 0; padding: 40px 16px; }
+  .caja { max-width: 600px; margin: auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 18px rgba(11,53,64,.14); }
+  .cabecera { background: linear-gradient(135deg, #0B3540, #07242C); padding: 30px 24px 24px; text-align: center; border-bottom: 3px solid #F7A81B; }
+  .cabecera svg { width: 220px; height: auto; display: block; margin: 0 auto; }
+  .lema { margin: 16px 0 0; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; color: #8FD3DE; }
+  .guion { color: #E0A83C; }
+  .contenido { padding: 30px 28px 26px; }
+  .ceja { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #177E8C; }
+  .titulo { margin: 8px 0; font-family: 'Fraunces', Georgia, serif; font-size: 27px; font-weight: 700; color: #0B3540; }
+  .folio { margin: 24px 0 6px; padding: 22px 20px; text-align: center; background: #FDF0D7; border: 2px dashed #F7A81B; border-radius: 12px; }
+  .folio-ceja { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #D98A0B; }
+  .folio-numero { margin: 8px 0 6px; font-family: 'Fraunces', Georgia, serif; font-size: 36px; font-weight: 800; color: #0B3540; }
+  .folio-nota { margin: 0; font-size: 13px; color: #5D6E73; }
+  .bloque { margin: 22px 0 0; padding: 6px 20px 14px; background: #F8F6F0; border: 1px solid #E4DFD2; border-radius: 12px; }
+  .bloque-titulo { margin: 16px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0B3540; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 11px 2px; font-size: 14px; border-bottom: 1px solid #E4DFD2; }
+  tr:last-child td { border-bottom: none; }
+  .etiqueta { color: #5D6E73; font-weight: 500; }
+  .valor { text-align: right; font-weight: 700; color: #1C2B30; }
+  .total { margin: 24px 0 0; padding: 22px 20px; text-align: center; background: #0B3540; border-radius: 12px; }
+  .total-etiqueta { margin: 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8FD3DE; }
+  .total-monto { margin: 8px 0 12px; font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 800; color: #F7A81B; }
+  .nota { margin: 22px 0 0; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: #5D6E73; background: #EFF5F6; border-left: 3px solid #177E8C; border-radius: 8px; }
+  .pie { padding: 24px; text-align: center; background: #07242C; }
+  .pie-marca { margin: 0; font-family: 'Libre Baskerville', Georgia, serif; font-size: 15px; font-weight: 700; letter-spacing: 4px; color: #F8F6F0; }
+  .pie-texto { margin: 10px 0 0; font-size: 12px; line-height: 1.7; color: #8FD3DE; }
 </style></head>
 <body><div class="caja">
-  <h1>HOTELICA</h1>
-  <p style="color:#177E8C;margin:4px 0 0">Comprobante de reserva y pago</p>
-  <p class="folio">${r.folio}</p>
-  <table>
-    <tr><td>Hotel</td><td>${hotelNombre}</td></tr>
-    <tr><td>Habitación</td><td>${habitacionTipo}</td></tr>
-    <tr><td>Huésped</td><td>${r.turista}</td></tr>
-    <tr><td>Correo</td><td>${r.correo || "—"}</td></tr>
-    <tr><td>Llegada</td><td>${fmtFecha(r.llegada)}</td></tr>
-    <tr><td>Salida</td><td>${fmtFecha(r.salida)}</td></tr>
-    <tr><td>Noches</td><td>${r.noches}</td></tr>
-    <tr><td>Subtotal</td><td>${fmtDinero(r.subtotal)}</td></tr>
-    <tr><td>IVA (${TASA_IVA_PCT * 100}%)</td><td>${fmtDinero(r.iva)}</td></tr>
-    <tr class="total"><td>Total pagado</td><td>${fmtDinero(r.total)}</td></tr>
-    <tr><td>Método de pago</td><td>${r.pago}</td></tr>
-    <tr><td>Estado de la reserva</td><td>${r.estado}</td></tr>
-  </table>
-  <p class="pie">Emitido el ${fmtFecha(r.creada)} · Guarda este comprobante para el check-in en recepción.</p>
+  <div class="cabecera">
+    ${logoBlanco}
+    <p class="lema"><span class="guion">—</span>&nbsp;&nbsp;Tu destino en Nicaragua&nbsp;&nbsp;<span class="guion">—</span></p>
+  </div>
+
+  <div class="contenido">
+    <p class="ceja">Comprobante de reserva y pago</p>
+    <h1 class="titulo">Reserva ${r.folio}</h1>
+
+    <div class="folio">
+      <p class="folio-ceja">Tu folio</p>
+      <p class="folio-numero">${r.folio}</p>
+      <p class="folio-nota">Guárdalo para el check-in</p>
+    </div>
+
+    <div class="bloque">
+      <p class="bloque-titulo">Detalle de la reserva</p>
+      <table>
+        ${fila("Hotel", hotelNombre)}
+        ${fila("Habitación", habitacionTipo)}
+        ${fila("Huésped", r.turista)}
+        ${fila("Correo", r.correo || "—")}
+        ${fila("Llegada", fmtFecha(r.llegada))}
+        ${fila("Salida", fmtFecha(r.salida))}
+        ${fila("Noches", String(r.noches))}
+        ${fila("Huéspedes", String(r.huespedes))}
+        ${fila("Estado de la reserva", chip(r.estado))}
+      </table>
+    </div>
+
+    <div class="bloque">
+      <p class="bloque-titulo">Pago</p>
+      <table>
+        ${fila("Método", metodo)}
+        ${pago ? fila("Estado del pago", chip(pago.estado)) : ""}
+        ${pago ? fila("Referencia", pago.referencia) : ""}
+        ${pago ? fila("Fecha de pago", fmtFecha(pago.fecha)) : ""}
+      </table>
+    </div>
+
+    <div class="bloque">
+      <p class="bloque-titulo">Resumen del pago</p>
+      <table>
+        ${fila("Subtotal", fmtDinero(r.subtotal))}
+        ${fila(`IVA (${TASA_IVA_PCT * 100}%)`, fmtDinero(r.iva))}
+      </table>
+    </div>
+
+    <div class="total">
+      <p class="total-etiqueta">Total pagado (IVA incluido)</p>
+      <p class="total-monto">${fmtDinero(r.total)}</p>
+      ${pago ? chip(pago.estado) : ""}
+    </div>
+
+    <p class="nota">Presenta este comprobante en recepción junto con tu identificación para completar el check-in. Emitido el ${fmtFecha(r.creada)}.</p>
+  </div>
+
+  <div class="pie">
+    <p class="pie-marca">HOTELICA</p>
+    <p class="pie-texto">Plataforma turística de Nicaragua · Donde Nicaragua te recibe</p>
+  </div>
 </div></body></html>`;
 
   const blob = new Blob([comprobante], { type: "text/html;charset=utf-8" });
@@ -308,7 +394,7 @@ export function ModalReserva({
             <button onClick={() => { alCerrar(); navegar({ nombre: "reservas" }); }} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-dark">
               <IconoCheck size={16} /> Ver mis reservas
             </button>
-            <button onClick={() => reserva && descargarComprobante(reserva, hotel.nombre, habitacion.tipo)} className="flex items-center gap-2 rounded-lg border-2 border-primary px-6 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary-soft">
+            <button onClick={() => reserva && descargarComprobante(reserva, hotel.nombre, habitacion.tipo, pagoRegistro)} className="flex items-center gap-2 rounded-lg border-2 border-primary px-6 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary-soft">
               <IconoDescargar size={16} /> Descargar comprobante
             </button>
             <button onClick={() => { alCerrar(); navegar({ nombre: "resultados" }); }} className="rounded-lg border-2 border-line px-6 py-3 text-sm font-bold text-muted transition-colors hover:border-primary hover:text-primary">
