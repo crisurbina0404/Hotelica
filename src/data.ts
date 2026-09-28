@@ -384,6 +384,37 @@ export function nuevoPromedio(promedio: number, totalResenas: number, estrellas:
   return Math.round(((promedio * totalResenas + estrellas) / (totalResenas + 1)) * 10) / 10;
 }
 
+// ----- Calificación de la estadía (HU-019) -----
+
+// Equivalente a la tabla `calificaciones`: una fila por reserva calificada
+export type Calificacion = {
+  id: string;
+  folio: string;      // reserva que originó la calificación
+  hotelId: string;
+  autor: string;
+  estrellas: number;  // entero de 1 a 5
+  comentario: string; // opcional
+  fecha: string;      // ISO (yyyy-mm-dd)
+};
+
+// Solo se puede calificar después del check-out y una sola vez por reserva
+export function sePuedeCalificar(reserva: Pick<Reserva, "estado" | "calificada">): boolean {
+  return reserva.estado === "completada" && !reserva.calificada;
+}
+
+// Las estrellas tienen que ser un entero entre 1 y 5
+export function validarCalificacion(estrellas: number): string {
+  if (!Number.isInteger(estrellas) || estrellas < 1 || estrellas > 5) {
+    return "La calificación debe estar entre 1 y 5 estrellas.";
+  }
+  return "";
+}
+
+// Devuelve la calificación que dejó el turista en una reserva
+export function calificacionDe(lista: Calificacion[], folio: string): Calificacion | undefined {
+  return lista.find((c) => c.folio === folio);
+}
+
 // Dice si dos rangos de fechas se traslapan (para la disponibilidad)
 export function seTraslapan(aIni: string, aFin: string, bIni: string, bFin: string): boolean {
   return aIni < bFin && bIni < aFin;

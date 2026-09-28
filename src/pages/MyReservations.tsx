@@ -8,7 +8,7 @@ import type { Navegar } from "../rutas";
 import {
   ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
   historialDeReservas, TURISTA_DEMO, sePuedeCancelar, FLUJO_RESERVA, pasoDeEstado,
-  ETIQUETA_PAGO,
+  ETIQUETA_PAGO, sePuedeCalificar, validarCalificacion, calificacionDe,
 } from "../data";
 import type { EstadoReserva, Reserva } from "../data";
 import { Reveal, BadgeEstado, Modal, Estrellas, EstrellasInput, EstadoVacio, TituloSeccion } from "../ui";
@@ -181,12 +181,12 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                         <IconoX size={14} /> Cancelar reserva
                       </button>
                     )}
-                    {r.estado === "completada" && !r.calificada && (
+                    {sePuedeCalificar(r) && (
                       <button onClick={() => setPorCalificar(r)} className="flex items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-dark active:scale-95">
                         <IconoEstrella size={14} /> Calificar estadía
                       </button>
                     )}
-                    {r.estado === "completada" && r.calificada && (
+                    {r.calificada && (
                       <span className="flex items-center justify-center gap-1.5 rounded-lg bg-[#DCFCE7] px-4 py-2 text-xs font-bold text-[#166534]">
                         <IconoEstrella size={14} llena /> Ya calificaste
                       </span>
@@ -237,7 +237,16 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
           hotelNombre={hotelDe(porCalificar)?.nombre ?? ""}
           alCerrar={() => setPorCalificar(null)}
           alEnviar={(estrellas, comentario) => {
-            calificar(porCalificar.folio, porCalificar.hotelId, estrellas, comentario);
+            // Vuelve a validar por si la reserva cambió de estado (HU-019)
+            const aviso = validarCalificacion(estrellas);
+            if (aviso) {
+              avisar(aviso, "error");
+              return;
+            }
+            if (!calificar(porCalificar.folio, porCalificar.hotelId, estrellas, comentario)) {
+              avisar("Esta reserva ya fue calificada o aún no termina.", "error");
+              return;
+            }
             avisar("¡Gracias! Tu calificación ya cuenta para el promedio del hotel.", "ok");
             setPorCalificar(null);
           }}
@@ -267,12 +276,14 @@ const PASO_DESCRIPCION: Record<EstadoReserva, string> = {
 
 // ----- Vista detallada de una reserva -----
 function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
-  const { hoteles, pagos } = useApp();
+  const { hoteles, pagos, calificaciones } = useApp();
   const h = hoteles.find((x) => x.id === r.hotelId);
   const hab = HABITACIONES_SEED.find((x) => x.id === r.habitacionId);
   const pagoTxt = r.pago === "tarjeta" ? "Tarjeta" : r.pago === "efectivo" ? "Efectivo en recepción" : "Transferencia bancaria";
   // Último pago registrado para este folio (HU-018)
   const pago = pagos.find((p) => p.folio === r.folio);
+  // Calificación que dejó el turista en esta reserva (HU-019)
+  const miCalificacion = calificacionDe(calificaciones, r.folio);
   void alCerrar;
   return (
     <div className="p-7">
@@ -321,6 +332,21 @@ function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
           </p>
         )}
       </div>
+
+      {/* La calificación que dejó el turista (HU-019) */}
+      {miCalificacion && (
+        <div className="mt-3 rounded-xl border border-line bg-canvas p-4 text-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Tu calificación</p>
+          <div className="mt-1.5 flex items-center gap-2.5">
+            <Estrellas valor={miCalificacion.estrellas} />
+            <b className="text-ink">{miCalificacion.estrellas} de 5</b>
+            <span className="ml-auto text-xs text-muted">{fmtFecha(miCalificacion.fecha)}</span>
+          </div>
+          {miCalificacion.comentario && (
+            <p className="mt-2 text-sm italic text-muted">“{miCalificacion.comentario}”</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -415,12 +441,12 @@ function ModalCalificar({
   const [estrellas, setEstrellas] = useState(0);
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState("");
-  void reserva;
   return (
     <Modal abierto alCerrar={alCerrar} ancho="max-w-md">
       <div className="p-7">
         <p className="text-xs font-bold uppercase tracking-wider text-primary">Calificar estadía</p>
         <h3 className="mt-1 font-display text-xl font-bold text-ink">¿Cómo la pasaste en {hotelNombre}?</h3>
+        <p className="mt-1 text-xs font-semibold text-muted">Reserva {reserva.folio} · check-out {fmtFecha(reserva.salida)}</p>
         <p className="mt-1.5 text-sm text-muted">Tu opinión ayuda a otros viajeros y mejora el promedio del hotel.</p>
 
         <div className="mt-6 flex justify-center">

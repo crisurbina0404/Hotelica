@@ -6,6 +6,24 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.37.0] — 2026-09-28 · HU-019: Calificar una estadía
+
+### Agregado
+- **`historias-usuario/HU-019-calificar-una-estadia.md`**: historia con 9 escenarios BDD (aparición tras check-out, no se califica antes, formulario con estrellas y comentario opcional, validación de estrellas, registro de la calificación, recálculo del promedio, una sola calificación por reserva, comentario como reseña y persistencia).
+- **Tipo `Calificacion`** (`src/data.ts`): registro con folio, hotel, autor, estrellas (1-5), comentario y fecha — el equivalente de Fase 1 a la tabla `calificaciones`.
+- **Funciones `sePuedeCalificar()`, `validarCalificacion()` y `calificacionDe()`** (`src/data.ts`): la regla central (solo tras el check-out y una sola vez), la validación de 1 a 5 estrellas y la búsqueda de la calificación de una reserva.
+- **Lista `calificaciones` persistida** (`src/store.tsx`) con `?? []`; `calificar()` ahora **valida antes de escribir** (si la reserva no está completada, ya fue calificada o las estrellas no son válidas no cambia nada) y devuelve `true`/`false`; además guarda el registro, marca `calificada`, recalcula el promedio con `nuevoPromedio()` y publica el comentario como reseña del hotel.
+- **10 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("sePuedeCalificar")`, `describe("validarCalificacion")` y `describe("calificacionDe")`).
+
+### Modificado
+- `src/pages/MyReservations.tsx`: el botón "Calificar estadía" ahora depende de `sePuedeCalificar(r)`; el sello "Ya calificaste" aparece para toda reserva calificada; el envío revalida y avisa si la reserva ya fue calificada; el detalle de la reserva muestra la estrella del turista con su fecha y comentario; el modal indica folio y fecha del check-out.
+
+### Verificado
+- `npm run test`: 70 pruebas pasando (10 nuevas de HU-019).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.36.0] — 2026-09-28 · HU-018: Registrar o realizar un pago
 
 ### Agregado

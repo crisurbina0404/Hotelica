@@ -20,8 +20,11 @@ import {
   pasoDeEstado,
   FLUJO_RESERVA,
   validarPago,
+  sePuedeCalificar,
+  validarCalificacion,
+  calificacionDe,
 } from "../data";
-import type { DatosPago, Reserva } from "../data";
+import type { Calificacion, DatosPago, Reserva } from "../data";
 
 // Datos de pago que siempre pasan la validación (tarjeta)
 const tarjetaOk: DatosPago = {
@@ -437,5 +440,64 @@ describe("validarPago", () => {
     expect(metodos).toContain("tarjeta");
     expect(metodos).toContain("efectivo");
     expect(metodos).toContain("transferencia");
+  });
+});
+
+// =====================================================
+// 12. Calificación de la estadía (HU-019)
+// =====================================================
+describe("sePuedeCalificar", () => {
+  it("permite calificar cuando el check-out ya se hizo", () => {
+    expect(sePuedeCalificar({ estado: "completada", calificada: false })).toBe(true);
+  });
+
+  it("no permite calificar antes del check-out (pendiente, confirmada o check-in)", () => {
+    expect(sePuedeCalificar({ estado: "pendiente", calificada: false })).toBe(false);
+    expect(sePuedeCalificar({ estado: "confirmada", calificada: false })).toBe(false);
+    expect(sePuedeCalificar({ estado: "checkin", calificada: false })).toBe(false);
+  });
+
+  it("no permite calificar una reserva cancelada", () => {
+    expect(sePuedeCalificar({ estado: "cancelada", calificada: false })).toBe(false);
+  });
+
+  it("no deja calificar dos veces la misma reserva", () => {
+    expect(sePuedeCalificar({ estado: "completada", calificada: true })).toBe(false);
+  });
+});
+
+describe("validarCalificacion", () => {
+  it("acepta cualquier estrella entera del 1 al 5", () => {
+    for (let n = 1; n <= 5; n++) expect(validarCalificacion(n)).toBe("");
+  });
+
+  it("rechaza 0 estrellas o valores negativos", () => {
+    expect(validarCalificacion(0)).toContain("1 y 5");
+    expect(validarCalificacion(-2)).toContain("1 y 5");
+  });
+
+  it("rechaza valores por encima de 5", () => {
+    expect(validarCalificacion(6)).toContain("1 y 5");
+  });
+
+  it("rechaza estrellas que no sean números enteros", () => {
+    expect(validarCalificacion(3.5)).toContain("1 y 5");
+    expect(validarCalificacion(Number.NaN)).toContain("1 y 5");
+  });
+});
+
+describe("calificacionDe", () => {
+  const lista: Calificacion[] = [
+    { id: "c-1", folio: "HC-1024", hotelId: "h-granada", autor: "María Fernández", estrellas: 5, comentario: "Excelente", fecha: "2026-09-20" },
+    { id: "c-2", folio: "HC-1038", hotelId: "h-sanjuan", autor: "Marta Ruiz", estrellas: 4, comentario: "", fecha: "2026-09-22" },
+  ];
+
+  it("devuelve la calificación de la reserva consultada", () => {
+    expect(calificacionDe(lista, "HC-1024")?.estrellas).toBe(5);
+  });
+
+  it("devuelve undefined cuando la reserva nunca se calificó", () => {
+    expect(calificacionDe(lista, "HC-9999")).toBeUndefined();
+    expect(calificacionDe([], "HC-1024")).toBeUndefined();
   });
 });
