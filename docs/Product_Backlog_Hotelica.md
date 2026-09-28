@@ -25,10 +25,3 @@ Este documento describe las historias de usuario y tareas pendientes para el pro
 | TT3 | Integrar notificaciones push en la app móvil                | Media     | Pendiente|
 | TT4 | Crear dashboard de administración con métricas básicas      | Media     | Pendiente|
 | TT5 | Configurar CI/CD en GitHub Actions                          | Baja      | Pendiente|
-
----
-
-## Notas
-- El backlog en formato **CSV** se mantiene como fuente editable.  
-- Este archivo **Markdown** sirve como documentación clara y legible en GitHub.
-git add Product_Backlog_Hotelica.md Product_Backlog_Hotelica.csv
