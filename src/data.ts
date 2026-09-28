@@ -415,6 +415,29 @@ export function calificacionDe(lista: Calificacion[], folio: string): Calificaci
   return lista.find((c) => c.folio === folio);
 }
 
+// ----- Favoritos por cuenta (HU-020) -----
+
+// Cada cuenta tiene su lista de favoritos; sin sesión se usa la clave de invitado
+export function claveDeFavoritos(usuario: { correo: string } | null | undefined): string {
+  const correo = usuario?.correo?.trim().toLowerCase();
+  return correo ? correo : "invitado";
+}
+
+// Lista de favoritos de la cuenta consultada
+export function favoritosDe(
+  mapa: Record<string, string[]>,
+  usuario: { correo: string } | null | undefined
+): string[] {
+  return mapa[claveDeFavoritos(usuario)] ?? [];
+}
+
+// Marca o desmarca un hotel de la lista, sin dejar duplicados
+export function alternarFavoritoDe(lista: string[], hotelId: string): string[] {
+  return lista.includes(hotelId)
+    ? lista.filter((f) => f !== hotelId)
+    : [...lista, hotelId];
+}
+
 // Dice si dos rangos de fechas se traslapan (para la disponibilidad)
 export function seTraslapan(aIni: string, aFin: string, bIni: string, bFin: string): boolean {
   return aIni < bFin && bIni < aFin;

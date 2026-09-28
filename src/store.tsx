@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED,
   nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
+  claveDeFavoritos, favoritosDe, alternarFavoritoDe,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion } from "./data";
 import type { Idioma } from "./i18n";
@@ -36,7 +37,7 @@ type Persistido = {
   hoteles: Hotel[];
   reservas: Reserva[];
   resenas: Resena[];
-  favoritos: string[];
+  favoritos: Record<string, string[]>; // lista propia de cada cuenta ("invitado" sin sesión)
   notificaciones: Notificacion[];
   pagos: Pago[];
   calificaciones: Calificacion[];
@@ -54,7 +55,13 @@ function cargar(): Persistido {
       const d = JSON.parse(crudo) as Persistido;
       // Los guardados viejos pueden traer campos nuevos: arrancamos con listas vacías
       if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) {
-        return { ...d, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [], calificaciones: d.calificaciones ?? [] };
+        // Los guardados viejos traían los favoritos en una sola lista:
+        // ahora van separados por cuenta (HU-020)
+        const viejos = d.favoritos as unknown;
+        const favoritos: Record<string, string[]> = Array.isArray(viejos)
+          ? { invitado: viejos as string[] }
+          : (viejos as Record<string, string[]> | undefined) ?? {};
+        return { ...d, favoritos, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [], calificaciones: d.calificaciones ?? [] };
       }
     }
   } catch {
@@ -64,7 +71,7 @@ function cargar(): Persistido {
     hoteles: HOTELES_SEED,
     reservas: RESERVAS_SEED,
     resenas: RESENAS_SEED,
-    favoritos: ["h-ometepe", "h-granada"],
+    favoritos: { invitado: ["h-ometepe", "h-granada"] },
     notificaciones: [],
     pagos: [],
     calificaciones: [],
@@ -176,13 +183,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
   };
 
-  // Marca o desmarca un hotel como favorito
+  // Marca o desmarca un hotel como favorito de la cuenta actual (HU-020)
   const alternarFavorito = (hotelId: string) => {
+    const clave = claveDeFavoritos(usuario);
     setDatos((d) => ({
       ...d,
-      favoritos: d.favoritos.includes(hotelId)
-        ? d.favoritos.filter((f) => f !== hotelId)
-        : [...d.favoritos, hotelId],
+      favoritos: {
+        ...d.favoritos,
+        [clave]: alternarFavoritoDe(d.favoritos[clave] ?? [], hotelId),
+      },
     }));
   };
 
@@ -541,7 +550,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hoteles: HOTELES_SEED,
       reservas: RESERVAS_SEED,
       resenas: RESENAS_SEED,
-      favoritos: ["h-ometepe", "h-granada"],
+      favoritos: { [claveDeFavoritos(usuario)]: ["h-ometepe", "h-granada"] },
       notificaciones: [],
       pagos: [],
       calificaciones: [],
@@ -555,7 +564,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hoteles: datos.hoteles,
       reservas: datos.reservas,
       resenas: datos.resenas,
-      favoritos: datos.favoritos,
+      favoritos: favoritosDe(datos.favoritos, usuario),
       notificaciones: datos.notificaciones,
       pagos: datos.pagos,
       calificaciones: datos.calificaciones,

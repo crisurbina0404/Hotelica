@@ -6,6 +6,25 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.38.0] — 2026-09-28 · HU-020: Gestionar hoteles favoritos
+
+### Agregado
+- **`historias-usuario/HU-020-gestionar-hoteles-favoritos.md`**: historia con 9 escenarios BDD (marcar y quitar desde la tarjeta, desde la ficha, contador en el header, página de favoritos, estado vacío, lista por cuenta, persistencia y sin duplicados).
+- **Favoritos por cuenta (subtaskos 182 y 186)**: `favoritos` en `src/store.tsx` pasó de una lista plana a `Record<string, string[]>` guardada **por clave de cuenta** (correo en minúsculas o `"invitado"` sin sesión); `cargar()` migra los guardados viejos a la lista del invitado. En Fase 2 esa clave se reemplaza por `id_usuario` de la tabla `favoritos`.
+- **Funciones `claveDeFavoritos()`, `favoritosDe()` y `alternarFavoritoDe()`** (`src/data.ts`): clave de la lista, lectura por cuenta y toggle sin duplicados.
+- **5 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("favoritos por cuenta")`).
+
+### Modificado
+- `src/store.tsx`: `alternarFavorito()` escribe solo en la lista de la cuenta actual; el contexto expone `favoritosDe(datos.favoritos, usuario)`; `reiniciarDemo()` siembra la lista de la cuenta activa.
+- `src/pages/MyReservations.tsx`: textos de la página Favoritos actualizados (lista propia por cuenta y tabla `favoritos` de Fase 2).
+
+### Verificado
+- Corazón en tarjeta (`src/tarjeta.tsx`) y ficha (`src/pages/HotelDetail.tsx`) con toggle, animación y aviso (subtaskos 181/183); contador en header y menú móvil (`src/layout.tsx`, subtasko 184); página `/favoritos` (subtasko 185).
+- `npm run test`: 75 pruebas pasando (5 nuevas de HU-020).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.37.0] — 2026-09-28 · HU-019: Calificar una estadía
 
 ### Agregado

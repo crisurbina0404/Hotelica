@@ -23,6 +23,9 @@ import {
   sePuedeCalificar,
   validarCalificacion,
   calificacionDe,
+  claveDeFavoritos,
+  favoritosDe,
+  alternarFavoritoDe,
 } from "../data";
 import type { Calificacion, DatosPago, Reserva } from "../data";
 
@@ -499,5 +502,38 @@ describe("calificacionDe", () => {
   it("devuelve undefined cuando la reserva nunca se calificó", () => {
     expect(calificacionDe(lista, "HC-9999")).toBeUndefined();
     expect(calificacionDe([], "HC-1024")).toBeUndefined();
+  });
+});
+
+// =====================================================
+// 13. Favoritos por cuenta (HU-020)
+// =====================================================
+describe("favoritos por cuenta", () => {
+  it("usa el correo de la cuenta como clave", () => {
+    expect(claveDeFavoritos({ correo: "Maria@Correo.com" })).toBe("maria@correo.com");
+    expect(claveDeFavoritos({ correo: "  " })).toBe("invitado");
+    expect(claveDeFavoritos(null)).toBe("invitado");
+  });
+
+  it("cada cuenta ve su propia lista de favoritos", () => {
+    const mapa = { invitado: ["h-1"], "ana@correo.com": ["h-2", "h-3"] };
+    expect(favoritosDe(mapa, { correo: "Ana@Correo.com" })).toEqual(["h-2", "h-3"]);
+    expect(favoritosDe(mapa, { correo: "pedro@correo.com" })).toEqual([]);
+    expect(favoritosDe(mapa, null)).toEqual(["h-1"]);
+  });
+
+  it("agrega un hotel nuevo al final de la lista", () => {
+    expect(alternarFavoritoDe(["h-1"], "h-2")).toEqual(["h-1", "h-2"]);
+    expect(alternarFavoritoDe([], "h-1")).toEqual(["h-1"]);
+  });
+
+  it("quita el hotel cuando ya estaba marcado", () => {
+    expect(alternarFavoritoDe(["h-1", "h-2"], "h-1")).toEqual(["h-2"]);
+    expect(alternarFavoritoDe(["h-1"], "h-9")).toEqual(["h-1", "h-9"]);
+  });
+
+  it("no deja favoritos duplicados", () => {
+    expect(alternarFavoritoDe(["h-1", "h-1"], "h-1")).toEqual([]);
+    expect(alternarFavoritoDe(["h-1", "h-2"], "h-2")).toEqual(["h-1"]);
   });
 });
