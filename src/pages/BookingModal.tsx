@@ -4,12 +4,12 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
-import type { Habitacion, Hotel, Reserva } from "../data";
-import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas, TASA_IVA as TASA_IVA_PCT } from "../data";
+import type { Habitacion, Hotel, Reserva, DatosPago, Pago } from "../data";
+import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas, TASA_IVA as TASA_IVA_PCT, validarPago } from "../data";
 import { Modal, Spinner, Marca } from "../ui";
 import {
   IconoLlave, IconoTarjeta, IconoBillete, IconoBanco, IconoCheck,
-  IconoCalendario, IconoHuespedes, IconoCama, IconoFlechaAtras,
+  IconoCalendario, IconoHuespedes, IconoCama, IconoFlechaAtras, IconoDescargar,
 } from "../icons";
 
 type Fase = "wizard" | "procesando" | "exito";
@@ -22,6 +22,68 @@ const PASOS = [
   { numero: 3, titulo: "Confirmar reserva", icono: "✅" },
 ];
 
+// Bancos disponibles para la transferencia (HU-018)
+const BANCOS = [
+  "Banco de Nicaragua",
+  "Banco Central de América",
+  "BAC Credomatic",
+  "Lafise Bancentro",
+  "Banco de Occidente",
+  "Banpro",
+];
+
+// Deja una referencia corta para el registro de pago (no guardamos la tarjeta completa)
+function referenciaDe(metodo: Reserva["pago"], datos: DatosPago): string {
+  if (metodo === "tarjeta") return `**** ${datos.tarjeta.replace(/\s+/g, "").slice(-4)}`;
+  if (metodo === "transferencia") return datos.referencia.trim();
+  return "Pago en recepción";
+}
+
+// Arma el comprobante en HTML y lo descarga desde el navegador (HU-018)
+function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: string) {
+  const comprobante = `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>Comprobante ${r.folio}</title>
+<style>
+  body{font-family:Arial,sans-serif;background:#F8F6F0;color:#1C2B30;margin:0;padding:40px}
+  .caja{max-width:560px;margin:auto;background:#fff;border:1px solid #E4DFD2;border-radius:12px;padding:32px}
+  h1{font-size:22px;color:#0B3540;letter-spacing:3px;margin:0}
+  .folio{font-size:30px;font-weight:bold;color:#D98A0B;margin:16px 0}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:7px 0;border-bottom:1px solid #E4DFD2}
+  td:last-child{text-align:right;font-weight:bold}
+  .total td{font-size:17px;color:#0B3540;border-bottom:0}
+  .pie{margin-top:18px;font-size:12px;color:#5D6E73}
+</style></head>
+<body><div class="caja">
+  <h1>HOTELICA</h1>
+  <p style="color:#177E8C;margin:4px 0 0">Comprobante de reserva y pago</p>
+  <p class="folio">${r.folio}</p>
+  <table>
+    <tr><td>Hotel</td><td>${hotelNombre}</td></tr>
+    <tr><td>Habitación</td><td>${habitacionTipo}</td></tr>
+    <tr><td>Huésped</td><td>${r.turista}</td></tr>
+    <tr><td>Correo</td><td>${r.correo || "—"}</td></tr>
+    <tr><td>Llegada</td><td>${fmtFecha(r.llegada)}</td></tr>
+    <tr><td>Salida</td><td>${fmtFecha(r.salida)}</td></tr>
+    <tr><td>Noches</td><td>${r.noches}</td></tr>
+    <tr><td>Subtotal</td><td>${fmtDinero(r.subtotal)}</td></tr>
+    <tr><td>IVA (${TASA_IVA_PCT * 100}%)</td><td>${fmtDinero(r.iva)}</td></tr>
+    <tr class="total"><td>Total pagado</td><td>${fmtDinero(r.total)}</td></tr>
+    <tr><td>Método de pago</td><td>${r.pago}</td></tr>
+    <tr><td>Estado de la reserva</td><td>${r.estado}</td></tr>
+  </table>
+  <p class="pie">Emitido el ${fmtFecha(r.creada)} · Guarda este comprobante para el check-in en recepción.</p>
+</div></body></html>`;
+
+  const blob = new Blob([comprobante], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement("a");
+  enlace.href = url;
+  enlace.download = `comprobante-${r.folio}.html`;
+  enlace.click();
+  URL.revokeObjectURL(url);
+}
+
 export function ModalReserva({
   hotel, habitacion, llegada: l0, salida: s0, huespedes: h0, navegar, alCerrar,
 }: {
@@ -33,11 +95,17 @@ export function ModalReserva({
   navegar: Navegar;
   alCerrar: () => void;
 }) {
-  const { crearReserva, enviarCorreoReserva, disponiblesDe, avisar, usuario } = useApp();
+  const { crearReserva, registrarPago, enviarCorreoReserva, disponiblesDe, avisar, usuario } = useApp();
   const [llegada, setLlegada] = useState(l0);
   const [salida, setSalida] = useState(s0);
   const [huespedes, setHuespedes] = useState(h0);
   const [pago, setPago] = useState<Reserva["pago"]>("tarjeta");
+  // Datos del formulario de pago (HU-018)
+  const [datosPago, setDatosPago] = useState<DatosPago>({
+    titular: "", tarjeta: "", vencimiento: "", cvv: "", banco: "", referencia: "",
+  });
+  // Registro de pago creado al confirmar, para mostrarlo en el comprobante
+  const [pagoRegistro, setPagoRegistro] = useState<Pago | null>(null);
   const [error, setError] = useState("");
   const [fase, setFase] = useState<Fase>("wizard");
   const [pasoActual, setPasoActual] = useState<Paso>(1);
@@ -86,6 +154,15 @@ export function ModalReserva({
       }
     }
 
+    // Paso 2: los datos del pago deben estar completos antes de avanzar (HU-018)
+    if (pasoActual === 2) {
+      const errorPago = validarPago(pago, datosPago, hoyISO());
+      if (errorPago) {
+        setError(errorPago);
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -121,11 +198,30 @@ export function ModalReserva({
       llegada, salida, huespedes,
       noches, subtotal, iva, total, pago,
     });
-    setReserva(nueva);
+
+    // Después registramos el pago contra ese folio (HU-018)
+    const registro = registrarPago({
+      folio: nueva.folio,
+      monto: nueva.total,
+      metodo: pago,
+      referencia: referenciaDe(pago, datosPago),
+    });
+    setPagoRegistro(registro);
+
+    // Con pago completo la reserva sale Confirmada; en efectivo queda Pendiente
+    const reservaFinal: Reserva = registro.estado === "pagado"
+      ? { ...nueva, estado: "confirmada" }
+      : nueva;
+    setReserva(reservaFinal);
     avisar(`Reserva ${nueva.folio} creada correctamente`, "ok");
+    if (registro.estado === "pagado") {
+      avisar(`Pago de ${fmtDinero(registro.monto)} registrado. Tu reserva quedó Confirmada.`, "ok");
+    } else {
+      avisar("Pago en efectivo pendiente: se realiza en recepción al llegar.", "info");
+    }
 
     // Luego intentamos enviar el correo
-    const resultadoCorreo = await enviarCorreoReserva(nueva, hotel.nombre);
+    const resultadoCorreo = await enviarCorreoReserva(reservaFinal, hotel.nombre);
 
     if (resultadoCorreo.ok) {
       setCorreoEnviado(true);
@@ -139,6 +235,13 @@ export function ModalReserva({
   };
 
   const claseCampo = "w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
+  const etiquetaCampo = "mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted";
+
+  // Actualiza un solo campo del formulario de pago y baja el aviso de error
+  const actualizarPago = (campo: keyof DatosPago, valor: string) => {
+    setError("");
+    setDatosPago((d) => ({ ...d, [campo]: valor }));
+  };
 
   const metodos = [
     { id: "tarjeta", nombre: "Tarjeta", icono: <IconoTarjeta size={18} /> },
@@ -194,11 +297,21 @@ export function ModalReserva({
             </div>
           )}
 
+          {reserva && pagoRegistro && (
+            <p className={`mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold ${pagoRegistro.estado === "pagado" ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#FEF3C7] text-[#92400E]"}`}>
+              <IconoTarjeta size={14} />
+              Pago {pagoRegistro.estado === "pagado" ? "registrado" : "pendiente"} · {pagoRegistro.referencia} · {fmtDinero(pagoRegistro.monto)}
+            </p>
+          )}
+
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <button onClick={() => { alCerrar(); navegar({ nombre: "reservas" }); }} className="flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-primary-dark">
               <IconoCheck size={16} /> Ver mis reservas
             </button>
-            <button onClick={() => { alCerrar(); navegar({ nombre: "resultados" }); }} className="rounded-lg border-2 border-primary px-6 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary-soft">
+            <button onClick={() => reserva && descargarComprobante(reserva, hotel.nombre, habitacion.tipo)} className="flex items-center gap-2 rounded-lg border-2 border-primary px-6 py-3 text-sm font-bold text-primary transition-colors hover:bg-primary-soft">
+              <IconoDescargar size={16} /> Descargar comprobante
+            </button>
+            <button onClick={() => { alCerrar(); navegar({ nombre: "resultados" }); }} className="rounded-lg border-2 border-line px-6 py-3 text-sm font-bold text-muted transition-colors hover:border-primary hover:text-primary">
               Seguir explorando
             </button>
           </div>
@@ -311,7 +424,7 @@ export function ModalReserva({
                   <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Selecciona tu método de pago</p>
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {metodos.map((m) => (
-                      <button key={m.id} type="button" onClick={() => setPago(m.id)}
+                      <button key={m.id} type="button" onClick={() => { setPago(m.id); setError(""); }}
                         className={`flex flex-col items-center gap-1.5 rounded-lg border-2 px-2 py-4 text-xs font-bold transition-all ${
                           pago === m.id ? "border-primary bg-primary-soft text-primary" : "border-line text-muted hover:border-primary/40"
                         }`}>
@@ -319,6 +432,51 @@ export function ModalReserva({
                       </button>
                     ))}
                   </div>
+
+                  {/* Formulario con los datos del método elegido (HU-018) */}
+                  {pago === "tarjeta" && (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <label className="block sm:col-span-2">
+                        <span className={etiquetaCampo}>Nombre del titular</span>
+                        <input value={datosPago.titular} onChange={(e) => actualizarPago("titular", e.target.value)} placeholder="Como figura en la tarjeta" className={claseCampo} />
+                      </label>
+                      <label className="block sm:col-span-2">
+                        <span className={etiquetaCampo}>Número de tarjeta</span>
+                        <input value={datosPago.tarjeta} onChange={(e) => actualizarPago("tarjeta", e.target.value)} placeholder="0000 0000 0000 0000" inputMode="numeric" maxLength={19} className={claseCampo} />
+                      </label>
+                      <label className="block">
+                        <span className={etiquetaCampo}>Vencimiento</span>
+                        <input value={datosPago.vencimiento} onChange={(e) => actualizarPago("vencimiento", e.target.value)} placeholder="MM/AA" maxLength={5} className={claseCampo} />
+                      </label>
+                      <label className="block">
+                        <span className={etiquetaCampo}>CVV</span>
+                        <input value={datosPago.cvv} onChange={(e) => actualizarPago("cvv", e.target.value)} placeholder="123" inputMode="numeric" maxLength={3} className={claseCampo} />
+                      </label>
+                    </div>
+                  )}
+
+                  {pago === "transferencia" && (
+                    <div className="mt-4 grid gap-3">
+                      <label className="block">
+                        <span className={etiquetaCampo}>Banco de origen</span>
+                        <select value={datosPago.banco} onChange={(e) => actualizarPago("banco", e.target.value)} className={claseCampo}>
+                          <option value="">Selecciona tu banco</option>
+                          {BANCOS.map((b) => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </label>
+                      <label className="block">
+                        <span className={etiquetaCampo}>Número de referencia</span>
+                        <input value={datosPago.referencia} onChange={(e) => actualizarPago("referencia", e.target.value)} placeholder="Ej: TRX-001234" className={claseCampo} />
+                      </label>
+                      <p className="text-xs text-muted">Transfiere el total a la cuenta de Hotelica y anota aquí el número de referencia.</p>
+                    </div>
+                  )}
+
+                  {pago === "efectivo" && (
+                    <div className="mt-4 rounded-lg border border-line bg-canvas p-4 text-sm text-muted">
+                      Pagas en efectivo al llegar a recepción. Tu reserva queda <b className="text-ink">Pendiente</b> hasta que realices el pago.
+                    </div>
+                  )}
 
                   {/* Comentarios o solicitudes especiales */}
                   <div className="mt-5 border-t border-line pt-4">
@@ -332,7 +490,11 @@ export function ModalReserva({
                     />
                   </div>
 
-                  <p className="mt-4 text-xs text-muted">Selecciona cómo deseas pagar tu reserva.</p>
+                  <p className="mt-4 text-xs text-muted">
+                    {pago === "efectivo"
+                      ? "Recuerda llevar el efectivo exacto para el check-in."
+                      : "Tus datos se validan antes de procesar el pago. Demostración: no se realiza ningún cargo real."}
+                  </p>
                 </div>
               )}
 
@@ -353,11 +515,18 @@ export function ModalReserva({
                       <p className="flex justify-between"><span className="text-muted">Noches</span><b className="text-ink">{noches}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Huéspedes</span><b className="text-ink">{huespedes}</b></p>
                       <p className="flex justify-between"><span className="text-muted">Método de pago</span><b className="text-ink capitalize">{pago}</b></p>
+                      {pago !== "efectivo" && (
+                        <p className="flex justify-between"><span className="text-muted">Referencia de pago</span><b className="text-ink">{referenciaDe(pago, datosPago)}</b></p>
+                      )}
                       {comentarios && <p className="flex justify-between"><span className="text-muted">Comentarios</span><b className="text-ink text-right max-w-[200px]">{comentarios}</b></p>}
                     </div>
                   </div>
 
-                  <p className="mt-4 text-xs text-muted">Al confirmar, la reserva quedará en estado <b>Pendiente</b> hasta que el hotel la confirme.</p>
+                  <p className="mt-4 text-xs text-muted">
+                    {pago === "efectivo"
+                      ? "Al confirmar, la reserva y el pago quedan Pendientes hasta que pagues en recepción."
+                      : "Al confirmar se registra el pago y tu reserva pasa a estado Confirmada."}
+                  </p>
                 </div>
               )}
 

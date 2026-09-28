@@ -6,6 +6,29 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.36.0] — 2026-09-28 · HU-018: Registrar o realizar un pago
+
+### Agregado
+- **`historias-usuario/HU-018-registrar-o-realizar-un-pago.md`**: historia con 9 escenarios BDD (selección del método, formulario según el método, validación antes de procesar, datos válidos, pago registrado con la reserva, reserva confirmada, pago en efectivo pendiente, comprobante descargable y montos del comprobante).
+- **Tipos `Pago`, `EstadoPago` y `DatosPago`** y constante **`ETIQUETA_PAGO`** (`src/data.ts`): registro de pago con folio, monto, método, estado (Pagado / Pendiente / Reembolsado), fecha y referencia.
+- **Función `validarPago(metodo, datos, hoy)`** (`src/data.ts`): valida los datos antes de procesar — tarjeta de 16 dígitos con titular, vencimiento MM/AA no vencido y CVV de 3 dígitos; transferencia con banco y referencia; en efectivo no pide nada.
+- **Lista `pagos` persistida** (`src/store.tsx`) y método **`registrarPago()`**: crea el pago contra el folio de la reserva y, si quedó Pagado, deja la reserva en estado **Confirmada** (en efectivo todo queda Pendiente). `pagos` se carga con `?? []` para no romper los guardados viejos.
+- **Formulario de pago en el paso 2** (`src/pages/BookingModal.tsx`): campos de tarjeta (titular, número, vencimiento, CVV), transferencia (banco, referencia) y aviso de pago en recepción para efectivo; no se avanza al paso 3 si `validarPago()` devuelve un error.
+- **Comprobante descagable**: `descargarComprobante()` genera un archivo HTML con folio, hotel, huésped, fechas, desglose con IVA 15% y método de pago, y lo descarga desde la pantalla de éxito (junto al correo de confirmación).
+- **Estado del pago en el detalle de la reserva** (`src/pages/MyReservations.tsx`): muestra estado, referencia y fecha del pago registrado.
+- **Icono `IconoDescargar`** (`src/icons.tsx`).
+- **11 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("validarPago")`).
+
+### Modificado
+- `src/pages/BookingModal.tsx`: al confirmar se registra el pago y la reserva sale Confirmada (o Pendiente en efectivo); pantalla de éxito con la línea "Pago registrado / pendiente" y botón "Descargar comprobante".
+- `historias-usuario/Orden de Historias de Usuarios.md`: HU-018 ✅ Terminada.
+
+### Verificado
+- `npm run test`: 60 pruebas pasando (11 nuevas de HU-018).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.35.0] — 2026-09-28 · HU-017: Consultar el estado de la reserva
 
 ### Agregado

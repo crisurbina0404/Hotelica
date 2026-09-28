@@ -8,7 +8,7 @@ import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED,
   nuevoPromedio, hoyISO, seTraslapan,
 } from "./data";
-import type { Hotel, Reserva, Resena, EstadoReserva, Rol } from "./data";
+import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
 
@@ -38,6 +38,7 @@ type Persistido = {
   resenas: Resena[];
   favoritos: string[];
   notificaciones: Notificacion[];
+  pagos: Pago[];
   folio: number; // último número de folio usado
 };
 
@@ -50,9 +51,9 @@ function cargar(): Persistido {
     const crudo = localStorage.getItem(CLAVE_LS);
     if (crudo) {
       const d = JSON.parse(crudo) as Persistido;
-      // Los guardados viejos pueden no traer notificaciones: arrancamos con la lista vacía
+      // Los guardados viejos pueden traer campos nuevos: arrancamos con listas vacías
       if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) {
-        return { ...d, notificaciones: d.notificaciones ?? [] };
+        return { ...d, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [] };
       }
     }
   } catch {
@@ -64,6 +65,7 @@ function cargar(): Persistido {
     resenas: RESENAS_SEED,
     favoritos: ["h-ometepe", "h-granada"],
     notificaciones: [],
+    pagos: [],
     folio: 1061,
   };
 }
@@ -77,6 +79,7 @@ type AppCtx = {
   resenas: Resena[];
   favoritos: string[];
   notificaciones: Notificacion[];
+  pagos: Pago[];
   rol: Rol;
   usuario: Usuario | null;
   idioma: Idioma;
@@ -93,6 +96,7 @@ type AppCtx = {
   cambiarIdioma: () => void;
   alternarFavorito: (hotelId: string) => void;
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
+  registrarPago: (pago: { folio: string; monto: number; metodo: Reserva["pago"]; referencia: string }) => Pago;
   enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva) => void;
   avisarHotel: (hotelId: string, folio: string, texto: string) => void;
@@ -191,6 +195,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setDatos((d) => ({ ...d, folio: d.folio + 1, reservas: [nueva, ...d.reservas] }));
     return nueva;
+  };
+
+  // Registra el pago de una reserva; si quedó pagado, la deja Confirmada (HU-018)
+  const registrarPago: AppCtx["registrarPago"] = ({ folio, monto, metodo, referencia }) => {
+    // En efectivo el turista paga en recepción: todo queda pendiente
+    const pagado = metodo !== "efectivo";
+    const nuevo: Pago = {
+      id: `p-${Date.now()}`,
+      folio,
+      monto,
+      metodo,
+      estado: pagado ? "pagado" : "pendiente",
+      fecha: hoyISO(),
+      referencia,
+    };
+    setDatos((d) => ({
+      ...d,
+      pagos: [nuevo, ...d.pagos],
+      reservas: d.reservas.map((r) =>
+        r.folio === folio && pagado ? { ...r, estado: "confirmada" } : r
+      ),
+    }));
+    return nuevo;
   };
 
   // Envía correo de confirmación vía Edge Function (Resend API)
@@ -494,6 +521,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resenas: RESENAS_SEED,
       favoritos: ["h-ometepe", "h-granada"],
       notificaciones: [],
+      pagos: [],
       folio: 1061,
     });
     avisar("Datos de demostración restaurados", "info");
@@ -506,6 +534,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resenas: datos.resenas,
       favoritos: datos.favoritos,
       notificaciones: datos.notificaciones,
+      pagos: datos.pagos,
       rol,
       usuario,
       idioma,
@@ -522,6 +551,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cambiarIdioma,
       alternarFavorito,
       crearReserva,
+      registrarPago,
       enviarCorreoReserva,
       cambiarEstadoReserva,
       avisarHotel,

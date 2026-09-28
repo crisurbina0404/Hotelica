@@ -1,6 +1,6 @@
 // ============================================================
 // Hotelica — Mis reservas (HU-015 historial, HU-016 cancelar,
-// HU-017 estado de la reserva, HU-019 calificar) y Favoritos (HU-020)
+// HU-017 estado de la reserva, HU-018 pago, HU-019 calificar) y Favoritos (HU-020)
 // ============================================================
 import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";
@@ -8,6 +8,7 @@ import type { Navegar } from "../rutas";
 import {
   ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
   historialDeReservas, TURISTA_DEMO, sePuedeCancelar, FLUJO_RESERVA, pasoDeEstado,
+  ETIQUETA_PAGO,
 } from "../data";
 import type { EstadoReserva, Reserva } from "../data";
 import { Reveal, BadgeEstado, Modal, Estrellas, EstrellasInput, EstadoVacio, TituloSeccion } from "../ui";
@@ -266,10 +267,12 @@ const PASO_DESCRIPCION: Record<EstadoReserva, string> = {
 
 // ----- Vista detallada de una reserva -----
 function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
-  const { hoteles } = useApp();
+  const { hoteles, pagos } = useApp();
   const h = hoteles.find((x) => x.id === r.hotelId);
   const hab = HABITACIONES_SEED.find((x) => x.id === r.habitacionId);
   const pagoTxt = r.pago === "tarjeta" ? "Tarjeta" : r.pago === "efectivo" ? "Efectivo en recepción" : "Transferencia bancaria";
+  // Último pago registrado para este folio (HU-018)
+  const pago = pagos.find((p) => p.folio === r.folio);
   void alCerrar;
   return (
     <div className="p-7">
@@ -305,6 +308,18 @@ function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
         <p className="flex justify-between"><span className="text-muted">IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(r.iva)}</b></p>
         <p className="flex justify-between border-t border-line pt-2 text-base"><span className="font-semibold text-muted">Total</span><b className="font-display text-primary">{fmtDinero(r.total)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Método de pago</span><b className="text-ink">{pagoTxt}</b></p>
+        <p className="flex justify-between">
+          <span className="text-muted">Estado del pago</span>
+          <b className={pago?.estado === "pagado" ? "text-[#166534]" : pago ? "text-[#92400E]" : "text-ink"}>
+            {pago ? ETIQUETA_PAGO[pago.estado] : "Sin registro"}
+          </b>
+        </p>
+        {pago && (
+          <p className="flex justify-between">
+            <span className="text-muted">Referencia de pago</span>
+            <b className="text-ink">{pago.referencia} · {fmtFecha(pago.fecha)}</b>
+          </p>
+        )}
       </div>
     </div>
   );

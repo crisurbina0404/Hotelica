@@ -19,8 +19,25 @@ import {
   sePuedeCancelar,
   pasoDeEstado,
   FLUJO_RESERVA,
+  validarPago,
 } from "../data";
-import type { Reserva } from "../data";
+import type { DatosPago, Reserva } from "../data";
+
+// Datos de pago que siempre pasan la validación (tarjeta)
+const tarjetaOk: DatosPago = {
+  titular: "María Fernández",
+  tarjeta: "4111 1111 1111 1111",
+  vencimiento: "12/30",
+  cvv: "123",
+  banco: "",
+  referencia: "",
+};
+
+const transferenciaOk: DatosPago = {
+  titular: "", tarjeta: "", vencimiento: "", cvv: "",
+  banco: "Banco de Nicaragua",
+  referencia: "TRX-001234",
+};
 
 // =====================================================
 // 1. Cálculo de noches de estadía
@@ -358,5 +375,67 @@ describe("pasoDeEstado", () => {
 
   it("el flujo tiene los 4 pasos en orden", () => {
     expect(FLUJO_RESERVA).toEqual(["pendiente", "confirmada", "checkin", "completada"]);
+  });
+});
+
+// =====================================================
+// 11. Validación de los datos de pago (HU-018)
+// =====================================================
+describe("validarPago", () => {
+  const hoy = "2026-09-28";
+
+  it("acepta una tarjeta completa y bien vencida", () => {
+    expect(validarPago("tarjeta", tarjetaOk, hoy)).toBe("");
+  });
+
+  it("rechaza un número de tarjeta que no tenga 16 dígitos", () => {
+    const datos = { ...tarjetaOk, tarjeta: "4111 1111" };
+    expect(validarPago("tarjeta", datos, hoy)).toContain("16 dígitos");
+  });
+
+  it("rechaza una tarjeta sin titular", () => {
+    const datos = { ...tarjetaOk, titular: "  " };
+    expect(validarPago("tarjeta", datos, hoy)).toContain("titular");
+  });
+
+  it("rechaza un vencimiento con formato distinto a MM/AA", () => {
+    const datos = { ...tarjetaOk, vencimiento: "12-30" };
+    expect(validarPago("tarjeta", datos, hoy)).toContain("MM/AA");
+  });
+
+  it("rechaza una tarjeta vencida según la fecha de hoy", () => {
+    const datos = { ...tarjetaOk, vencimiento: "08/26" };
+    expect(validarPago("tarjeta", datos, hoy)).toContain("vencida");
+  });
+
+  it("rechaza un CVV que no tenga 3 dígitos", () => {
+    const datos = { ...tarjetaOk, cvv: "12" };
+    expect(validarPago("tarjeta", datos, hoy)).toContain("CVV");
+  });
+
+  it("acepta una transferencia con banco y referencia", () => {
+    expect(validarPago("transferencia", transferenciaOk, hoy)).toBe("");
+  });
+
+  it("rechaza la transferencia cuando falta la referencia", () => {
+    const datos = { ...transferenciaOk, referencia: "123" };
+    expect(validarPago("transferencia", datos, hoy)).toContain("referencia");
+  });
+
+  it("rechaza la transferencia cuando no se eligió banco", () => {
+    const datos = { ...transferenciaOk, banco: "" };
+    expect(validarPago("transferencia", datos, hoy)).toContain("banco");
+  });
+
+  it("en efectivo no pide datos porque se paga en recepción", () => {
+    const vacio: DatosPago = { titular: "", tarjeta: "", vencimiento: "", cvv: "", banco: "", referencia: "" };
+    expect(validarPago("efectivo", vacio, hoy)).toBe("");
+  });
+
+  it("el método de pago de la reserva sigue siendo tarjeta, efectivo o transferencia", () => {
+    const metodos: Reserva["pago"][] = ["tarjeta", "efectivo", "transferencia"];
+    expect(metodos).toContain("tarjeta");
+    expect(metodos).toContain("efectivo");
+    expect(metodos).toContain("transferencia");
   });
 });

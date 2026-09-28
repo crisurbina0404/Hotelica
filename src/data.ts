@@ -649,6 +649,65 @@ export function sePuedeCancelar(reserva: Pick<Reserva, "estado" | "llegada">, ho
   return estadoPermitido && reserva.llegada >= hoy;
 }
 
+// ----- Pagos de las reservas (HU-018) -----
+
+export type EstadoPago = "pagado" | "pendiente" | "reembolsado";
+
+// Registro de un pago asociado al folio de una reserva
+export type Pago = {
+  id: string;
+  folio: string;      // reserva a la que pertenece
+  monto: number;      // total cobrado
+  metodo: Reserva["pago"];
+  estado: EstadoPago;
+  fecha: string;      // ISO (yyyy-mm-dd)
+  referencia: string; // últimos 4 dígitos de la tarjeta o n.º de referencia
+};
+
+// Lo que el turista escribe en el formulario de pago
+export type DatosPago = {
+  titular: string;
+  tarjeta: string;
+  vencimiento: string; // MM/AA
+  cvv: string;
+  banco: string;
+  referencia: string;
+};
+
+export const ETIQUETA_PAGO: Record<EstadoPago, string> = {
+  pagado: "Pagado",
+  pendiente: "Pendiente",
+  reembolsado: "Reembolsado",
+};
+
+// Valida los datos del método elegido; devuelve "" cuando todo está bien
+export function validarPago(metodo: Reserva["pago"], datos: DatosPago, hoy: string): string {
+  // En efectivo no se pide nada: se paga al llegar al hotel
+  if (metodo === "efectivo") return "";
+
+  if (metodo === "transferencia") {
+    if (!datos.banco.trim()) return "Selecciona el banco desde donde haces la transferencia.";
+    if (datos.referencia.trim().length < 6) return "Ingresa el número de referencia de la transferencia (mínimo 6 caracteres).";
+    return "";
+  }
+
+  // Tarjeta de crédito o débito
+  const digitos = datos.tarjeta.replace(/\s+/g, "");
+  if (!/^\d{16}$/.test(digitos)) return "El número de tarjeta debe tener 16 dígitos.";
+  if (!datos.titular.trim()) return "Ingresa el nombre del titular de la tarjeta.";
+  if (!/^\d{2}\/\d{2}$/.test(datos.vencimiento)) return "El vencimiento debe tener el formato MM/AA.";
+
+  // Revisa que la tarjeta siga vigente comparando MM/AA con la fecha de hoy
+  const [mes, anio] = datos.vencimiento.split("/").map(Number);
+  if (mes < 1 || mes > 12) return "El mes de vencimiento no es válido.";
+  const anioHoy = Number(hoy.slice(2, 4));
+  const mesHoy = Number(hoy.slice(5, 7));
+  if (anio < anioHoy || (anio === anioHoy && mes < mesHoy)) return "La tarjeta está vencida.";
+
+  if (!/^\d{3}$/.test(datos.cvv)) return "El código de seguridad (CVV) tiene 3 dígitos.";
+  return "";
+}
+
 // ----- Destinos y actividades turísticas (HU-012) -----
 
 export type CategoriaActividad = "aventura" | "cultura" | "naturaleza" | "playa";

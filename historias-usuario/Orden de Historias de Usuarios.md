@@ -20,7 +20,7 @@
 | 16 | HU-015 | Reservas | Consultar historial de reservas | Media | ✅ Terminada |
 | 17 | HU-016 | Reservas | Cancelar una reserva | Alta | ✅ Terminada |
 | 18 | HU-017 | Reservas | Consultar el estado de la reserva | Alta | ✅ Terminada |
-| 19 | HU-018 | Reservas | Registrar o realizar un pago | Media | ⬜ Escrita |
+| 19 | HU-018 | Reservas | Registrar o realizar un pago | Media | ✅ Terminada |
 | 20 | HU-019 | Reservas | Calificar una estadía | Baja | ⬜ Escrita |
 | 21 | HU-020 | Reservas | Gestionar hoteles favoritos | Baja | ⬜ Escrita |
 | 22 | HU-021 | Gestión Hotel | Registrar un hotel | Alta | ⬜ Escrita |
