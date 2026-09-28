@@ -14,7 +14,10 @@ import {
   hoyISO,
   sumarDias,
   sugerirFechasAlternativas,
+  historialDeReservas,
+  TURISTA_DEMO,
 } from "../data";
+import type { Reserva } from "../data";
 
 // =====================================================
 // 1. Cálculo de noches de estadía
@@ -229,6 +232,68 @@ describe("sugerirFechasAlternativas", () => {
     const habitaciones = [{ id: "h1", unidades: 2 }];
     const disponiblesDe = () => 0; // nunca disponible
     const resultado = sugerirFechasAlternativas(habitaciones, disponiblesDe, 3, "2026-10-15");
+    expect(resultado).toEqual([]);
+  });
+});
+
+// =====================================================
+// 8. Historial de reservas del turista (HU-015)
+// =====================================================
+describe("historialDeReservas", () => {
+  // Crea una reserva mínima para las pruebas
+  const reserva = (folio: string, turista: string, correo: string, creada: string): Reserva => ({
+    folio,
+    hotelId: "h-granada",
+    habitacionId: "g1",
+    turista,
+    correo,
+    telefono: "8888-1234",
+    comentarios: "",
+    llegada: "2026-10-01",
+    salida: "2026-10-04",
+    huespedes: 2,
+    noches: 3,
+    subtotal: 3600,
+    iva: 540,
+    total: 4140,
+    pago: "tarjeta",
+    estado: "confirmada",
+    creada,
+    calificada: false,
+  });
+
+  const lista = [
+    reserva("HC-1", "María Fernández", "maria@correo.com", "2026-09-01"),
+    reserva("HC-2", "Carlos Mendoza", "carlos@correo.com", "2026-09-15"),
+    reserva("HC-3", "María Fernández", "maria@correo.com", "2026-09-20"),
+  ];
+
+  it("sin sesión muestra solo las reservas de la turista de demostración", () => {
+    const resultado = historialDeReservas(lista, null);
+    expect(resultado.length).toBe(2);
+    expect(resultado.every((r) => r.turista === TURISTA_DEMO)).toBe(true);
+  });
+
+  it("con sesión filtra por correo y no muestra reservas ajenas", () => {
+    const resultado = historialDeReservas(lista, { nombre: "María Fernández", correo: "maria@correo.com" });
+    expect(resultado.length).toBe(2);
+    expect(resultado.some((r) => r.turista === "Carlos Mendoza")).toBe(false);
+  });
+
+  it("ordena de más reciente a más antiguo", () => {
+    const resultado = historialDeReservas(lista, { nombre: "María Fernández", correo: "maria@correo.com" });
+    expect(resultado.map((r) => r.folio)).toEqual(["HC-3", "HC-1"]);
+  });
+
+  it("coincide por nombre cuando la reserva no guardó correo", () => {
+    const sinCorreo = [reserva("HC-4", "Ana López", "", "2026-09-25")];
+    const resultado = historialDeReservas(sinCorreo, { nombre: "Ana López", correo: "" });
+    expect(resultado.length).toBe(1);
+    expect(resultado[0].folio).toBe("HC-4");
+  });
+
+  it("devuelve lista vacía cuando el usuario no tiene reservas", () => {
+    const resultado = historialDeReservas(lista, { nombre: "Pedro Vega", correo: "pedro@correo.com" });
     expect(resultado).toEqual([]);
   });
 });

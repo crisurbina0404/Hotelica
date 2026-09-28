@@ -616,6 +616,24 @@ export const USUARIOS_DEMO = {
 
 export type Rol = keyof typeof USUARIOS_DEMO;
 
+// ----- Historial de reservas del turista (HU-015) -----
+
+// Nombre de la turista de demostración (la que aparece cuando nadie inicia sesión)
+export const TURISTA_DEMO = USUARIOS_DEMO.turista.nombre;
+
+// Devuelve solo las reservas del usuario, de más recientes a más antiguas.
+// Sin sesión (usuario null) se muestran las reservas de la turista demo.
+export function historialDeReservas(
+  reservas: Reserva[],
+  usuario: { nombre: string; correo: string } | null
+): Reserva[] {
+  const mias = usuario
+    ? reservas.filter((r) => (usuario.correo !== "" && r.correo === usuario.correo) || r.turista === usuario.nombre)
+    : reservas.filter((r) => r.turista === TURISTA_DEMO);
+  // Más recientes primero: la fecha de creación ISO (yyyy-mm-dd) ordena alfabéticamente
+  return [...mias].sort((a, b) => b.creada.localeCompare(a.creada));
+}
+
 // ----- Destinos y actividades turísticas (HU-012) -----
 
 export type CategoriaActividad = "aventura" | "cultura" | "naturaleza" | "playa";

@@ -1,12 +1,13 @@
 // ============================================================
-// Hotelica — Mis reservas (HU-004 historial, HU-005 cancelar,
-// HU-006 calificar) y Favoritos (HU-010)
+// Hotelica — Mis reservas (HU-015 historial, HU-016 cancelar,
+// HU-019 calificar) y Favoritos (HU-020)
 // ============================================================
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
   ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
+  historialDeReservas, TURISTA_DEMO,
 } from "../data";
 import type { EstadoReserva, Reserva } from "../data";
 import { Reveal, BadgeEstado, Modal, Estrellas, EstrellasInput, EstadoVacio, TituloSeccion } from "../ui";
@@ -17,17 +18,15 @@ import {
 } from "../icons";
 
 export function MisReservas({ navegar }: { navegar: Navegar }) {
-  const { reservas, hoteles, cambiarEstadoReserva, calificar, avisar } = useApp();
+  const { reservas, hoteles, cambiarEstadoReserva, calificar, avisar, usuario } = useApp();
   const [filtro, setFiltro] = useState<EstadoReserva | "todas">("todas");
   const [detalle, setDetalle] = useState<Reserva | null>(null);
   const [porCancelar, setPorCancelar] = useState<Reserva | null>(null);
   const [porCalificar, setPorCalificar] = useState<Reserva | null>(null);
 
-  // Solo mostramos las reservas de la turista de demostración
-  const mias = useMemo(
-    () => reservas.filter((r) => r.turista === "María Fernández"),
-    [reservas]
-  );
+  // Reservas del usuario con sesión (o de la turista demo si nadie inició sesión),
+  // ordenadas de más recientes a más antiguas (HU-015)
+  const mias = useMemo(() => historialDeReservas(reservas, usuario), [reservas, usuario]);
   const visibles = filtro === "todas" ? mias : mias.filter((r) => r.estado === filtro);
   const hoy = hoyISO();
 
@@ -53,7 +52,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
       <Reveal>
         <TituloSeccion ceja="Tu historial de viajes" titulo="Mis reservas" />
         <p className="mt-2 text-sm text-muted">
-          Sesión demo: <b className="text-ink">María Fernández</b> · {mias.length} reserva{mias.length !== 1 && "s"} en total
+          {usuario ? "Sesión activa" : "Sesión demo"}: <b className="text-ink">{usuario?.nombre ?? TURISTA_DEMO}</b> · {mias.length} reserva{mias.length !== 1 && "s"} en total
         </p>
       </Reveal>
 
@@ -172,7 +171,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
         </div>
       </Modal>
 
-      {/* Modal de calificación (HU-006) */}
+      {/* Modal de calificación (HU-019) */}
       {porCalificar && (
         <ModalCalificar
           reserva={porCalificar}
@@ -277,7 +276,7 @@ function ModalCalificar({
 }
 
 // ============================================================
-// Favoritos (HU-010)
+// Favoritos (HU-020)
 // ============================================================
 export function Favoritos({ navegar }: { navegar: Navegar }) {
   const { hoteles, favoritos } = useApp();

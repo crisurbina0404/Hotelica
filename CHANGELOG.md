@@ -6,6 +6,39 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.33.0] — 2026-09-28 · HU-015: Consultar historial de reservas
+
+### Agregado
+- **`historias-usuario/HU-015-consultar-historial-de-reservas.md`**: historia con
+  9 escenarios BDD (listado, filtro por usuario, orden, estados, detalle,
+  caso vacío y persistencia).
+- **Función `historialDeReservas(reservas, usuario)`** (`src/data.ts`): devuelve
+  solo las reservas del usuario logueado y las ordena de más recientes a más
+  antiguas; sin sesión muestra las de la turista de demostración.
+- **Constante `TURISTA_DEMO`** (`src/data.ts`): nombre de la turista demo
+  (María Fernández) en un solo lugar.
+- **5 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("historialDeReservas")`):
+  filtro por sesión, demo sin sesión, orden descendente, coincidencia por nombre
+  cuando no hay correo y lista vacía.
+
+### Modificado
+- **`src/pages/MyReservations.tsx`**: el listado ya no filtra por el nombre fijo
+  "María Fernández", ahora usa `historialDeReservas()` con el usuario de la sesión
+  (y la turista demo cuando nadie inició sesión); el encabezado muestra
+  "Sesión activa" o "Sesión demo" según corresponda.
+- Números de HU de los comentarios de la pantalla actualizados al backlog oficial
+  (historial HU-015, cancelar HU-016, calificar HU-019, favoritos HU-020).
+- **Escenario 3 de la HU ajustado**: "Mis reservas" es ruta protegida, así que sin
+  sesión la pantalla no se abre y se vuelve al inicio (antes decía que se mostraban
+  las reservas de la turista demo, caso no alcanzable en la interfaz).
+- Estado de HU-015 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+### Verificado
+- `npm run test`: 37 pruebas pasando (5 nuevas de HU-015).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.32.0] — 2026-09-24 · HU-014: Calcular subtotal, IVA y total
 
 ### Agregado
