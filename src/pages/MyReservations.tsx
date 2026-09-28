@@ -1,34 +1,76 @@
 // ============================================================
 // Hotelica — Mis reservas (HU-015 historial, HU-016 cancelar,
-// HU-019 calificar) y Favoritos (HU-020)
+// HU-017 estado de la reserva, HU-019 calificar) y Favoritos (HU-020)
 // ============================================================
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
   ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
-  historialDeReservas, TURISTA_DEMO, sePuedeCancelar,
+  historialDeReservas, TURISTA_DEMO, sePuedeCancelar, FLUJO_RESERVA, pasoDeEstado,
 } from "../data";
 import type { EstadoReserva, Reserva } from "../data";
 import { Reveal, BadgeEstado, Modal, Estrellas, EstrellasInput, EstadoVacio, TituloSeccion } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
 import {
   IconoCalendario, IconoHuespedes, IconoOjo, IconoX, IconoEstrella,
-  IconoLlave, IconoCama, IconoCorazon,
+  IconoLlave, IconoCama, IconoCorazon, IconoCheck,
 } from "../icons";
+
+// Último estado visto por cada folio, para avisar los cambios (HU-017)
+const CLAVE_ESTADOS_VISTOS = "hotelica-estados-vistos";
+
+function leerEstadosVistos(): Record<string, EstadoReserva> {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_ESTADOS_VISTOS) ?? "{}") as Record<string, EstadoReserva>;
+  } catch {
+    return {};
+  }
+}
+
+// Guarda los estados actuales para compararlos en la próxima visita
+function guardarEstadosVistos(reservas: Reserva[]) {
+  const vistos: Record<string, EstadoReserva> = {};
+  reservas.forEach((r) => { vistos[r.folio] = r.estado; });
+  localStorage.setItem(CLAVE_ESTADOS_VISTOS, JSON.stringify(vistos));
+}
+
+// Marca un folio como visto (para no avisar un cambio que hizo el propio turista)
+function marcarEstadoVisto(folio: string, estado: EstadoReserva) {
+  const vistos = leerEstadosVistos();
+  vistos[folio] = estado;
+  localStorage.setItem(CLAVE_ESTADOS_VISTOS, JSON.stringify(vistos));
+}
 
 export function MisReservas({ navegar }: { navegar: Navegar }) {
   const { reservas, hoteles, cambiarEstadoReserva, calificar, avisar, avisarHotel, usuario } = useApp();
   const [filtro, setFiltro] = useState<EstadoReserva | "todas">("todas");
-  const [detalle, setDetalle] = useState<Reserva | null>(null);
+  const [folioDetalle, setFolioDetalle] = useState<string | null>(null);
   const [porCancelar, setPorCancelar] = useState<Reserva | null>(null);
   const [porCalificar, setPorCalificar] = useState<Reserva | null>(null);
+  // Reservas cuyo estado cambió desde la última visita (HU-017)
+  const [cambiaron, setCambiaron] = useState<string[]>([]);
 
   // Reservas del usuario con sesión (o de la turista demo si nadie inició sesión),
   // ordenadas de más recientes a más antiguas (HU-015)
   const mias = useMemo(() => historialDeReservas(reservas, usuario), [reservas, usuario]);
   const visibles = filtro === "todas" ? mias : mias.filter((r) => r.estado === filtro);
   const hoy = hoyISO();
+
+  // El detalle se abre buscando por folio: así podemos avisar si la reserva ya no existe
+  const detalle = folioDetalle ? mias.find((r) => r.folio === folioDetalle) : undefined;
+
+  // Avisa cuando el estado de una reserva cambió desde la última vez que abrimos la pantalla
+  useEffect(() => {
+    const vistos = leerEstadosVistos();
+    const cambiadas = mias.filter((r) => vistos[r.folio] !== undefined && vistos[r.folio] !== r.estado);
+    if (cambiadas.length > 0) {
+      setCambiaron(cambiadas.map((r) => r.folio));
+      cambiadas.forEach((r) => avisar(`Tu reserva ${r.folio} pasó a ${ETIQUETA_ESTADO[r.estado]}`, "info"));
+    }
+    guardarEstadosVistos(mias);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mias]);
 
   const hotelDe = (r: Reserva) => hoteles.find((h) => h.id === r.hotelId);
   const habDe = (r: Reserva) => HABITACIONES_SEED.find((h) => h.id === r.habitacionId);
@@ -37,10 +79,18 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
   const cancelar = () => {
     if (!porCancelar) return;
     cambiarEstadoReserva(porCancelar.folio, "cancelada");
+    // El cambio lo hizo el turista: no hace falta avisárselo como novedad
+    marcarEstadoVisto(porCancelar.folio, "cancelada");
     // El hotel se entera en su panel de que el turista canceló
     avisarHotel(porCancelar.hotelId, porCancelar.folio, `Reserva ${porCancelar.folio} cancelada por el turista`);
     avisar("La reserva fue cancelada correctamente. Le avisamos al hotel.", "ok");
     setPorCancelar(null);
+  };
+
+  // Abre el detalle y quita la marca de "estado actualizado" de esa tarjeta
+  const verDetalle = (folio: string) => {
+    setFolioDetalle(folio);
+    setCambiaron((c) => c.filter((f) => f !== folio));
   };
 
   const chips: (EstadoReserva | "todas")[] = ["todas", "pendiente", "confirmada", "checkin", "completada", "cancelada"];
@@ -104,6 +154,11 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                     <div className="flex flex-wrap items-center gap-2.5">
                       <h3 className="font-display text-lg font-bold text-ink">{h?.nombre}</h3>
                       <BadgeEstado estado={r.estado} />
+                      {cambiaron.includes(r.folio) && (
+                        <span className="anim-pop rounded-full bg-accent-light px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-accent-dark">
+                          Estado actualizado
+                        </span>
+                      )}
                     </div>
                     <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-muted">
                       <IconoCama size={14} className="text-primary" /> {hab?.tipo} · reserva del {fmtFecha(r.creada)}
@@ -117,7 +172,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
 
                   {/* Acciones según el estado de la reserva */}
                   <div className="flex flex-row flex-wrap items-center gap-2 border-t border-line pt-4 sm:flex-col sm:items-stretch sm:border-0 sm:pt-0">
-                    <button onClick={() => setDetalle(r)} className="flex items-center justify-center gap-1.5 rounded-lg border border-primary/40 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary-soft">
+                    <button onClick={() => verDetalle(r.folio)} className="flex items-center justify-center gap-1.5 rounded-lg border border-primary/40 px-4 py-2 text-xs font-bold text-primary transition-colors hover:bg-primary-soft">
                       <IconoOjo size={14} /> Ver detalle
                     </button>
                     {sePuedeCancelar(r, hoy) && (
@@ -143,10 +198,12 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
         </div>
       )}
 
-      {/* Modal de detalle de la reserva */}
-      <Modal abierto={!!detalle} alCerrar={() => setDetalle(null)} ancho="max-w-md">
-        {detalle && (
-          <DetalleReserva r={detalle} alCerrar={() => setDetalle(null)} />
+      {/* Modal de detalle de la reserva (HU-017): busca por folio y avisa si ya no existe */}
+      <Modal abierto={!!folioDetalle} alCerrar={() => setFolioDetalle(null)} ancho="max-w-md">
+        {detalle ? (
+          <DetalleReserva r={detalle} alCerrar={() => setFolioDetalle(null)} />
+        ) : (
+          <ReservaNoEncontrada folio={folioDetalle ?? ""} alCerrar={() => setFolioDetalle(null)} />
         )}
       </Modal>
 
@@ -189,6 +246,24 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
   );
 }
 
+// Significado de cada estado, para explicárselo al turista (HU-017)
+const SIGNIFICADO: Record<EstadoReserva, string> = {
+  pendiente: "Recibimos tu solicitud y el hotel aún no la confirma.",
+  confirmada: "El hotel aceptó tu reserva: todo listo para tu llegada.",
+  checkin: "Ya estás en el hotel. Disfruta tu estadía.",
+  completada: "La estadía terminó. Ya puedes calificar cómo te fue.",
+  cancelada: "Esta reserva se canceló y la habitación volvió a estar disponible.",
+};
+
+// Texto breve de cada paso del recorrido de la reserva
+const PASO_DESCRIPCION: Record<EstadoReserva, string> = {
+  pendiente: "Solicitud enviada al hotel",
+  confirmada: "El hotel aceptó la reserva",
+  checkin: "Llegada registrada en recepción",
+  completada: "Estadía finalizada",
+  cancelada: "El recorrido se detuvo",
+};
+
 // ----- Vista detallada de una reserva -----
 function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
   const { hoteles } = useApp();
@@ -210,14 +285,105 @@ function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
       </div>
       <h3 className="mt-4 font-display text-lg font-bold text-ink">{h?.nombre}</h3>
       <p className="text-sm text-muted">{hab?.tipo} · {r.huespedes} huésped{r.huespedes > 1 ? "es" : ""}</p>
+
+      {/* Estado actual explicado con palabras (HU-017) */}
+      <div className="mt-4 rounded-xl border border-line bg-canvas p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted">Estado actual</p>
+          <BadgeEstado estado={r.estado} />
+        </div>
+        <p className="mt-1.5 text-sm text-muted">{SIGNIFICADO[r.estado]}</p>
+      </div>
+
+      <LineaTiempo estado={r.estado} />
+
       <div className="mt-4 grid gap-2 rounded-xl bg-canvas p-4 text-sm">
         <p className="flex justify-between"><span className="text-muted">Llegada</span><b className="text-ink">{fmtFecha(r.llegada)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Salida</span><b className="text-ink">{fmtFecha(r.salida)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Noches</span><b className="text-ink">{r.noches}</b></p>
-        <p className="flex justify-between"><span className="text-muted">Subtotal</span><b className="text-ink">{fmtDinero(r.subtotal)}</b></p>                        <p className="flex justify-between"><span className="text-muted">IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(r.iva)}</b></p>
+        <p className="flex justify-between"><span className="text-muted">Subtotal</span><b className="text-ink">{fmtDinero(r.subtotal)}</b></p>
+        <p className="flex justify-between"><span className="text-muted">IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(r.iva)}</b></p>
         <p className="flex justify-between border-t border-line pt-2 text-base"><span className="font-semibold text-muted">Total</span><b className="font-display text-primary">{fmtDinero(r.total)}</b></p>
         <p className="flex justify-between"><span className="text-muted">Método de pago</span><b className="text-ink">{pagoTxt}</b></p>
       </div>
+    </div>
+  );
+}
+
+// ----- Recorrido de la reserva: Pendiente → Confirmada → Check-in → Completada -----
+function LineaTiempo({ estado }: { estado: EstadoReserva }) {
+  const actual = pasoDeEstado(estado);
+
+  // Reserva cancelada: el recorrido se corta y se explica con un aviso
+  if (actual === -1) {
+    return (
+      <div className="mt-4 rounded-xl border border-[#FCA5A5] bg-[#FEE2E2] p-4">
+        <p className="flex items-center gap-2 text-sm font-bold text-[#B91C1C]">
+          <IconoX size={16} /> Reserva cancelada
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-[#B91C1C]">
+          El recorrido se detuvo aquí: la habitación quedó libre y esta reserva ya no avanza.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <p className="text-xs font-bold uppercase tracking-wider text-muted">Recorrido de la reserva</p>
+      <ol className="mt-3">
+        {FLUJO_RESERVA.map((paso, i) => {
+          const hecho = i < actual;
+          const enCurso = i === actual;
+          // Cada paso se pinta según esté hecho, en curso o pendiente
+          const circulo = enCurso
+            ? "anim-pop border-accent-dark bg-accent text-white"
+            : hecho
+              ? "border-[#86EFAC] bg-[#DCFCE7] text-[#166534]"
+              : "border-line bg-white text-muted";
+          const texto = enCurso ? "text-ink" : hecho ? "text-[#166534]" : "text-muted";
+          const ultimo = i === FLUJO_RESERVA.length - 1;
+          return (
+            <li key={paso} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold ${circulo}`}>
+                  {hecho ? <IconoCheck size={14} /> : i + 1}
+                </span>
+                {!ultimo && <span className="w-px flex-1 bg-line" />}
+              </div>
+              <div className={ultimo ? "pt-0.5" : "pb-4 pt-0.5"}>
+                <p className={`flex flex-wrap items-center gap-2 text-sm font-bold ${texto}`}>
+                  {ETIQUETA_ESTADO[paso]}
+                  {enCurso && (
+                    <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Actual</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted">{PASO_DESCRIPCION[paso]}</p>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+// ----- Aviso cuando el folio del detalle ya no existe (HU-017) -----
+function ReservaNoEncontrada({ folio, alCerrar }: { folio: string; alCerrar: () => void }) {
+  return (
+    <div className="p-7 text-center">
+      <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-canvas text-muted"><IconoOjo size={28} /></span>
+      <h3 className="mt-4 font-display text-xl font-bold text-ink">No encontramos la reserva</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted">
+        El folio <b className="font-mono text-ink">{folio}</b> ya no está en tu historial.
+        Si restauraste los datos de demostración, esa reserva ya no existe.
+      </p>
+      <button
+        onClick={alCerrar}
+        className="mt-6 w-full rounded-lg bg-primary py-3 text-sm font-bold text-white shadow-md transition-colors hover:bg-primary-dark"
+      >
+        Cerrar
+      </button>
     </div>
   );
 }

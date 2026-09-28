@@ -577,6 +577,14 @@ export const ETIQUETA_ESTADO: Record<EstadoReserva, string> = {
   cancelada: "Cancelada",
 };
 
+// Recorrido normal de una reserva (HU-017): por aquí avanzan las que no se cancelan
+export const FLUJO_RESERVA: EstadoReserva[] = ["pendiente", "confirmada", "checkin", "completada"];
+
+// Índice del paso que está viviendo la reserva; -1 cuando está cancelada
+export function pasoDeEstado(estado: EstadoReserva): number {
+  return estado === "cancelada" ? -1 : FLUJO_RESERVA.indexOf(estado);
+}
+
 // Etiquetas para el estado de habitaciones
 export const ETIQUETA_HABITACION: Record<EstadoHabitacion, string> = {
   disponible: "Disponible",

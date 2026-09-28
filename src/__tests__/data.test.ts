@@ -17,6 +17,8 @@ import {
   historialDeReservas,
   TURISTA_DEMO,
   sePuedeCancelar,
+  pasoDeEstado,
+  FLUJO_RESERVA,
 } from "../data";
 import type { Reserva } from "../data";
 
@@ -327,5 +329,34 @@ describe("sePuedeCancelar", () => {
 
   it("no permite cancelar si la llegada ya pasó", () => {
     expect(sePuedeCancelar({ estado: "pendiente", llegada: "2026-09-27" }, hoy)).toBe(false);
+  });
+});
+
+// =====================================================
+// 10. Recorrido de la reserva (HU-017)
+// =====================================================
+describe("pasoDeEstado", () => {
+  it("la reserva pendiente está en el primer paso", () => {
+    expect(pasoDeEstado("pendiente")).toBe(0);
+  });
+
+  it("la reserva confirmada va por el segundo paso", () => {
+    expect(pasoDeEstado("confirmada")).toBe(1);
+  });
+
+  it("la reserva en check-in va por el tercer paso", () => {
+    expect(pasoDeEstado("checkin")).toBe(2);
+  });
+
+  it("la reserva completada llega al último paso", () => {
+    expect(pasoDeEstado("completada")).toBe(3);
+  });
+
+  it("la reserva cancelada no sigue el recorrido (-1)", () => {
+    expect(pasoDeEstado("cancelada")).toBe(-1);
+  });
+
+  it("el flujo tiene los 4 pasos en orden", () => {
+    expect(FLUJO_RESERVA).toEqual(["pendiente", "confirmada", "checkin", "completada"]);
   });
 });

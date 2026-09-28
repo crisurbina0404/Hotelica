@@ -6,6 +6,27 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 académica del curso.
 
+## [v0.35.0] — 2026-09-28 · HU-017: Consultar el estado de la reserva
+
+### Agregado
+- **`historias-usuario/HU-017-consultar-estado-de-la-reserva.md`**: historia con 8 escenarios BDD (badge, explicación del estado, línea de tiempo, reserva cancelada, aviso de cambio, reserva inexistente, persistencia y ruta protegida).
+- **Línea de tiempo de la reserva** (`src/pages/MyReservations.tsx` → componente `LineaTiempo`): los 4 pasos del flujo (Pendiente → Confirmada → Check-in → Completada) con check en los hechos, paso actual resaltado en dorado y los futuros en gris; si está cancelada se reemplaza por un aviso en coral.
+- **Explicación del estado en el detalle**: bloque "Estado actual" con una frase sencilla por cada estado (`SIGNIFICADO`).
+- **Aviso de cambio de estado**: al volver a "Mis reservas" se comparan los estados guardados en `localStorage` (`hotelica-estados-vistos`) con los actuales; si alguno cambió se lanza un toast y la tarjeta queda marcada con "Estado actualizado" hasta que se abre el detalle.
+- **Reserva inexistente**: el detalle ahora se abre **por folio**; si el folio ya no existe se muestra el mensaje "No encontramos la reserva" con botón de cierre (`ReservaNoEncontrada`).
+- **Función `pasoDeEstado(estado)`** y constante **`FLUJO_RESERVA`** (`src/data.ts`): devuelven el paso 0..3 del recorrido y `-1` para reservas canceladas.
+- **6 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("pasoDeEstado")`).
+
+### Modificado
+- `src/pages/MyReservations.tsx`: estado del modal cambiado de objeto a folio; la cancelación marca el estado como visto para no avisarse a sí misma; se arregló el formato del bloque de IVA en el detalle.
+- `historias-usuario/Orden de Historias de Usuarios.md`: HU-017 ✅ Terminada.
+
+### Verificado
+- `npm run test`: 49 pruebas pasando (6 nuevas de HU-017).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.34.0] — 2026-09-28 · HU-016: Cancelar una reserva
 
 ### Agregado
