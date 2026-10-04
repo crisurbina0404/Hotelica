@@ -1,5 +1,6 @@
-<img width="2000" height="2000" alt="Propuesta 3 - Elegante (2)" src="https://github.com/user-attachments/assets/697370c7-4dfe-4dcf-a394-70ee145ce201" />
-# Hotelica — Tu destino en Nicaragua
+<img width="1000" height="1000" alt="Propuesta 3 - Elegante (2)" src="https://github.com/user-attachments/assets/697370c7-4dfe-4dcf-a394-70ee145ce201" />
+
+#Hotelica — Tu destino en Nicaragua
 
 > *Donde Nicaragua te recibe 🇳🇮*
 
