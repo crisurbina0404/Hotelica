@@ -1,8 +1,10 @@
-<img width="1000" height="1000" alt="Propuesta 3 - Elegante (2)" src="https://github.com/user-attachments/assets/697370c7-4dfe-4dcf-a394-70ee145ce201" />
+<p align="center">
+<img width="200" height="200" alt="Propuesta 3 - Elegante" src="https://github.com/user-attachments/assets/57579b23-2aea-42df-87fb-9e81c4c8f1f8" />
+</p>
 
-#Hotelica — Tu destino en Nicaragua
+# Hotelica — Tu destino en Nicaragua
 
-> *Donde Nicaragua te recibe 🇳🇮*
+*Donde Nicaragua te recibe 🇳🇮*
 
 **Hotelica** es un sistema de reservación de hoteles enfocado en hoteles pequeños y familiares de Nicaragua. Proyecto académico desarrollado para el curso de **Ingeniería del Software II** (Grupo #08 · Recinto Central Managua "Carlos Fonseca Amador").
 
