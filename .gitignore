@@ -1,5 +1,8 @@
 node_modules/
 .next/
+test-results/
+playwright-report/
+blob-report/
 dist/
 build/
 *.log

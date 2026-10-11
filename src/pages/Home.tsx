@@ -29,7 +29,7 @@ const GRADIENTES: Record<string, string> = {
 };
 
 export function Inicio({ navegar }: { navegar: Navegar }) {
-  const { hoteles, resenas, favoritos, idioma, avisar } = useApp();
+  const { hoteles, resenas, favoritos, idioma } = useApp();
 
   // ----- Estado del buscador principal (HU-006) -----
   const [depto, setDepto] = useState("");
@@ -340,17 +340,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
                   Regístrate gratis, el administrador revisa tu solicitud y en menos de 48 horas apareces en las búsquedas de miles de viajeros.
                 </p>
               </div>
-              <div className="flex flex-col gap-3 lg:items-end">
-                <button
-                  onClick={() => avisar("Solicitud enviada: el administrador revisará tu hotel (demostración)", "info")}
-                  className="rounded-lg bg-accent px-7 py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-xl active:scale-[0.97]"
-                >
-                  Registrar mi hotel gratis
-                </button>
-                <p className="flex items-center gap-1.5 text-xs text-teal-100/70">
-                  <IconoCheck size={13} className="text-accent" /> Aprobación revisada por el equipo de Hotelica
-                </p>
-              </div>
+              <p className="flex items-center gap-1.5 text-xs text-teal-100/70 lg:items-end">
+                <IconoCheck size={13} className="text-accent" /> Aprobación revisada por el equipo de Hotelica
+              </p>
             </div>
           </div>
         </Reveal>

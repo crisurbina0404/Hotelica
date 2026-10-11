@@ -83,7 +83,10 @@ function AppInner() {
             splashVisible ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
-          <Marca tam="enorme" centrada />
+          {/* El logo tiene márgenes transparentes anclados a la izquierda: lo corregimos para que se vea centrado */}
+          <div className="translate-x-36">
+            <Marca tam="enorme" centrada />
+          </div>
         </div>
       )}
 

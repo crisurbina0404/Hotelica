@@ -408,7 +408,7 @@ export function ModalReserva({
               </div>
 
               <p className="mt-3 text-center text-[11px] leading-relaxed text-muted">
-                Demostración: no se realiza ningún cargo real.
+                No se realiza ningún cargo real.
               </p>
             </div>
           </div>

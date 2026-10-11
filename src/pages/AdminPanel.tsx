@@ -201,7 +201,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                 </div>
               ))}
               <p className="mt-5 border-t border-line pt-3.5 text-[11px] leading-relaxed text-muted">
-                Reporte de demostración calculado en vivo: cuenta las reservas no canceladas de cada departamento. En Fase 2 se generará desde la base de datos MySQL.
+                Reporte calculado en vivo: cuenta las reservas no canceladas de cada departamento.
               </p>
             </div>
           </Reveal>

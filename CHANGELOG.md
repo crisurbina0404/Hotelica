@@ -4,7 +4,78 @@ Bitácora de avances del proyecto (convención: una entrada por versión).
 
 Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
-académica del curso.
+del proyecto.
+
+## [v0.35.1] — 2026-10-11 · Limpieza de archivos que no aportaban
+
+### Borrado
+- **`vite-dev.log`**: log suelto de una corrida de `npm run dev`.
+- **`.freebuff/`**: carpeta de una herramienta externa; sólo contenía un `project-id`.
+- **`dist/`** y **`test-results/`**: artefactos de build y de Playwright regenerables (ya estaban en `.gitignore`).
+
+### Corregido
+- **`package.json`** y **`package-lock.json`**: el nombre del paquete era `"sandbox-workspace"`, un resto de la plantilla. Pasó a `"hotelica"` (en las dos posiciones del lock).
+
+### Nota
+Se revisaron y **conservaron** todos los archivos que sí aportan: `public/` (los 5 SVG están referenciados), `supabase/` (la edge function se invoca desde `src/store.tsx`), `vercel.json`, `historias-usuario/` y los skills de `.opencode/`.
+
+Quedan pendientes en una futura versión, por requerir verificación más amplia: las 10 dependencias de runtime sin importar (36,4 MB de `node_modules`) y la duplicidad entre `vite.config.js` y `vite.config.ts`.
+
+---
+
+## [v0.35.0] — 2026-10-11 · Quitado lo de proyecto académico y acentos rotos
+
+### Quitado
+- **`src/layout.tsx`** (footer): la columna "Proyecto académico" (Ingeniería de Software Fase 1, maqueta funcional, 10 historias de usuario) pasó a ser "Hotelica" con datos de producto: reservas en línea 24/7, atención en español, sin cargos ocultos. Se conserva "Hecho en Nicaragua".
+- **`src/pages/Home.tsx`**: botón "Registrar mi hotel gratis" que no hacía nada (sólo mostraba un aviso "demostración"). Queda sólo la nota de aprobación del equipo.
+- **`src/layout.tsx`** (footer y menú de rol): botón "Restaurar datos de demostración", que estaba duplicado. Al quitarlo se eliminaron también `reiniciarDemo` de `src/store.tsx` y el icono `IconoReiniciar` de `src/icons.tsx`, que quedaron sin uso.
+- **`README.md`**: referencias al curso, grupo #08, docente guía, institución y badges de "Fase 1/Fase 2". El pie dice "Hotelica · Reservación hotelera de Nicaragua".
+- **`src/pages/MyReservations.tsx`** y **`src/pages/AdminPanel.tsx`**: textos visibles que mencionaban "Fase 1/Fase 2".
+
+### Cambiado
+- **`src/layout.tsx`**: "Modo de demostración" → "Cambiar de perfil" (el selector de rol sigue funcionando igual). "Sesión demo iniciada como…" → "Sesión iniciada como…".
+- **`src/pages/BookingModal.tsx`**: "Demostración: no se realiza ningún cargo real." → "No se realiza ningún cargo real."
+
+### Corregido
+- **`src/layout.tsx`**: 41 caracteres acentuados rotos (U+FFFD) que se veían en pantalla — "Proyecto acad+<?>mico", "Reservaci+<?>n hotelera", "men+<?>", "peque+<?>os", "C+<?>lculos", "Sesi+<?>n demo", etc. El fallo entró en el commit `826563a8`; se reconstruyeron los textos contra la última versión limpia (`be79ca30`).
+
+---
+
+## [v0.34.1] — 2026-10-11 · Splash centrado
+
+### Corregido
+- **`src/App.tsx`**: el bloque del splash aparecía ~148 px a la izquierda del centro. Los SVG del logo traen un lienzo 2000×2000 con márgenes transparentes y se anclan a la izquierda (`objectPosition: "left center"` en `src/ui.tsx:86`), así que la caja se centraba pero los píxeles visibles no. Se compensa sólo en el splash con un `translate-x-36`; `Marca` (navbar, footer) queda intacta.
+
+---
+
+## [v0.34.0] — 2026-10-11 · Siluetas geográficas de departamentos
+
+### Cambiado
+- **`src/siluetas.tsx`**: las 8 siluetas icónicas (iglesia, volcán, palmera) se reemplazaron por los **contornos geográficos reales** de cada departamento. La API `SiluetaDepto({ id, className })` no cambió, ni `NOMBRES`, ni el `viewBox 64×64` con `fill="currentColor"`. Se agregó `fillRule="evenodd"` por si un contorno trae huecos.
+
+### Procedencia y licencia
+- Contornos derivados de [pacisauctor/geojson-nicaragua](https://github.com/pacisauctor/geojson-nicaragua), cuyos datos son de **OpenStreetMap bajo licencia ODbL** (© OpenStreetMap contributors). La atribución queda en el encabezado de `src/siluetas.tsx`.
+- `caribe` mapea a `raas.geo.json` (RACCS), que es el rótulo que ya usaba el catálogo.
+- Pipeline: `mapshaper -simplify 5%` (matagalpa y raas al 3%) + re-escala a 64×64 con proyección equirectangular. De 1.36 MB de GeoJSON crudo a **19.1 KB** de paths (73–809 puntos por departamento).
+
+### Verificado
+- `npm run typecheck` sin errores · `npm run test`: 32 pruebas · `npx playwright test`: 1 prueba (CP-001).
+- Revisión visual del Home: los contornos se ven correctos en las tarjetas de destino.
+
+---
+
+## [v0.33.0] — 2026-10-10 · Pruebas E2E con Playwright (CP-001)
+
+### Agregado
+- **Playwright configurado** (`playwright.config.ts`): carpeta `tests/`, navegador Chromium, `baseURL http://localhost:3000` y `webServer` que levanta `npm run dev` si no está corriendo.
+- **Prueba E2E `tests/CP-001-iva.spec.ts`**: caja negra del flujo HU-013 + HU-014 — inicio → detalle de Brisas del Pacífico → fechas de 3 noches → habitación Estándar Mar → verifica subtotal `C$ 4,200.00`, IVA `C$ 630.00` y total `C$ 4,830.00`.
+- **Script `npm run test:e2e`** en `package.json`.
+
+### Verificado
+- `npx playwright test`: 1 prueba pasando.
+- `npm run test`: 32 pruebas unitarias pasando. `npm run typecheck` sin errores.
+
+---
 
 ## [v0.32.0] — 2026-09-24 · HU-014: Calcular subtotal, IVA y total
 

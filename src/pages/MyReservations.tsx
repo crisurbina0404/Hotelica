@@ -319,7 +319,7 @@ export function Favoritos({ navegar }: { navegar: Navegar }) {
       <Reveal delay={200}>
         <p className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-dashed border-line bg-white/60 px-5 py-4 text-center text-xs font-medium text-muted">
           <IconoLlave size={14} className="text-primary" />
-          Fase 1: los favoritos se guardan en tu navegador (localStorage). En Fase 2 se sincronizarán con tu cuenta.
+          Tus favoritos se guardan en este dispositivo. Inicia sesión para llevarlos contigo a donde vayas.
         </p>
       </Reveal>
     </main>

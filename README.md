@@ -2,9 +2,9 @@
 
 > *Donde Nicaragua te recibe 🇳🇮*
 
-**Hotelica** es un sistema de reservación de hoteles enfocado en hoteles pequeños y familiares de Nicaragua. Proyecto académico desarrollado para el curso de **Ingeniería del Software II** (Grupo #08 · Recinto Central Managua "Carlos Fonseca Amador").
+**Hotelica** es un sistema de reservación de hoteles enfocado en hoteles pequeños y familiares de Nicaragua.
 
-![Estado](https://img.shields.io/badge/Estado-Fase%201%20(Demo%20+%20Auth)-177E8C?style=for-the-badge)
+![Estado](https://img.shields.io/badge/Estado-En%20línea-177E8C?style=for-the-badge)
 ![Metodología](https://img.shields.io/badge/Metodología-Scrum%20Ágil-F4502C?style=for-the-badge)
 ![Frontend](https://img.shields.io/badge/Frontend-React%20+%20TypeScript-E08E0B?style=for-the-badge)
 ![Auth](https://img.shields.io/badge/Auth-Supabase-0B3540?style=for-the-badge)
@@ -43,7 +43,7 @@ Muchos hoteles pequeños en Nicaragua gestionan sus reservas en cuadernos o What
 
 > **"Ninguna interfaz se programa sin tener su Historia de Usuario (HU) escrita primero."**
 
-Para cada funcionalidad seguimos estrictamente este flujo académico:
+Para cada funcionalidad seguimos estrictamente este flujo:
 1. ✍️ Redactar la HU en `/historias-usuario/` (usando formato BDD e INVEST).
 2. 📋 Actualizar el estado en `Orden de Historias de Usuarios.md`.
 3. 💻 Programar la interfaz (con comentarios simples de una línea explicando el *"qué"*).
@@ -76,9 +76,9 @@ El backlog completo está priorizado mediante **MoSCoW** y estimado con **Planni
 |---|---|
 | **Frontend** | React 18 · TypeScript · Vite · Tailwind CSS v4 |
 | **Autenticación** | Supabase Auth (registro, login, logout, recuperar/restablecer contraseña, perfil) |
-| **Datos (Fase 1)** | Catálogo simulado en `src/data.ts` · cliente de Supabase en `src/lib/supabase.ts` |
-| **Base de Datos (Fase 2)** | PostgreSQL vía Supabase (modelo relacional documentado en `HU-000`) |
-| **Backend (Fase 2)** | API REST de Supabase |
+| **Datos** | Catálogo simulado en `src/data.ts` · cliente de Supabase en `src/lib/supabase.ts` |
+| **Base de Datos** | PostgreSQL vía Supabase (modelo relacional documentado en `HU-000`) |
+| **Backend** | API REST de Supabase |
 | **Gestión Ágil** | Jira (Sprints) · Google Sheets (Backlog/Poker) |
 | **Despliegue** | Vercel (SPA con rewrites a `index.html`) |
 
@@ -199,7 +199,7 @@ El proyecto se despliega en Vercel como SPA:
 
 ## 🗄️ Datos y Base de Datos
 
-- **Fase 1 (actual):** el catálogo de hoteles, habitaciones, reservas y reseñas es **simulado** en `src/data.ts`, diseñado para reflejar el esquema relacional. La autenticación (usuarios y perfiles) es **real** con Supabase Auth.
+- **Catálogo:** el catálogo de hoteles, habitaciones, reservas y reseñas es **simulado** en `src/data.ts`, diseñado para reflejar el esquema relacional. La autenticación (usuarios y perfiles) es **real** con Supabase Auth.
 - **Modelo relacional (HU-000):** entidades `usuarios`, `hoteles`, `habitaciones`, `reservas`, `pagos`, `calificaciones`, más catálogos de `departamentos` (8 de Nicaragua) y `municipios`, con estados controlados por `ENUM`:
   - Hotel: *Pendiente → Aprobado / Rechazado*
   - Reserva: *Pendiente → Confirmada → Check-in → Completada / Cancelada*
@@ -240,18 +240,15 @@ El progreso detallado versión por versión está en [`CHANGELOG.md`](./CHANGELO
 
 ---
 
-## 👨‍💻 Equipo (Grupo #08)
+## 👨‍💻 Equipo
 
-| Nombre | Rol Scrum |
+| Nombre | Rol |
 |---|---|
 | **Cristhian David Urbina Cano** | Developer |
 | **Tatiana Solimar Jaime Martinez** | Scrum Master |
 | **Edwin Ally Mercado Padilla** | Product Owner |
 
-**Docente Guía:** MBA. Ing. Tania G. Sequeira Altamirano  
-**Institución:** Dirección de Ciencias Básicas y Tecnologías · Ingeniería en Sistemas de Información · Modalidad Regular.
-
 ---
 <p align="center">
-  <sub>Proyecto Académico · Ingeniería del Software II · Agosto 2026</sub>
+  <sub>Hotelica · Reservación hotelera de Nicaragua · Agosto 2026</sub>
 </p>

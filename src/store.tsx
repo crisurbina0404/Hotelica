@@ -82,7 +82,6 @@ type AppCtx = {
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => void;
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => void;
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
-  reiniciarDemo: () => void;
 };
 
 const Ctx = createContext<AppCtx | null>(null);
@@ -448,19 +447,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIdioma((prev) => (prev === "es" ? "en" : "es"));
   };
 
-  // Restaura los datos originales de demostración
-  const reiniciarDemo = () => {
-    localStorage.removeItem(CLAVE_LS);
-    setDatos({
-      hoteles: HOTELES_SEED,
-      reservas: RESERVAS_SEED,
-      resenas: RESENAS_SEED,
-      favoritos: ["h-ometepe", "h-granada"],
-      folio: 1061,
-    });
-    avisar("Datos de demostración restaurados", "info");
-  };
-
   const valor = useMemo<AppCtx>(
     () => ({
       hoteles: datos.hoteles,
@@ -488,7 +474,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       calificar,
       decidirHotel,
       disponiblesDe,
-      reiniciarDemo,
     }),
     [datos, rol, usuario, idioma, toasts]
   );

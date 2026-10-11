@@ -164,10 +164,6 @@ export const IconoComillas = (p: P) => (
   <Base {...p}><path d="M7 7C5 8.2 4 10 4 12.5V17h5v-5H6.5c0-1.8.7-3 2-3.8L7 7Zm9 0c-2 1.2-3 3-3 5.5V17h5v-5h-2.5c0-1.8.7-3 2-3.8L16 7Z" fill="currentColor" stroke="none" /></Base>
 );
 
-export const IconoReiniciar = (p: P) => (
-  <Base {...p}><path d="M4 5v5h5" /><path d="M4.5 10A8 8 0 1 1 4 13.5" /></Base>
-);
-
 export const IconoGrafica = (p: P) => (
   <Base {...p}><path d="M4 4v16h16" /><path d="M8 16v-5m4 5V7m4 9v-3" /></Base>
 );
