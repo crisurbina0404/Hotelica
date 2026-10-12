@@ -464,7 +464,18 @@ export type CuentaHotelero = {
   contrasena: string;
   nombre: string; // nombre del dueño, que es el nombre del usuario
   hotelId: string;
+  creadaEn: string; // fecha y hora en que el admin creó la cuenta (ISO)
+  contrasenaTemporal: boolean; // true mientras no cambie la contraseña que dio el admin
 };
+
+// La contraseña temporal que regala el admin solo dura 24 horas (seguridad HU-021)
+export const VIDA_TEMPORAL_MS = 24 * 60 * 60 * 1000;
+
+// ¿Pasaron ya las 24 horas sin que el hotelero haya cambiado su contraseña?
+export function contrasenaTemporalVencida(cuenta: CuentaHotelero, ahora = Date.now()): boolean {
+  if (!cuenta.contrasenaTemporal) return false;
+  return ahora - new Date(cuenta.creadaEn).getTime() > VIDA_TEMPORAL_MS;
+}
 
 // Contraseña temporal que recibe el hotelero junto con su cuenta
 export function generarContrasenaHotelero(): string {

@@ -94,6 +94,10 @@ export function RecuperarContrasena({ navegar }: { navegar: Navegar }) {
               <p className="mt-1.5 text-sm text-muted">
                 Ingresá el correo asociado a tu cuenta y te enviaremos un enlace para restablecer tu contraseña.
               </p>
+              <p className="mt-2 rounded-lg bg-accent-light px-3.5 py-2.5 text-xs font-medium text-[#92400E]">
+                Este cambio es para tu <b>contraseña de turista</b>. Si olvidaste la contraseña de tu hotel,
+                pedile una nueva al administrador.
+              </p>
             </div>
 
             <form onSubmit={enviarRecuperacion} className="mt-6 grid gap-4">

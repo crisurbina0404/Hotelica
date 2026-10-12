@@ -7,7 +7,7 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, HABITACIONES_SEED, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO,
+  DEPARTAMENTOS, HABITACIONES_SEED, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida,
 } from "../data";
 import type { DatosRegistroHotel, ErroresRegistroHotel, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
@@ -17,7 +17,7 @@ import {
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel } = useApp();
+  const { hoteles, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -26,6 +26,30 @@ export function PanelHotel() {
     : undefined;
   const hotel = mio ?? hoteles.find((h) => h.id === "h-sanjuan")!;
   const HOTEL_ID = hotel.id;
+
+  // Contraseña temporal: el hotelero debe cambiarla en 24 horas (seguridad HU-021)
+  const cuentaMia = usuario?.correo
+    ? cuentasHotelero.find((c) => c.correo === usuario.correo.trim().toLowerCase())
+    : undefined;
+  const passwordTemporal = cuentaMia?.contrasenaTemporal ?? false;
+  const passwordVencida = cuentaMia ? contrasenaTemporalVencida(cuentaMia) : false;
+  const [nuevaPass, setNuevaPass] = useState("");
+  const [confirmaPass, setConfirmaPass] = useState("");
+  const [errorPass, setErrorPass] = useState("");
+
+  // Cambia la contraseña temporal y desbloquea el resto del panel
+  const guardarPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    const resultado = cambiarContrasenaHotelero(nuevaPass, confirmaPass);
+    if (resultado.error) {
+      setErrorPass(resultado.error);
+      return;
+    }
+    setErrorPass("");
+    setNuevaPass("");
+    setConfirmaPass("");
+    avisar("Contraseña actualizada: ya podés usar tu panel con normalidad.", "ok");
+  };
 
   // Edición de la información del hotel (HU-022)
   const [editando, setEditando] = useState(false);
@@ -188,6 +212,65 @@ export function PanelHotel() {
           </div>
         </div>
       </Reveal>
+
+      {/* Aviso obligatorio: cambiar la contraseña temporal en 24 horas */}
+      {passwordTemporal && (
+        <Reveal delay={20}>
+          <div className={`mt-5 rounded-xl border-2 p-5 shadow-card ${passwordVencida ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[#FCD34D] bg-[#FEF3C7]"}`}>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="max-w-xl">
+                <p className={`text-sm font-bold ${passwordVencida ? "text-[#B91C1C]" : "text-[#92400E]"}`}>
+                  {passwordVencida
+                    ? "Tu contraseña temporal ya venció (24 horas)."
+                    : "Cambiá tu contraseña temporal: tienes 24 horas."}
+                </p>
+                <p className={`mt-1 text-xs leading-relaxed ${passwordVencida ? "text-[#B91C1C]/80" : "text-[#92400E]/80"}`}>
+                  La contraseña que te dio el administrador es débil y solo dura 24 horas por seguridad.
+                  Creá la tuya propia (mínimo 6 caracteres) para seguir usando el panel y tus reservas.
+                </p>
+              </div>
+            </div>
+            <form onSubmit={guardarPassword} className="mt-4 grid max-w-md gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#92400E]">Nueva contraseña</span>
+                <input
+                  type="password"
+                  value={nuevaPass}
+                  onChange={(e) => setNuevaPass(e.target.value)}
+                  minLength={6}
+                  maxLength={40}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#92400E]">Confirmar contraseña</span>
+                <input
+                  type="password"
+                  value={confirmaPass}
+                  onChange={(e) => setConfirmaPass(e.target.value)}
+                  minLength={6}
+                  maxLength={40}
+                  placeholder="Repetí la contraseña"
+                  className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+              </label>
+              {errorPass && (
+                <p role="alert" className="anim-pop text-xs font-semibold text-[#B91C1C] sm:col-span-2">{errorPass}</p>
+              )}
+              <div className="sm:col-span-2">
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
+                >
+                  <IconoCheck size={14} />
+                  Guardar mi contraseña
+                </button>
+              </div>
+            </form>
+          </div>
+        </Reveal>
+      )}
 
       {/* Estado del hotel ante la plataforma */}
       <Reveal delay={40}>

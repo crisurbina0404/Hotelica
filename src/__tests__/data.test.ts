@@ -28,6 +28,7 @@ import {
   alternarFavoritoDe,
   validarRegistroHotel,
   validarImagenHotel,
+  contrasenaTemporalVencida,
 } from "../data";
 import type { Calificacion, DatosPago, DatosRegistroHotel, Hotel, Reserva } from "../data";
 
@@ -631,6 +632,25 @@ describe("validarRegistroHotel", () => {
     });
     // 7 obligatorios + imagen = 8 (el teléfono vacío no es error)
     expect(Object.keys(vacio).length).toBe(8);
+  });
+});
+
+describe("contrasenaTemporalVencida (HU-021, seguridad)", () => {
+  const base = { correo: "dueno@hotel.ni", contrasena: "hotel1234", nombre: "Carlos", hotelId: "h-1" };
+
+  it("no vence si el hotelero ya cambió la contraseña", () => {
+    const cuenta = { ...base, creadaEn: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(), contrasenaTemporal: false };
+    expect(contrasenaTemporalVencida(cuenta)).toBe(false);
+  });
+
+  it("no vence dentro de las 24 horas", () => {
+    const cuenta = { ...base, creadaEn: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(), contrasenaTemporal: true };
+    expect(contrasenaTemporalVencida(cuenta)).toBe(false);
+  });
+
+  it("vence después de 24 horas sin cambiarla", () => {
+    const cuenta = { ...base, creadaEn: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), contrasenaTemporal: true };
+    expect(contrasenaTemporalVencida(cuenta)).toBe(true);
   });
 });
 

@@ -8,7 +8,7 @@ import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED,
   nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
   claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel,
-  generarContrasenaHotelero,
+  generarContrasenaHotelero, contrasenaTemporalVencida,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero } from "./data";
 import type { Idioma } from "./i18n";
@@ -63,7 +63,18 @@ function cargar(): Persistido {
         const favoritos: Record<string, string[]> = Array.isArray(viejos)
           ? { invitado: viejos as string[] }
           : (viejos as Record<string, string[]> | undefined) ?? {};
-        return { ...d, favoritos, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [], calificaciones: d.calificaciones ?? [], cuentasHotelero: d.cuentasHotelero ?? [] };
+        return {
+          ...d, favoritos,
+          notificaciones: d.notificaciones ?? [],
+          pagos: d.pagos ?? [],
+          calificaciones: d.calificaciones ?? [],
+          // Cuentas viejas sin fecha: les damos la hora actual y ya no son temporales
+          cuentasHotelero: (d.cuentasHotelero ?? []).map((c) => ({
+            ...c,
+            creadaEn: c.creadaEn ?? new Date().toISOString(),
+            contrasenaTemporal: c.contrasenaTemporal ?? false,
+          })),
+        };
       }
     }
   } catch {
@@ -132,6 +143,7 @@ type AppCtx = {
   enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
   actualizarHotel: (hotelId: string, datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel };
+  cambiarContrasenaHotelero: (nueva: string, confirmar: string) => { error?: string };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
 
@@ -440,6 +452,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
             contrasena: generarContrasenaHotelero(),
             nombre: hotel.dueno,
             hotelId,
+            creadaEn: new Date().toISOString(),
+            contrasenaTemporal: true, // el dueño debe cambiarla en 24 horas
           }
         : null;
 
@@ -550,6 +564,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
+  // El hotelero cambia la contraseña temporal que le dio el admin (debe hacerlo en 24h)
+  const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = (nueva, confirmar) => {
+    if (!usuario?.correo) return { error: "No hay sesión de hotelero activa" };
+
+    const limpia = nueva.trim();
+    if (limpia.length < 6) return { error: "La nueva contraseña debe tener al menos 6 caracteres." };
+    if (limpia !== confirmar.trim()) return { error: "Las contraseñas no coinciden. Escribí la misma en los dos campos." };
+
+    let encontrada = false;
+    setDatos((d) => ({
+      ...d,
+      cuentasHotelero: d.cuentasHotelero.map((c) => {
+        if (c.correo !== usuario.correo.trim().toLowerCase()) return c;
+        encontrada = true;
+        return { ...c, contrasena: limpia, contrasenaTemporal: false };
+      }),
+    }));
+    if (!encontrada) return { error: "No encontramos tu cuenta de hotelero." };
+    return {};
+  };
+
   // Disponibilidad = total de unidades - unidades ocupadas en esas fechas
   const disponiblesDe = (habitacionId: string, llegada: string, salida: string) => {
     const ocupadas = datos.reservas.filter(
@@ -578,6 +613,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       (c) => c.correo === correo.trim().toLowerCase() && c.contrasena === contrasena.trim()
     );
     if (cuenta) {
+      // Si la contraseña temporal ya venció (24h), no dejamos entrar
+      if (contrasenaTemporalVencida(cuenta)) {
+        return { error: "Tu contraseña temporal venció (24 horas). Pedile al administrador una nueva contraseña." };
+      }
       setUsuario({ nombre: cuenta.nombre, rol: "Hotel", correo: cuenta.correo, telefono: "", direccion: "" });
       setRol("hotel"); // el panel del hotel queda visible en el menú
       const hotel = datos.hoteles.find((h) => h.id === cuenta.hotelId);
@@ -709,12 +748,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { error: "Ingresa tu correo electrónico" };
     }
 
-    // Sin redirectTo: Supabase usa la URL configurada en el dashboard
-    const { error } = await supabase.auth.resetPasswordForEmail(correo);
+    // redirectTo: el enlace del correo regresa a la misma dirección donde pidió el cambio
+    let { error } = await supabase.auth.resetPasswordForEmail(correo, {
+      redirectTo: window.location.origin,
+    });
+
+    // Si Supabase rechazó la redirección (URL no autorizada), reintentamos sin ella
+    if (error && (error.message.toLowerCase().includes("redirect") || error.message.toLowerCase().includes("allow"))) {
+      console.warn("Redirect rechazado, reintentando sin redirectTo:", error.message);
+      ({ error } = await supabase.auth.resetPasswordForEmail(correo));
+    }
 
     if (error) {
-      console.error("Error Supabase resetPasswordForEmail:", error.message);
-      return { error: "No se pudo enviar el correo de recuperación. Verificá que el correo esté registrado." };
+      console.error("Error Supabase resetPasswordForEmail:", error.message, error);
+      // Mensajes claros según lo que reportó Supabase
+      if (error.message.includes("Security purposes") || error.message.includes("rate limit") || error.message.includes("after")) {
+        return { error: "Esperá un minuto antes de pedir otro correo: Supabase limita los envíos por seguridad." };
+      }
+      if (error.message.toLowerCase().includes("redirect")) {
+        return { error: "No se pudo enviar: la URL de redirección no está autorizada en Supabase (Authentication → URL Configuration)." };
+      }
+      return { error: "No se pudo enviar el correo de recuperación. Verificá que el correo esté registrado y sea tu correo de turista." };
     }
 
     return { ok: true };
@@ -778,6 +832,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       enviarCuentaHotelero,
       registrarHotel,
       actualizarHotel,
+      cambiarContrasenaHotelero,
       disponiblesDe,
     }),
     [datos, rol, usuario, idioma, toasts]

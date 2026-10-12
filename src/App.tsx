@@ -4,6 +4,7 @@
 // ============================================================
 import { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./store";
+import { supabase } from "./lib/supabase";
 import type { Ruta } from "./rutas";
 import { Navbar, Footer, Toasts } from "./layout";
 import { Marca } from "./ui";
@@ -35,13 +36,28 @@ function AppInner() {
   }, [usuario, ruta.nombre]);
 
   // Detectar si Supabase redirigió con token de recuperación de contraseña
+  // Puede llegar en el hash (#access_token=...&type=recovery) o como código PKCE (?code=...)
   useEffect(() => {
     const hash = window.location.hash;
-    if (hash.includes("access_token") && hash.includes("type=recovery")) {
-      // Limpiar el hash de la URL y navegar a restablecer contraseña
+    const params = new URLSearchParams(window.location.search);
+    const enHash = hash.includes("access_token") && hash.includes("type=recovery");
+    const enQuery = params.has("code");
+    if (enHash || enQuery) {
+      // Limpiar la URL y navegar a restablecer contraseña
       window.history.replaceState(null, "", window.location.pathname);
       setRuta({ nombre: "restablecer" });
     }
+  }, []);
+
+  // Supabase avisa con PASSWORD_RECOVERY cuando el enlace del correo es válido
+  // (cubre el flujo PKCE, donde el token no queda visible en la URL)
+  useEffect(() => {
+    const { data: escucha } = supabase.auth.onAuthStateChange((evento) => {
+      if (evento === "PASSWORD_RECOVERY") {
+        setRuta({ nombre: "restablecer" });
+      }
+    });
+    return () => escucha.subscription.unsubscribe();
   }, []);
 
   // Splash de entrada con la marca unificada (se desvanece al cargar)

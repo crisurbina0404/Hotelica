@@ -26,7 +26,7 @@ const FORM_VACIO: DatosRegistroHotel = {
 };
 
 export function InscribeHotel() {
-  const { hoteles, registrarHotel, avisar, usuario, cuentasHotelero } = useApp();
+  const { hoteles, registrarHotel, avisar, usuario } = useApp();
 
   const [registro, setRegistro] = useState<DatosRegistroHotel>(() =>
     // Si ya hay sesión, prellenamos los datos del dueño
@@ -134,13 +134,8 @@ export function InscribeHotel() {
     } else if (hotel.aprobado === "rechazado") {
       setResultadoConsulta({ tipo: "rechazado", hotel });
     } else {
-      // Aprobado: buscamos la cuenta creada por el admin para mostrar credenciales
-      const cuenta = cuentasHotelero.find((c) => c.hotelId === hotel.id);
-      setResultadoConsulta({
-        tipo: "aprobado",
-        hotel,
-        cuenta: cuenta ? { correo: cuenta.correo, contrasena: cuenta.contrasena } : { correo, contrasena: "" },
-      });
+      // Aprobado: por seguridad NUNCA mostramos la contraseña acá, solo el estado
+      setResultadoConsulta({ tipo: "aprobado", hotel, cuenta: { correo: hotel.correoDueno ?? correo, contrasena: "" } });
     }
   };
 
@@ -450,22 +445,11 @@ export function InscribeHotel() {
                   <p className="text-sm font-bold text-[#166534]">
                     ¡Tu hotel <b>{resultadoConsulta.hotel.nombre}</b> fue <b>Aprobado</b>! Ya aparece en las búsquedas de Hotelica.
                   </p>
-                  {resultadoConsulta.cuenta.contrasena ? (
-                    <div className="mt-3 rounded-lg bg-white p-4">
-                      <p className="text-xs font-bold uppercase tracking-wider text-[#166534]">Tus credenciales de acceso</p>
-                      <div className="mt-2 space-y-1 text-sm">
-                        <p className="flex justify-between"><span className="text-muted">Correo</span><b className="font-mono text-ink">{resultadoConsulta.cuenta.correo}</b></p>
-                        <p className="flex justify-between"><span className="text-muted">Contraseña</span><b className="font-mono text-ink">{resultadoConsulta.cuenta.contrasena}</b></p>
-                      </div>
-                      <p className="mt-3 text-xs text-muted">
-                        Con estos datos podés iniciar sesión en Hotelica y entrar a tu panel. También te los enviamos por correo.
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-[#166534]/80">
-                      Inicia sesión con tu correo y la contraseña que recibiste en tu bandeja de entrada.
-                    </p>
-                  )}
+                  <p className="mt-2 text-xs text-[#166534]/80">
+                    Tus credenciales de acceso se enviaron <b>solo</b> al correo que dejaste al inscribirte
+                    ({resultadoConsulta.cuenta.correo}). Por seguridad no se muestran acá: revisá tu bandeja de entrada
+                    y cambiá tu contraseña temporal en las primeras 24 horas.
+                  </p>
                 </div>
               )}
             </div>

@@ -41,7 +41,7 @@ function validarCampos(nombre: string, telefono: string, direccion: string): Err
 }
 
 export function Perfil({ navegar }: { navegar: Navegar }) {
-  const { usuario, actualizarPerfil, avisar } = useApp();
+  const { usuario, rol, actualizarPerfil, avisar, hoteles, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
 
   // Estado del modo edición
   const [editando, setEditando] = useState(false);
@@ -60,6 +60,34 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
     telefono: usuario?.telefono ?? "",
     direccion: usuario?.direccion ?? "",
   });
+
+  // Si el usuario es hotelero, mostramos su hotel y su sección de contraseña
+  const esHotelero = rol === "hotel" && usuario?.rol === "Hotel";
+  const miHotel = esHotelero && usuario?.correo
+    ? hoteles.find((h) => h.correoDueno?.toLowerCase() === usuario.correo.trim().toLowerCase())
+    : undefined;
+  const cuentaMia = esHotelero && usuario?.correo
+    ? cuentasHotelero.find((c) => c.correo === usuario.correo.trim().toLowerCase())
+    : undefined;
+
+  // Formulario para cambiar la contraseña (solo hotelero)
+  const [nuevaPass, setNuevaPass] = useState("");
+  const [confirmaPass, setConfirmaPass] = useState("");
+  const [errorPass, setErrorPass] = useState("");
+
+  // Guarda la nueva contraseña del hotelero
+  const guardarPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    const resultado = cambiarContrasenaHotelero(nuevaPass, confirmaPass);
+    if (resultado.error) {
+      setErrorPass(resultado.error);
+      return;
+    }
+    setErrorPass("");
+    setNuevaPass("");
+    setConfirmaPass("");
+    avisar("Contraseña actualizada correctamente.", "ok");
+  };
 
   // Si no hay usuario autenticado, no debería llegar aquí (ruta protegida)
   if (!usuario) {
@@ -128,15 +156,17 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary-soft text-primary">
+          <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${esHotelero ? "bg-hotel-soft text-hotel" : "bg-primary-soft text-primary"}`}>
             <IconoUsuario size={20} />
           </span>
           <div>
-            <TituloSeccion ceja="Tu información personal" titulo="Mi perfil" />
+            <TituloSeccion ceja={esHotelero ? "Cuenta de hotelero" : "Tu información personal"} titulo="Mi perfil" />
           </div>
         </div>
         <p className="mt-2 text-sm text-muted">
-          Administra y actualiza tu información personal.
+          {esHotelero
+            ? "Estos son los datos de tu cuenta de hotelero. El hotel lo administrás desde tu panel."
+            : "Administra y actualiza tu información personal."}
         </p>
       </Reveal>
 
@@ -147,18 +177,23 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
           <div className="border-b border-line bg-canvas/50 px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white font-display text-sm font-bold">
+                <span className={`flex h-10 w-10 items-center justify-center rounded-full font-display text-sm font-bold text-white ${esHotelero ? "bg-hotel" : "bg-primary"}`}>
                   {usuario.nombre.charAt(0).toUpperCase()}
                 </span>
                 <div>
                   <p className="text-sm font-bold text-ink">{usuario.nombre}</p>
                   <p className="text-xs text-muted">{correo}</p>
+                  {esHotelero && miHotel && (
+                    <p className="mt-0.5 text-xs font-semibold text-hotel">
+                      Dueño de {miHotel.nombre}
+                    </p>
+                  )}
                 </div>
               </div>
               {!editando && (
                 <button
                   onClick={iniciarEdicion}
-                  className="rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-primary-dark hover:shadow-md active:scale-95"
+                  className={`rounded-lg px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:shadow-md active:scale-95 ${esHotelero ? "bg-hotel hover:bg-[#92400E]" : "bg-primary hover:bg-primary-dark"}`}
                 >
                   Editar perfil
                 </button>
@@ -287,6 +322,66 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
           </div>
         </div>
       </Reveal>
+
+      {/* Sección de contraseña (solo para el hotelero, HU-021) */}
+      {esHotelero && (
+        <Reveal delay={150}>
+          <div className="mt-6 rounded-2xl border border-line bg-white p-6 shadow-card sm:p-8">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-light text-hotel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              <div>
+                <h2 className="font-display text-lg font-bold text-ink">Contraseña de acceso</h2>
+                <p className="text-xs text-muted">
+                  {cuentaMia?.contrasenaTemporal
+                    ? "Aún usás la contraseña temporal: cambiala ya (vence en 24 horas)."
+                    : "Podés cambiarla cuando quieras."}
+                </p>
+              </div>
+            </div>
+
+            <form onSubmit={guardarPassword} className="mt-5 grid gap-5 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Nueva contraseña</span>
+                <input
+                  type="password"
+                  value={nuevaPass}
+                  onChange={(e) => setNuevaPass(e.target.value)}
+                  minLength={6}
+                  maxLength={40}
+                  placeholder="Mínimo 6 caracteres"
+                  className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Confirmar contraseña</span>
+                <input
+                  type="password"
+                  value={confirmaPass}
+                  onChange={(e) => setConfirmaPass(e.target.value)}
+                  minLength={6}
+                  maxLength={40}
+                  placeholder="Repetí la contraseña"
+                  className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+              </label>
+              {errorPass && (
+                <p role="alert" className="anim-pop text-xs font-semibold text-[#B91C1C] sm:col-span-2">{errorPass}</p>
+              )}
+              <div className="flex justify-end sm:col-span-2">
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
+                >
+                  <IconoCheck size={15} />
+                  Cambiar contraseña
+                </button>
+              </div>
+            </form>
+          </div>
+        </Reveal>
+      )}
 
       {/* Nota informativa sobre la seguridad */}
       <Reveal delay={200}>

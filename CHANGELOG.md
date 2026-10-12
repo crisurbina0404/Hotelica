@@ -6,6 +6,41 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.47.0] — 2026-10-12 · Recuperar contraseña: el enlace vuelve a la app correcta
+
+### Arreglado
+- **`src/store.tsx`**: `olvidarContrasena()` ahora pasa `redirectTo: window.location.origin`, así el enlace del correo regresa a la dirección donde el usuario pidió el cambio (localhost, IP local o dominio), en lugar de la Site URL fija del dashboard de Supabase.
+- **`src/App.tsx`**: la detección del enlace de recuperación ahora cubre **las dos formas** en que Supabase puede mandar el token: en el hash (`#access_token=...&type=recovery`) y como código PKCE (`?code=...`); además se escucha el evento `PASSWORD_RECOVERY` del cliente como respaldo.
+- **`src/pages/ForgotPassword.tsx`**: aclaración de que esta recuperación es solo para la contraseña de turista; la del hotel la regenera el administrador.
+
+### Nota
+Supabase solo redirige a URLs que estén en **Authentication → URL Configuration → Redirect URLs** del dashboard. Si el enlace sigue sin volver a la app, agregar ahí `http://localhost:3000/**` y `http://192.168.56.1:3000/**`.
+
+---
+
+## [v0.46.0] — 2026-10-12 · Perfil adaptado al rol Hotelero
+
+### Cambiado
+- **`src/pages/Profile.tsx`**: cuando el usuario tiene sesión de hotelero, "Mi perfil" se adapta: ceja "Cuenta de hotelero", colores ámbar del rol, tarjeta con "Dueño de {hotel}" y aviso de que el hotel se administra desde el panel.
+- **`src/pages/Profile.tsx`**: nueva sección **"Contraseña de acceso"** visible solo para el hotelero, para cambiar su contraseña desde el perfil (misma validación que el banner del panel); si aún usa la temporal, el texto recuerda que vence en 24 horas.
+
+---
+
+## [v0.45.0] — 2026-10-12 · Seguridad: contraseña temporal de hotelero vence en 24h
+
+### Agregado
+- **`src/data.ts`**: `CuentaHotelero` ahora guarda `creadaEn` y `contrasenaTemporal`. Nueva función `contrasenaTemporalVencida()`: la contraseña que regala el administrador **vence a las 24 horas** si el dueño no la cambia.
+- **`src/store.tsx`**: al crear la cuenta hotelero se marca como temporal; `login()` **bloquea el ingreso** si la temporal ya venció, con mensaje para pedir una nueva al admin. Nueva función `cambiarContrasenaHotelero()` (mínimo 6 caracteres, con confirmación).
+- **`src/pages/HotelPanel.tsx`**: banner obligatorio arriba del panel para que el hotelero **cambie su contraseña temporal**; si ya venció, el aviso pasa a rojo.
+
+### Cambiado
+- **`src/pages/InscribeHotel.tsx`**: la consulta pública de estado ya **no muestra la contraseña** (antes cualquiera que supiera el correo podía verla). Ahora solo indica que las credenciales se enviaron por correo.
+
+### Pruebas
+- 3 tests nuevos de `contrasenaTemporalVencida` (93 pruebas en total).
+
+---
+
 ## [v0.44.0] — 2026-10-12 · Revert: selector de roles restaurado
 
 ### Revertido
