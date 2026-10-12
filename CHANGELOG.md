@@ -77,6 +77,20 @@ Quedan pendientes en una futura versión, por requerir verificación más amplia
 
 ---
 
+## [v0.39.1] — 2026-10-12 · Corrección de bugs #2 y #3 (Reserva sin sesión y sobreventa entre pestañas)
+
+### Corregido
+- **Bug #2 — Reserva sin sesión**: `src/pages/BookingModal.tsx` ahora valida `usuario` en `validarPaso()` y al inicio de `confirmar()`. Sin sesión aparece "Debes iniciar sesión para reservar." y se vuelve al paso 1; ya no se crean reservas con nombre "Turista" y correo vacío, ni el toast "enviado a undefined".
+- **Bug #3 — Sobreventa y pérdida de datos entre pestañas**:
+  - `src/store.tsx`: nuevo `useEffect` con `window.addEventListener("storage", ...)`, así cuando una pestaña guarda cambios la otra sincroniza su estado en lugar de pisarlo.
+  - `crearReserva()` lee lo último guardado en el navegador para el folio (evita folios duplicados) y re-valida la disponibilidad con los datos más frescos antes de escribir; si ya no hay cupo no escribe la reserva.
+  - `BookingModal.tsx`: `confirmar()` re-valida fechas, pago y disponibilidad justo antes de crear la reserva (si otra pestaña ya reservó, muestra el error y regresa al paso 1).
+
+### Verificado
+- `npx tsc --noEmit` y `npm run build` sin errores.
+
+---
+
 ## [v0.39.0] — 2026-09-28 · Comprobantes con la marca Hotelica
 
 ### Agregado

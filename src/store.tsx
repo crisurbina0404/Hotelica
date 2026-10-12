@@ -79,6 +79,18 @@ function cargar(): Persistido {
   };
 }
 
+// Lee lo último que haya en el navegador; devuelve null si no hay nada o está corrupto
+function leerGuardado(): Persistido | null {
+  try {
+    const crudo = localStorage.getItem(CLAVE_LS);
+    if (!crudo) return null;
+    const d = JSON.parse(crudo) as Persistido;
+    return d && Array.isArray(d.reservas) && Array.isArray(d.hoteles) ? d : null;
+  } catch {
+    return null;
+  }
+}
+
 // Aviso visual que aparece en la esquina (toast)
 export type Toast = { id: number; texto: string; tono: "ok" | "error" | "info" };
 
@@ -139,6 +151,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CLAVE_LS, JSON.stringify(datos));
   }, [datos]);
 
+  // Si otra pestaña guarda cambios, copiamos su estado para no pisarnos (bug sobreventa)
+  useEffect(() => {
+    const alCambiarEnOtraPestana = (e: StorageEvent) => {
+      if (e.key !== CLAVE_LS || !e.newValue) return;
+      try {
+        const d = JSON.parse(e.newValue) as Persistido;
+        if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) setDatos(d);
+      } catch {
+        // Si el guardado de la otra pestaña está corrupto, lo ignoramos
+      }
+    };
+    window.addEventListener("storage", alCambiarEnOtraPestana);
+    return () => window.removeEventListener("storage", alCambiarEnOtraPestana);
+  }, []);
+
   // Persistir usuario en localStorage
   useEffect(() => {
     if (usuario) localStorage.setItem("hotelica-usuario", JSON.stringify(usuario));
@@ -196,7 +223,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Crea una reserva nueva y le asigna el siguiente folio (HC-XXXX)
   const crearReserva: AppCtx["crearReserva"] = (r) => {
-    const folio = `HC-${datos.folio + 1}`;
+    // Leemos lo último guardado en el navegador: otra pestaña pudo haber reservado antes
+    const guardado = leerGuardado();
+    const folio = `HC-${(guardado?.folio ?? datos.folio) + 1}`;
     const nueva: Reserva = {
       ...r,
       folio,
@@ -204,7 +233,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
       creada: hoyISO(),
       calificada: false,
     };
-    setDatos((d) => ({ ...d, folio: d.folio + 1, reservas: [nueva, ...d.reservas] }));
+    setDatos((d) => {
+      // Re-validamos disponibilidad con los datos más frescos antes de escribir
+      const ocupadas = d.reservas.filter(
+        (rr) =>
+          rr.habitacionId === r.habitacionId &&
+          rr.estado !== "cancelada" &&
+          rr.estado !== "completada" &&
+          seTraslapan(r.llegada, r.salida, rr.llegada, rr.salida)
+      ).length;
+      if (ocupadas >= unidadesDe(r.habitacionId)) return d; // ya no hay cupo: no escribimos
+      return {
+        ...d,
+        folio: Math.max(d.folio, guardado?.folio ?? 0) + 1,
+        reservas: [nueva, ...d.reservas],
+      };
+    });
     return nueva;
   };
 

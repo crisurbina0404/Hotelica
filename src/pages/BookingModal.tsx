@@ -217,28 +217,40 @@ export function ModalReserva({
     );
   }, [disponibles, noches, llegada, habitacion, disponiblesDe]);
 
+  // Valida los datos del paso 1: fechas, huéspedes y disponibilidad
+  const validarDatosReserva = (): boolean => {
+    if (salida <= llegada) {
+      setError("La fecha de salida debe ser posterior a la fecha de llegada.");
+      return false;
+    }
+    if (huespedes < 1) {
+      setError("El número de huéspedes debe ser mayor o igual a 1.");
+      return false;
+    }
+    if (huespedes > habitacion.capacidad) {
+      setError("La habitación seleccionada no admite esa cantidad de huéspedes.");
+      return false;
+    }
+    // Revisamos la disponibilidad al momento de validar (otra pestaña pudo reservar)
+    const disponiblesAhora = disponiblesDe(habitacion.id, llegada, salida);
+    if (disponiblesAhora <= 0) {
+      setError("No hay habitaciones disponibles para este tipo en las fechas elegidas.");
+      return false;
+    }
+    return true;
+  };
+
   // Validar el paso actual antes de avanzar
   const validarPaso = (): boolean => {
     setError("");
 
-    if (pasoActual === 1) {
-      if (salida <= llegada) {
-        setError("La fecha de salida debe ser posterior a la fecha de llegada.");
-        return false;
-      }
-      if (huespedes < 1) {
-        setError("El número de huéspedes debe ser mayor o igual a 1.");
-        return false;
-      }
-      if (huespedes > habitacion.capacidad) {
-        setError("La habitación seleccionada no admite esa cantidad de huéspedes.");
-        return false;
-      }
-      if (disponibles <= 0) {
-        setError("No hay habitaciones disponibles para este tipo en las fechas elegidas.");
-        return false;
-      }
+    // Sin sesión no se puede reservar en ningún paso
+    if (!usuario) {
+      setError("Debes iniciar sesión para reservar.");
+      return false;
     }
+
+    if (pasoActual === 1 && !validarDatosReserva()) return false;
 
     // Paso 2: los datos del pago deben estar completos antes de avanzar (HU-018)
     if (pasoActual === 2) {
@@ -270,6 +282,33 @@ export function ModalReserva({
 
   // Confirmar la reserva (paso 3)
   const confirmar = async () => {
+    // Sin sesión no dejamos confirmar: evita reservas con datos "Turista" vacíos
+    if (!usuario) {
+      setError("Debes iniciar sesión para reservar.");
+      setPasoActual(1);
+      return;
+    }
+
+    // Re-validamos todo el flujo justo antes de crear (fechas y pago pueden haber cambiado)
+    if (!validarDatosReserva()) {
+      setPasoActual(1);
+      return;
+    }
+    const errorPago = validarPago(pago, datosPago, hoyISO());
+    if (errorPago) {
+      setError(errorPago);
+      setPasoActual(2);
+      return;
+    }
+
+    // Última revisión de disponibilidad: otra pestaña pudo haber reservado ya
+    const disponiblesFinales = disponiblesDe(habitacion.id, llegada, salida);
+    if (disponiblesFinales <= 0) {
+      setError("Esta habitación ya no está disponible para las fechas elegidas. Elegí otras fechas.");
+      setPasoActual(1);
+      return;
+    }
+
     setFase("procesando");
     setCorreoEnviado(null);
 
