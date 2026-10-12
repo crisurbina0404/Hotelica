@@ -1,6 +1,10 @@
-# 🗝️ Hotelica — Tu destino en Nicaragua
+<p align="center">
+<img width="200" height="200" alt="Propuesta 3 - Elegante" src="https://github.com/user-attachments/assets/57579b23-2aea-42df-87fb-9e81c4c8f1f8" />
+</p>
 
-> *Donde Nicaragua te recibe 🇳🇮*
+# Hotelica — Tu destino en Nicaragua
+
+*Donde Nicaragua te recibe 🇳🇮*
 
 **Hotelica** es un sistema de reservación de hoteles enfocado en hoteles pequeños y familiares de Nicaragua.
 

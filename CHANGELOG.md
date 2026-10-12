@@ -77,6 +77,160 @@ Quedan pendientes en una futura versión, por requerir verificación más amplia
 
 ---
 
+## [v0.39.0] — 2026-09-28 · Comprobantes con la marca Hotelica
+
+### Agregado
+- **Logo de Hotelica en el correo**: la cabecera muestra `public/logo-email.png` (PNG generado desde `Logo-blanco.svg` y recortado al tamaño real del logo) apuntando al archivo publicado en el repositorio, ya que los clientes de correo no renderizan imágenes en `data URI` — por eso salía la imagen rota. Si la imagen está bloqueada se muestra "HOTELICA" como texto alternativo con la tipografía de la marca.
+- **Datos completos del comprobante en el correo**: el frontend envía habitación, subtotal, IVA, método de pago, estado de la reserva, estado del pago y referencia; la plantilla suma bloques de **Detalle de la reserva**, **Pago**, **Resumen del pago** y chips de estado con la paleta oficial.
+- **Copia interna del logo** (`src/assets/Logo-blanco.svg`) para incrustarlo en el comprobante descargable.
+
+### Modificado
+- **Plantilla del correo** (`supabase/fn enviar-correo-reserva`): rediseño con tablas (el espaciado de las filas ahora se respeta en cualquier cliente), cabecera teal con logo y filete dorado, folio en bloque dorado, resumen con subtotal/IVA, total en bloque oscuro con monto dorado, nota de check-in y pie de marca.
+- **Comprobante descargable** (`src/pages/BookingModal.tsx` → `descargarComprobante`): mismo diseño que el correo, con el SVG del logo incrustado, bloques de reserva/pago/resumen, chips de estado, referencia y fecha de pago, y pie HOTELICA.
+- `src/store.tsx`: `enviarCorreoReserva()` arma el cuerpo con los datos extra de la reserva y del pago.
+
+### Verificado
+- `npm run typecheck` y `npm run build` sin errores; `npm run test`: 75 pruebas pasando.
+- Para que el correo nuevo se vea hay que subir el PNG al repositorio (`main`) y luego redesplegar la función: `supabase functions deploy enviar-correo-reserva`.
+
+---
+
+## [v0.38.0] — 2026-09-28 · HU-020: Gestionar hoteles favoritos
+
+### Agregado
+- **`historias-usuario/HU-020-gestionar-hoteles-favoritos.md`**: historia con 9 escenarios BDD (marcar y quitar desde la tarjeta, desde la ficha, contador en el header, página de favoritos, estado vacío, lista por cuenta, persistencia y sin duplicados).
+- **Favoritos por cuenta (subtaskos 182 y 186)**: `favoritos` en `src/store.tsx` pasó de una lista plana a `Record<string, string[]>` guardada **por clave de cuenta** (correo en minúsculas o `"invitado"` sin sesión); `cargar()` migra los guardados viejos a la lista del invitado. En Fase 2 esa clave se reemplaza por `id_usuario` de la tabla `favoritos`.
+- **Funciones `claveDeFavoritos()`, `favoritosDe()` y `alternarFavoritoDe()`** (`src/data.ts`): clave de la lista, lectura por cuenta y toggle sin duplicados.
+- **5 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("favoritos por cuenta")`).
+
+### Modificado
+- `src/store.tsx`: `alternarFavorito()` escribe solo en la lista de la cuenta actual; el contexto expone `favoritosDe(datos.favoritos, usuario)`; `reiniciarDemo()` siembra la lista de la cuenta activa.
+- `src/pages/MyReservations.tsx`: textos de la página Favoritos actualizados (lista propia por cuenta y tabla `favoritos` de Fase 2).
+
+### Verificado
+- Corazón en tarjeta (`src/tarjeta.tsx`) y ficha (`src/pages/HotelDetail.tsx`) con toggle, animación y aviso (subtaskos 181/183); contador en header y menú móvil (`src/layout.tsx`, subtasko 184); página `/favoritos` (subtasko 185).
+- `npm run test`: 75 pruebas pasando (5 nuevas de HU-020).
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.37.0] — 2026-09-28 · HU-019: Calificar una estadía
+
+### Agregado
+- **`historias-usuario/HU-019-calificar-una-estadia.md`**: historia con 9 escenarios BDD (aparición tras check-out, no se califica antes, formulario con estrellas y comentario opcional, validación de estrellas, registro de la calificación, recálculo del promedio, una sola calificación por reserva, comentario como reseña y persistencia).
+- **Tipo `Calificacion`** (`src/data.ts`): registro con folio, hotel, autor, estrellas (1-5), comentario y fecha — el equivalente de Fase 1 a la tabla `calificaciones`.
+- **Funciones `sePuedeCalificar()`, `validarCalificacion()` y `calificacionDe()`** (`src/data.ts`): la regla central (solo tras el check-out y una sola vez), la validación de 1 a 5 estrellas y la búsqueda de la calificación de una reserva.
+- **Lista `calificaciones` persistida** (`src/store.tsx`) con `?? []`; `calificar()` ahora **valida antes de escribir** (si la reserva no está completada, ya fue calificada o las estrellas no son válidas no cambia nada) y devuelve `true`/`false`; además guarda el registro, marca `calificada`, recalcula el promedio con `nuevoPromedio()` y publica el comentario como reseña del hotel.
+- **10 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("sePuedeCalificar")`, `describe("validarCalificacion")` y `describe("calificacionDe")`).
+
+### Modificado
+- `src/pages/MyReservations.tsx`: el botón "Calificar estadía" ahora depende de `sePuedeCalificar(r)`; el sello "Ya calificaste" aparece para toda reserva calificada; el envío revalida y avisa si la reserva ya fue calificada; el detalle de la reserva muestra la estrella del turista con su fecha y comentario; el modal indica folio y fecha del check-out.
+
+### Verificado
+- `npm run test`: 70 pruebas pasando (10 nuevas de HU-019).
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.36.0] — 2026-09-28 · HU-018: Registrar o realizar un pago
+
+### Agregado
+- **`historias-usuario/HU-018-registrar-o-realizar-un-pago.md`**: historia con 9 escenarios BDD (selección del método, formulario según el método, validación antes de procesar, datos válidos, pago registrado con la reserva, reserva confirmada, pago en efectivo pendiente, comprobante descargable y montos del comprobante).
+- **Tipos `Pago`, `EstadoPago` y `DatosPago`** y constante **`ETIQUETA_PAGO`** (`src/data.ts`): registro de pago con folio, monto, método, estado (Pagado / Pendiente / Reembolsado), fecha y referencia.
+- **Función `validarPago(metodo, datos, hoy)`** (`src/data.ts`): valida los datos antes de procesar — tarjeta de 16 dígitos con titular, vencimiento MM/AA no vencido y CVV de 3 dígitos; transferencia con banco y referencia; en efectivo no pide nada.
+- **Lista `pagos` persistida** (`src/store.tsx`) y método **`registrarPago()`**: crea el pago contra el folio de la reserva y, si quedó Pagado, deja la reserva en estado **Confirmada** (en efectivo todo queda Pendiente). `pagos` se carga con `?? []` para no romper los guardados viejos.
+- **Formulario de pago en el paso 2** (`src/pages/BookingModal.tsx`): campos de tarjeta (titular, número, vencimiento, CVV), transferencia (banco, referencia) y aviso de pago en recepción para efectivo; no se avanza al paso 3 si `validarPago()` devuelve un error.
+- **Comprobante descagable**: `descargarComprobante()` genera un archivo HTML con folio, hotel, huésped, fechas, desglose con IVA 15% y método de pago, y lo descarga desde la pantalla de éxito (junto al correo de confirmación).
+- **Estado del pago en el detalle de la reserva** (`src/pages/MyReservations.tsx`): muestra estado, referencia y fecha del pago registrado.
+- **Icono `IconoDescargar`** (`src/icons.tsx`).
+- **11 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("validarPago")`).
+
+### Modificado
+- `src/pages/BookingModal.tsx`: al confirmar se registra el pago y la reserva sale Confirmada (o Pendiente en efectivo); pantalla de éxito con la línea "Pago registrado / pendiente" y botón "Descargar comprobante".
+- `historias-usuario/Orden de Historias de Usuarios.md`: HU-018 ✅ Terminada.
+
+### Verificado
+- `npm run test`: 60 pruebas pasando (11 nuevas de HU-018).
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.35.0] — 2026-09-28 · HU-017: Consultar el estado de la reserva
+
+### Agregado
+- **`historias-usuario/HU-017-consultar-estado-de-la-reserva.md`**: historia con 8 escenarios BDD (badge, explicación del estado, línea de tiempo, reserva cancelada, aviso de cambio, reserva inexistente, persistencia y ruta protegida).
+- **Línea de tiempo de la reserva** (`src/pages/MyReservations.tsx` → componente `LineaTiempo`): los 4 pasos del flujo (Pendiente → Confirmada → Check-in → Completada) con check en los hechos, paso actual resaltado en dorado y los futuros en gris; si está cancelada se reemplaza por un aviso en coral.
+- **Explicación del estado en el detalle**: bloque "Estado actual" con una frase sencilla por cada estado (`SIGNIFICADO`).
+- **Aviso de cambio de estado**: al volver a "Mis reservas" se comparan los estados guardados en `localStorage` (`hotelica-estados-vistos`) con los actuales; si alguno cambió se lanza un toast y la tarjeta queda marcada con "Estado actualizado" hasta que se abre el detalle.
+- **Reserva inexistente**: el detalle ahora se abre **por folio**; si el folio ya no existe se muestra el mensaje "No encontramos la reserva" con botón de cierre (`ReservaNoEncontrada`).
+- **Función `pasoDeEstado(estado)`** y constante **`FLUJO_RESERVA`** (`src/data.ts`): devuelven el paso 0..3 del recorrido y `-1` para reservas canceladas.
+- **6 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("pasoDeEstado")`).
+
+### Modificado
+- `src/pages/MyReservations.tsx`: estado del modal cambiado de objeto a folio; la cancelación marca el estado como visto para no avisarse a sí misma; se arregló el formato del bloque de IVA en el detalle.
+- `historias-usuario/Orden de Historias de Usuarios.md`: HU-017 ✅ Terminada.
+
+### Verificado
+- `npm run test`: 49 pruebas pasando (6 nuevas de HU-017).
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.34.0] — 2026-09-28 · HU-016: Cancelar una reserva
+
+### Agregado
+- **`historias-usuario/HU-016-cancelar-una-reserva.md`**: historia con 8 escenarios BDD (botón, modal con política, cambio de estado, estados no cancelables, llegada pasada, disponibilidad liberada, aviso al hotel y persistencia).
+- **Función `sePuedeCancelar(reserva, hoy)`** (`src/data.ts`): regla central de la cancelación — solo estados **Pendiente** o **Confirmada** y con la llegada aún no pasada.
+- **Avisos para el hotel**: tipo `Notificacion` y lista `notificaciones` persistida en `src/store.tsx` con `avisarHotel()` y `marcarNotificacionesLeidas()`; al cancelar, el turista deja el aviso "Reserva HC-XXXX cancelada por el turista".
+- **Tarjeta "Avisos recientes"** (`src/pages/HotelPanel.tsx`): lista los avisos del hotel con contador de no leídos y botón "Marcar como leídos".
+- **Icono `IconoCampana`** (`src/icons.tsx`): SVG inline propio.
+- **6 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("sePuedeCancelar")`): pendiente/confirmada futura, llegada de hoy, check-in, completada, cancelada y llegada pasada.
+
+### Modificado
+- `src/pages/MyReservations.tsx`: el botón y la validación usan `sePuedeCancelar()`; el modal de confirmación ahora incluye la política de cancelación (sin cargos, libera la habitación y avisa al hotel); `cancelar()` llama a `avisarHotel()` y el toast informa que se avisó al hotel.
+- `src/store.tsx`: `notificaciones` se carga con `?? []` para no romper los guardados viejos del `localStorage`.
+- Comentarios de `src/pages/HotelPanel.tsx` actualizados al backlog oficial (HU-026 a HU-029).
+- Estado de HU-016 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+### Verificado
+- `npm run test`: 43 pruebas pasando (6 nuevas de HU-016).
+- `npm run typecheck` sin errores.
+
+---
+
+## [v0.33.0] — 2026-09-28 · HU-015: Consultar historial de reservas
+
+### Agregado
+- **`historias-usuario/HU-015-consultar-historial-de-reservas.md`**: historia con
+  9 escenarios BDD (listado, filtro por usuario, orden, estados, detalle,
+  caso vacío y persistencia).
+- **Función `historialDeReservas(reservas, usuario)`** (`src/data.ts`): devuelve
+  solo las reservas del usuario logueado y las ordena de más recientes a más
+  antiguas; sin sesión muestra las de la turista de demostración.
+- **Constante `TURISTA_DEMO`** (`src/data.ts`): nombre de la turista demo
+  (María Fernández) en un solo lugar.
+- **5 pruebas nuevas** (`src/__tests__/data.test.ts` → `describe("historialDeReservas")`):
+  filtro por sesión, demo sin sesión, orden descendente, coincidencia por nombre
+  cuando no hay correo y lista vacía.
+
+### Modificado
+- **`src/pages/MyReservations.tsx`**: el listado ya no filtra por el nombre fijo
+  "María Fernández", ahora usa `historialDeReservas()` con el usuario de la sesión
+  (y la turista demo cuando nadie inició sesión); el encabezado muestra
+  "Sesión activa" o "Sesión demo" según corresponda.
+- Números de HU de los comentarios de la pantalla actualizados al backlog oficial
+  (historial HU-015, cancelar HU-016, calificar HU-019, favoritos HU-020).
+- **Escenario 3 de la HU ajustado**: "Mis reservas" es ruta protegida, así que sin
+  sesión la pantalla no se abre y se vuelve al inicio (antes decía que se mostraban
+  las reservas de la turista demo, caso no alcanzable en la interfaz).
+- Estado de HU-015 actualizado a ✅ Terminada en `Orden de Historias de Usuarios.md`.
+
+### Verificado
+- `npm run test`: 37 pruebas pasando (5 nuevas de HU-015).
+- `npm run typecheck` sin errores.
+
+---
+
 ## [v0.32.0] — 2026-09-24 · HU-014: Calcular subtotal, IVA y total
 
 ### Agregado

@@ -6,9 +6,10 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED,
-  nuevoPromedio, hoyISO, seTraslapan,
+  nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
+  claveDeFavoritos, favoritosDe, alternarFavoritoDe,
 } from "./data";
-import type { Hotel, Reserva, Resena, EstadoReserva, Rol } from "./data";
+import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
 
@@ -21,12 +22,25 @@ export type Usuario = {
   direccion: string;
 };
 
+// Aviso que queda para el hotel en su panel (HU-016)
+export type Notificacion = {
+  id: string;
+  hotelId: string;
+  folio: string;
+  texto: string;
+  fecha: string; // ISO (yyyy-mm-dd)
+  leida: boolean;
+};
+
 // Forma de los datos que se guardan en el navegador
 type Persistido = {
   hoteles: Hotel[];
   reservas: Reserva[];
   resenas: Resena[];
-  favoritos: string[];
+  favoritos: Record<string, string[]>; // lista propia de cada cuenta ("invitado" sin sesión)
+  notificaciones: Notificacion[];
+  pagos: Pago[];
+  calificaciones: Calificacion[];
   folio: number; // último número de folio usado
 };
 
@@ -39,7 +53,16 @@ function cargar(): Persistido {
     const crudo = localStorage.getItem(CLAVE_LS);
     if (crudo) {
       const d = JSON.parse(crudo) as Persistido;
-      if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) return d;
+      // Los guardados viejos pueden traer campos nuevos: arrancamos con listas vacías
+      if (d && Array.isArray(d.reservas) && Array.isArray(d.hoteles)) {
+        // Los guardados viejos traían los favoritos en una sola lista:
+        // ahora van separados por cuenta (HU-020)
+        const viejos = d.favoritos as unknown;
+        const favoritos: Record<string, string[]> = Array.isArray(viejos)
+          ? { invitado: viejos as string[] }
+          : (viejos as Record<string, string[]> | undefined) ?? {};
+        return { ...d, favoritos, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [], calificaciones: d.calificaciones ?? [] };
+      }
     }
   } catch {
     // Si el guardado está corrupto, arrancamos con las semillas
@@ -48,7 +71,10 @@ function cargar(): Persistido {
     hoteles: HOTELES_SEED,
     reservas: RESERVAS_SEED,
     resenas: RESENAS_SEED,
-    favoritos: ["h-ometepe", "h-granada"],
+    favoritos: { invitado: ["h-ometepe", "h-granada"] },
+    notificaciones: [],
+    pagos: [],
+    calificaciones: [],
     folio: 1061,
   };
 }
@@ -61,6 +87,9 @@ type AppCtx = {
   reservas: Reserva[];
   resenas: Resena[];
   favoritos: string[];
+  notificaciones: Notificacion[];
+  pagos: Pago[];
+  calificaciones: Calificacion[];
   rol: Rol;
   usuario: Usuario | null;
   idioma: Idioma;
@@ -77,9 +106,12 @@ type AppCtx = {
   cambiarIdioma: () => void;
   alternarFavorito: (hotelId: string) => void;
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
+  registrarPago: (pago: { folio: string; monto: number; metodo: Reserva["pago"]; referencia: string }) => Pago;
   enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva) => void;
-  calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => void;
+  avisarHotel: (hotelId: string, folio: string, texto: string) => void;
+  marcarNotificacionesLeidas: (hotelId: string) => void;
+  calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => void;
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
@@ -150,13 +182,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
   };
 
-  // Marca o desmarca un hotel como favorito
+  // Marca o desmarca un hotel como favorito de la cuenta actual (HU-020)
   const alternarFavorito = (hotelId: string) => {
+    const clave = claveDeFavoritos(usuario);
     setDatos((d) => ({
       ...d,
-      favoritos: d.favoritos.includes(hotelId)
-        ? d.favoritos.filter((f) => f !== hotelId)
-        : [...d.favoritos, hotelId],
+      favoritos: {
+        ...d.favoritos,
+        [clave]: alternarFavoritoDe(d.favoritos[clave] ?? [], hotelId),
+      },
     }));
   };
 
@@ -172,6 +206,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     setDatos((d) => ({ ...d, folio: d.folio + 1, reservas: [nueva, ...d.reservas] }));
     return nueva;
+  };
+
+  // Registra el pago de una reserva; si quedó pagado, la deja Confirmada (HU-018)
+  const registrarPago: AppCtx["registrarPago"] = ({ folio, monto, metodo, referencia }) => {
+    // En efectivo el turista paga en recepción: todo queda pendiente
+    const pagado = metodo !== "efectivo";
+    const nuevo: Pago = {
+      id: `p-${Date.now()}`,
+      folio,
+      monto,
+      metodo,
+      estado: pagado ? "pagado" : "pendiente",
+      fecha: hoyISO(),
+      referencia,
+    };
+    setDatos((d) => ({
+      ...d,
+      pagos: [nuevo, ...d.pagos],
+      reservas: d.reservas.map((r) =>
+        r.folio === folio && pagado ? { ...r, estado: "confirmada" } : r
+      ),
+    }));
+    return nuevo;
   };
 
   // Envía correo de confirmación vía Edge Function (Resend API)
@@ -204,6 +261,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           noches: reserva.noches,
           huespedes: reserva.huespedes,
           total: reserva.total,
+          // Extras para que el comprobante salga completo (HU comprobantes)
+          habitacion: HABITACIONES_SEED.find((h) => h.id === reserva.habitacionId)?.tipo ?? "",
+          subtotal: reserva.subtotal,
+          iva: reserva.iva,
+          pago: reserva.pago,
+          estado: reserva.estado,
+          estadoPago: datos.pagos.find((p) => p.folio === reserva.folio)?.estado ?? "",
+          referencia: datos.pagos.find((p) => p.folio === reserva.folio)?.referencia ?? "",
         }),
       });
 
@@ -229,21 +294,58 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  // Registra una calificación y recalcula el promedio del hotel
-  const calificar = (folio: string, hotelId: string, estrellas: number, comentario: string) => {
+  // Deja un aviso en el panel del hotel (por ejemplo: "Reserva cancelada por el turista")
+  const avisarHotel: AppCtx["avisarHotel"] = (hotelId, folio, texto) => {
+    setDatos((d) => ({
+      ...d,
+      notificaciones: [
+        { id: `n-${Date.now()}`, hotelId, folio, texto, fecha: hoyISO(), leida: false },
+        ...d.notificaciones,
+      ],
+    }));
+  };
+
+  // Marca todos los avisos de un hotel como leídos
+  const marcarNotificacionesLeidas: AppCtx["marcarNotificacionesLeidas"] = (hotelId) => {
+    setDatos((d) => ({
+      ...d,
+      notificaciones: d.notificaciones.map((n) => (n.hotelId === hotelId ? { ...n, leida: true } : n)),
+    }));
+  };
+
+  // Registra la calificación de la reserva y recalcula el promedio (HU-019)
+  // Devuelve false si la reserva no estaba lista o ya había sido calificada
+  const calificar: AppCtx["calificar"] = (folio, hotelId, estrellas, comentario) => {
+    const reserva = datos.reservas.find((r) => r.folio === folio);
+    if (!reserva || !sePuedeCalificar(reserva) || validarCalificacion(estrellas)) return false;
+    if (!datos.hoteles.some((h) => h.id === hotelId)) return false;
+
+    const texto = comentario.trim();
+    const fecha = hoyISO();
+
     setDatos((d) => {
-      const hotel = d.hoteles.find((h) => h.id === hotelId)!;
-      const nuevaResena: Resena = {
+      const nueva: Calificacion = {
+        id: `c-${Date.now()}`,
+        folio,
+        hotelId,
+        autor: reserva.turista,
+        estrellas,
+        comentario: texto,
+        fecha,
+      };
+      // El comentario también queda publicado como reseña del hotel
+      const resena: Resena = {
         id: `r-${Date.now()}`,
         hotelId,
-        autor: "María Fernández",
-        origen: "Managua, Nicaragua",
+        autor: reserva.turista,
+        origen: "Nicaragua, Centroamérica",
         rating: estrellas,
-        comentario,
-        fecha: hoyISO(),
+        comentario: texto,
+        fecha,
       };
       return {
         ...d,
+        calificaciones: [nueva, ...d.calificaciones],
         reservas: d.reservas.map((r) => (r.folio === folio ? { ...r, calificada: true } : r)),
         hoteles: d.hoteles.map((h) =>
           h.id === hotelId
@@ -254,9 +356,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
               }
             : h
         ),
-        resenas: comentario.trim() ? [nuevaResena, ...d.resenas] : d.resenas,
+        resenas: texto ? [resena, ...d.resenas] : d.resenas,
       };
     });
+    return true;
   };
 
   // El administrador aprueba o rechaza un hotel registrado
@@ -452,7 +555,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hoteles: datos.hoteles,
       reservas: datos.reservas,
       resenas: datos.resenas,
-      favoritos: datos.favoritos,
+      favoritos: favoritosDe(datos.favoritos, usuario),
+      notificaciones: datos.notificaciones,
+      pagos: datos.pagos,
+      calificaciones: datos.calificaciones,
       rol,
       usuario,
       idioma,
@@ -469,8 +575,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cambiarIdioma,
       alternarFavorito,
       crearReserva,
+      registrarPago,
       enviarCorreoReserva,
       cambiarEstadoReserva,
+      avisarHotel,
+      marcarNotificacionesLeidas,
       calificar,
       decidirHotel,
       disponiblesDe,

@@ -384,6 +384,60 @@ export function nuevoPromedio(promedio: number, totalResenas: number, estrellas:
   return Math.round(((promedio * totalResenas + estrellas) / (totalResenas + 1)) * 10) / 10;
 }
 
+// ----- Calificación de la estadía (HU-019) -----
+
+// Equivalente a la tabla `calificaciones`: una fila por reserva calificada
+export type Calificacion = {
+  id: string;
+  folio: string;      // reserva que originó la calificación
+  hotelId: string;
+  autor: string;
+  estrellas: number;  // entero de 1 a 5
+  comentario: string; // opcional
+  fecha: string;      // ISO (yyyy-mm-dd)
+};
+
+// Solo se puede calificar después del check-out y una sola vez por reserva
+export function sePuedeCalificar(reserva: Pick<Reserva, "estado" | "calificada">): boolean {
+  return reserva.estado === "completada" && !reserva.calificada;
+}
+
+// Las estrellas tienen que ser un entero entre 1 y 5
+export function validarCalificacion(estrellas: number): string {
+  if (!Number.isInteger(estrellas) || estrellas < 1 || estrellas > 5) {
+    return "La calificación debe estar entre 1 y 5 estrellas.";
+  }
+  return "";
+}
+
+// Devuelve la calificación que dejó el turista en una reserva
+export function calificacionDe(lista: Calificacion[], folio: string): Calificacion | undefined {
+  return lista.find((c) => c.folio === folio);
+}
+
+// ----- Favoritos por cuenta (HU-020) -----
+
+// Cada cuenta tiene su lista de favoritos; sin sesión se usa la clave de invitado
+export function claveDeFavoritos(usuario: { correo: string } | null | undefined): string {
+  const correo = usuario?.correo?.trim().toLowerCase();
+  return correo ? correo : "invitado";
+}
+
+// Lista de favoritos de la cuenta consultada
+export function favoritosDe(
+  mapa: Record<string, string[]>,
+  usuario: { correo: string } | null | undefined
+): string[] {
+  return mapa[claveDeFavoritos(usuario)] ?? [];
+}
+
+// Marca o desmarca un hotel de la lista, sin dejar duplicados
+export function alternarFavoritoDe(lista: string[], hotelId: string): string[] {
+  return lista.includes(hotelId)
+    ? lista.filter((f) => f !== hotelId)
+    : [...lista, hotelId];
+}
+
 // Dice si dos rangos de fechas se traslapan (para la disponibilidad)
 export function seTraslapan(aIni: string, aFin: string, bIni: string, bFin: string): boolean {
   return aIni < bFin && bIni < aFin;
@@ -577,6 +631,14 @@ export const ETIQUETA_ESTADO: Record<EstadoReserva, string> = {
   cancelada: "Cancelada",
 };
 
+// Recorrido normal de una reserva (HU-017): por aquí avanzan las que no se cancelan
+export const FLUJO_RESERVA: EstadoReserva[] = ["pendiente", "confirmada", "checkin", "completada"];
+
+// Índice del paso que está viviendo la reserva; -1 cuando está cancelada
+export function pasoDeEstado(estado: EstadoReserva): number {
+  return estado === "cancelada" ? -1 : FLUJO_RESERVA.indexOf(estado);
+}
+
 // Etiquetas para el estado de habitaciones
 export const ETIQUETA_HABITACION: Record<EstadoHabitacion, string> = {
   disponible: "Disponible",
@@ -615,6 +677,90 @@ export const USUARIOS_DEMO = {
 } as const;
 
 export type Rol = keyof typeof USUARIOS_DEMO;
+
+// ----- Historial de reservas del turista (HU-015) -----
+
+// Nombre de la turista de demostración (la que aparece cuando nadie inicia sesión)
+export const TURISTA_DEMO = USUARIOS_DEMO.turista.nombre;
+
+// Devuelve solo las reservas del usuario, de más recientes a más antiguas.
+// Sin sesión (usuario null) se muestran las reservas de la turista demo.
+export function historialDeReservas(
+  reservas: Reserva[],
+  usuario: { nombre: string; correo: string } | null
+): Reserva[] {
+  const mias = usuario
+    ? reservas.filter((r) => (usuario.correo !== "" && r.correo === usuario.correo) || r.turista === usuario.nombre)
+    : reservas.filter((r) => r.turista === TURISTA_DEMO);
+  // Más recientes primero: la fecha de creación ISO (yyyy-mm-dd) ordena alfabéticamente
+  return [...mias].sort((a, b) => b.creada.localeCompare(a.creada));
+}
+
+// Solo se puede cancelar antes del check-in y si la reserva sigue abierta
+// (pendiente o confirmada) — regla de negocio de HU-016
+export function sePuedeCancelar(reserva: Pick<Reserva, "estado" | "llegada">, hoy: string): boolean {
+  const estadoPermitido = reserva.estado === "pendiente" || reserva.estado === "confirmada";
+  return estadoPermitido && reserva.llegada >= hoy;
+}
+
+// ----- Pagos de las reservas (HU-018) -----
+
+export type EstadoPago = "pagado" | "pendiente" | "reembolsado";
+
+// Registro de un pago asociado al folio de una reserva
+export type Pago = {
+  id: string;
+  folio: string;      // reserva a la que pertenece
+  monto: number;      // total cobrado
+  metodo: Reserva["pago"];
+  estado: EstadoPago;
+  fecha: string;      // ISO (yyyy-mm-dd)
+  referencia: string; // últimos 4 dígitos de la tarjeta o n.º de referencia
+};
+
+// Lo que el turista escribe en el formulario de pago
+export type DatosPago = {
+  titular: string;
+  tarjeta: string;
+  vencimiento: string; // MM/AA
+  cvv: string;
+  banco: string;
+  referencia: string;
+};
+
+export const ETIQUETA_PAGO: Record<EstadoPago, string> = {
+  pagado: "Pagado",
+  pendiente: "Pendiente",
+  reembolsado: "Reembolsado",
+};
+
+// Valida los datos del método elegido; devuelve "" cuando todo está bien
+export function validarPago(metodo: Reserva["pago"], datos: DatosPago, hoy: string): string {
+  // En efectivo no se pide nada: se paga al llegar al hotel
+  if (metodo === "efectivo") return "";
+
+  if (metodo === "transferencia") {
+    if (!datos.banco.trim()) return "Selecciona el banco desde donde haces la transferencia.";
+    if (datos.referencia.trim().length < 6) return "Ingresa el número de referencia de la transferencia (mínimo 6 caracteres).";
+    return "";
+  }
+
+  // Tarjeta de crédito o débito
+  const digitos = datos.tarjeta.replace(/\s+/g, "");
+  if (!/^\d{16}$/.test(digitos)) return "El número de tarjeta debe tener 16 dígitos.";
+  if (!datos.titular.trim()) return "Ingresa el nombre del titular de la tarjeta.";
+  if (!/^\d{2}\/\d{2}$/.test(datos.vencimiento)) return "El vencimiento debe tener el formato MM/AA.";
+
+  // Revisa que la tarjeta siga vigente comparando MM/AA con la fecha de hoy
+  const [mes, anio] = datos.vencimiento.split("/").map(Number);
+  if (mes < 1 || mes > 12) return "El mes de vencimiento no es válido.";
+  const anioHoy = Number(hoy.slice(2, 4));
+  const mesHoy = Number(hoy.slice(5, 7));
+  if (anio < anioHoy || (anio === anioHoy && mes < mesHoy)) return "La tarjeta está vencida.";
+
+  if (!/^\d{3}$/.test(datos.cvv)) return "El código de seguridad (CVV) tiene 3 dígitos.";
+  return "";
+}
 
 // ----- Destinos y actividades turísticas (HU-012) -----
 
