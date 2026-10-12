@@ -26,6 +26,14 @@ function AppInner() {
   // La pantalla actual se guarda en el estado (sin URL, es una maqueta)
   const [ruta, setRuta] = useState<Ruta>({ nombre: "inicio" });
 
+  // Al cerrar sesión en una pantalla protegida, volvemos al inicio
+  useEffect(() => {
+    if (!usuario && RUTAS_PROTEGIDAS.includes(ruta.nombre)) {
+      setRuta({ nombre: "inicio" });
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    }
+  }, [usuario, ruta.nombre]);
+
   // Detectar si Supabase redirigió con token de recuperación de contraseña
   useEffect(() => {
     const hash = window.location.hash;
