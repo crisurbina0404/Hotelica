@@ -26,8 +26,10 @@ import {
   claveDeFavoritos,
   favoritosDe,
   alternarFavoritoDe,
+  validarRegistroHotel,
+  validarImagenHotel,
 } from "../data";
-import type { Calificacion, DatosPago, Reserva } from "../data";
+import type { Calificacion, DatosPago, DatosRegistroHotel, Hotel, Reserva } from "../data";
 
 // Datos de pago que siempre pasan la validación (tarjeta)
 const tarjetaOk: DatosPago = {
@@ -535,5 +537,102 @@ describe("favoritos por cuenta", () => {
   it("no deja favoritos duplicados", () => {
     expect(alternarFavoritoDe(["h-1", "h-1"], "h-1")).toEqual([]);
     expect(alternarFavoritoDe(["h-1", "h-2"], "h-2")).toEqual(["h-1"]);
+  });
+});
+
+// =====================================================
+// 14. Inscripción de un hotel (HU-021)
+// =====================================================
+
+// Formulario completo que pasa todas las validaciones
+const registroOk: DatosRegistroHotel = {
+  dueno: "María Fernández López",
+  correo: "maria@miradorometepe.com",
+  nombre: "Hotel Mirador de Ometepe",
+  departamentoId: "rivas",
+  municipioId: "m-altagracia",
+  direccion: "Camino a la cascada San Ramón, Altagracia",
+  descripcion: "Cabañas de madera con vista al volcán Concepción, desayuno nicaragüense incluido y senderos guiados.",
+  telefono: "8888-8888",
+  imagen: "data:image/png;base64,abc123",
+};
+
+describe("validarRegistroHotel", () => {
+  it("acepta el formulario completo y bien lleno", () => {
+    expect(validarRegistroHotel(registroOk)).toEqual({});
+  });
+
+  it("rechaza el dueño vacío o demasiado corto", () => {
+    expect(validarRegistroHotel({ ...registroOk, dueno: "   " }).dueno).toBeTruthy();
+    expect(validarRegistroHotel({ ...registroOk, dueno: "Ana" }).dueno).toBeTruthy();
+  });
+
+  it("rechaza el correo vacío o con formato inválido", () => {
+    expect(validarRegistroHotel({ ...registroOk, correo: "" }).correo).toBeTruthy();
+    expect(validarRegistroHotel({ ...registroOk, correo: "no-es-correo" }).correo).toBeTruthy();
+  });
+
+  it("rechaza un correo que ya tiene otro hotel inscrito", () => {
+    const existentes = [{ correoDueno: "maria@miradorometepe.com" } as Hotel];
+    const errores = validarRegistroHotel({ ...registroOk, correo: "Maria@MiradorOmetepe.com" }, existentes);
+    expect(errores.correo).toBeTruthy();
+  });
+
+  it("rechaza el nombre vacío y el demasiado corto", () => {
+    expect(validarRegistroHotel({ ...registroOk, nombre: "   " }).nombre).toBeTruthy();
+    expect(validarRegistroHotel({ ...registroOk, nombre: "abc" }).nombre).toBeTruthy();
+  });
+
+  it("rechaza un nombre que ya tiene otro hotel", () => {
+    const existentes = [{ nombre: "brisas del pacífico" } as Hotel];
+    const errores = validarRegistroHotel({ ...registroOk, nombre: "Brisas del Pacífico " }, existentes);
+    expect(errores.nombre).toContain("ese nombre");
+  });
+
+  it("rechaza un municipio que no pertenece al departamento", () => {
+    // m-leon pertenece a León, no a Rivas
+    const errores = validarRegistroHotel({ ...registroOk, municipioId: "m-leon" });
+    expect(errores.municipioId).toBeTruthy();
+  });
+
+  it("rechaza el departamento y el municipio sin elegir", () => {
+    expect(validarRegistroHotel({ ...registroOk, departamentoId: "" }).departamentoId).toBeTruthy();
+    expect(validarRegistroHotel({ ...registroOk, municipioId: "" }).municipioId).toBeTruthy();
+  });
+
+  it("rechaza la dirección y la descripción muy cortas", () => {
+    expect(validarRegistroHotel({ ...registroOk, direccion: "corto" }).direccion).toBeTruthy();
+    expect(validarRegistroHotel({ ...registroOk, descripcion: "Muy corta." }).descripcion).toBeTruthy();
+  });
+
+  it("el teléfono es opcional, pero si se llena debe ser de 8 dígitos", () => {
+    expect(validarRegistroHotel({ ...registroOk, telefono: "" })).toEqual({});
+    expect(validarRegistroHotel({ ...registroOk, telefono: "88888888" })).toEqual({});
+    expect(validarRegistroHotel({ ...registroOk, telefono: "123" }).telefono).toBeTruthy();
+  });
+
+  it("exige tener al menos una imagen representativa", () => {
+    expect(validarRegistroHotel({ ...registroOk, imagen: "" }).imagen).toBeTruthy();
+  });
+
+  it("marca todos los campos obligatorios que vinieron vacíos", () => {
+    const vacio = validarRegistroHotel({
+      dueno: "", correo: "", nombre: "", departamentoId: "", municipioId: "",
+      direccion: "", descripcion: "", telefono: "", imagen: "",
+    });
+    // 7 obligatorios + imagen = 8 (el teléfono vacío no es error)
+    expect(Object.keys(vacio).length).toBe(8);
+  });
+});
+
+describe("validarImagenHotel", () => {
+  it("acepta una imagen liviana", () => {
+    const archivo = new File(["foto"], "hotel.png", { type: "image/png" });
+    expect(validarImagenHotel(archivo)).toBe("");
+  });
+
+  it("rechaza archivos que no son imagen", () => {
+    const archivo = new File(["texto"], "notas.txt", { type: "text/plain" });
+    expect(validarImagenHotel(archivo)).toContain("imagen");
   });
 });

@@ -6,6 +6,55 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.39.0] — 2026-10-12 · HU-021: correo de credenciales y consulta de estado
+
+### Agregado
+- **Edge Function `enviar-cuenta-hotelero`** (`supabase/functions/enviar-cuenta-hotelero/index.ts`): envía un correo real (Brevo API) al dueño del hotel cuando el admin aprueba su solicitud. El correo incluye su correo, contraseña temporal e instrucciones para iniciar sesión en Hotelica.
+- **`src/store.tsx`**: función `enviarCuentaHotelero()` que llama a la Edge Function; `cuentasHotelero` ahora se expone en el contexto para que la consulta pública pueda leer las credenciales.
+- **`src/pages/AdminPanel.tsx`**: al aprobar una solicitud, el sistema envía automáticamente el correo de credenciales al dueño y muestra el modal con los datos (y un aviso si el correo falla).
+- **`src/pages/InscribeHotel.tsx`**: consulta pública de estado de solicitud. El dueño ingresa su correo y ve si su hotel está Pendiente, Aprobado o Rechazado; si está aprobado, también ve sus credenciales de acceso.
+
+### Nota
+La Edge Function necesita `BREVO_API_KEY` y `BREVO_SENDER_EMAIL` configurados en Supabase (igual que la de reservas). Para desplegarla: `supabase functions deploy enviar-cuenta-hotelero`.
+
+---
+
+## [v0.38.0] — 2026-10-12 · HU-021: inscripción pública de hoteles
+
+### Cambiado
+- **Flujo de registro de hotel (HU-021)**: el formulario se movió del panel del hotelero a una **sección pública al final del Inicio** (`src/pages/InscribeHotel.tsx`). Ahora cualquiera puede inscribir su hotel **sin cuenta**: llena sus datos (nombre y correo) y los del hotel, y la solicitud le llega al administrador.
+- **Nuevo comportamiento al aprobar**: cuando el admin aprueba una solicitud, el sistema **crea automáticamente la cuenta de hotelero** (correo + contraseña temporal) y la muestra en un modal para que el admin se la envíe al dueño. El hotelero inicia sesión con esa cuenta y queda dirigido a su panel.
+- **`src/data.ts`**: `DatosRegistroHotel` ahora pide `dueno` y `correo` obligatorios (el correo es con el que se crea la cuenta) y `telefono` opcional; `Hotel` tiene `correoDueno`; nuevo tipo `CuentaHotelero` y `generarContrasenaHotelero()`.
+- **`src/store.tsx`**: `decidirHotel()` devuelve la cuenta creada al aprobar; `login()` reconoce primero las cuentas de hotelero creadas por el admin y, si coinciden, inicia sesión con rol Hotel.
+- **`src/pages/HotelPanel.tsx`**: se quitó el formulario; el panel ahora muestra el hotel cuyo `correoDueno` coincide con el usuario logueado (o el de demostración si no hay sesión de hotelero).
+- **`src/pages/AdminPanel.tsx`**: al aprobar, muestra el modal con la cuenta creada (correo y contraseña) para enviársela al hotelero.
+
+### Nota
+La prueba E2E `tests/CP-002-registro-hotel.spec.ts` quedó desactualizada respecto al nuevo flujo público; se revisará cuando se ejecute en un entorno que permita el navegador. Las 89 pruebas unitarias y el typecheck pasan sin errores.
+
+---
+
+## [v0.37.0] — 2026-10-12 · HU-021 terminada: registrar un hotel
+
+### Agregado
+- **`src/data.ts`**: tipo `DatosRegistroHotel` y función `validarRegistroHotel()` que revisa nombre (obligatorio, 4–60 caracteres, sin repetir el de otro hotel), departamento y municipio del catálogo (el municipio debe pertenecer al departamento), dirección (8–120 caracteres), descripción (30–600 caracteres), contacto (correo válido o teléfono de 8 dígitos) e imagen representativa. También `validarImagenHotel()` rechaza archivos que no son imagen o pesan más de 5 MB.
+- **`src/store.tsx`**: función `registrarHotel()` que guarda el hotel con `aprobado: "pendiente"` (= `estado_hotel = 'Pendiente'`), el dueño según el usuario logueado y la foto como imagen principal.
+- **`src/pages/HotelPanel.tsx`**: sección "Registrar un hotel" con formulario, errores campo por campo, vista previa de la foto y aviso de éxito "Tu hotel será revisado por un administrador" con badge Pendiente.
+- **`src/pages/AdminPanel.tsx`**: el modal de revisión ahora muestra el contacto que dejó el hotelero.
+- **`src/__tests__`** y **`tests/CP-002-registro-hotel.spec.ts`**: pruebas de las validaciones y flujo E2E.
+
+### Nota
+El hotel nuevo no aparece en las búsquedas hasta que un administrador lo apruebe (regla ya existente). La prueba E2E CP-002 no pudo ejecutarse en esta máquina porque una política bloquea el navegador de Playwright; las 86 pruebas unitarias y el typecheck pasan sin errores.
+
+---
+
+## [v0.36.0] — 2026-10-12 · Redacción de la HU-021
+
+### Agregado
+- **`historias-usuario/HU-021-registrar-un-hotel.md`**: historia de usuario del módulo Gestión Hotel, con 6 escenarios BDD (registro válido, campos obligatorios, imagen representativa, aviso de revisión y ocultamiento hasta aprobación) y los subtaskos HOTELICA-199 a 204 del Jira como notas de implementación.
+
+---
+
 ## [v0.35.1] — 2026-10-11 · Limpieza de archivos que no aportaban
 
 ### Borrado

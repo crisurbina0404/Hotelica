@@ -1,23 +1,35 @@
 // ============================================================
 // Hotelica — Panel del hotel (HU-026 reservas recibidas,
 // HU-027 confirmar, HU-028 check-in, HU-029 check-out)
+// El hotelero llega acá después de que el admin apruebe su
+// inscripción del inicio y le cree la cuenta (HU-021)
 // ============================================================
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  HABITACIONES_SEED, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO,
+  DEPARTAMENTOS, HABITACIONES_SEED, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO,
 } from "../data";
 import type { Reserva } from "../data";
-import { Reveal, BadgeEstado, BadgeHabitacion, TituloSeccion } from "../ui";
+import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica,
   IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana,
 } from "../icons";
 
 export function PanelHotel() {
-  const { reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas } = useApp();
-  const HOTEL_ID = "h-sanjuan"; // hotel de demostración: Brisas del Pacífico
+  const { hoteles, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario } = useApp();
   const hoy = hoyISO();
+
+  // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
+  const mio = usuario?.correo
+    ? hoteles.find((h) => h.correoDueno?.toLowerCase() === usuario.correo.trim().toLowerCase())
+    : undefined;
+  const hotel = mio ?? hoteles.find((h) => h.id === "h-sanjuan")!;
+  const HOTEL_ID = hotel.id;
+
+  // Municipio y departamento para el encabezado
+  const municipio = MUNICIPIOS.find((m) => m.id === hotel.municipioId)?.nombre ?? "";
+  const departamento = DEPARTAMENTOS.find((d) => d.id === hotel.departamentoId)?.nombre ?? "";
 
   // Avisos que dejaron los turistas (por ejemplo, cancelaciones) — HU-016
   const avisos = useMemo(
@@ -86,8 +98,8 @@ export function PanelHotel() {
               <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm"><IconoHotel size={28} /></span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Panel del hotel · Rol Hotel</p>
-                <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Brisas del Pacífico</h1>
-                <p className="mt-0.5 text-sm text-amber-100/85">San Juan del Sur, Rivas · atendido por Rodolfo Quintana</p>
+                <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">{hotel.nombre}</h1>
+                <p className="mt-0.5 text-sm text-amber-100/85">{municipio}, {departamento} · atendido por {hotel.dueno}</p>
               </div>
             </div>
             <div className="rounded-xl bg-white/12 px-5 py-3.5 text-right backdrop-blur-sm">
@@ -95,6 +107,16 @@ export function PanelHotel() {
               <p className="font-display text-2xl font-extrabold text-white">{fmtDinero(ingresos)}</p>
             </div>
           </div>
+        </div>
+      </Reveal>
+
+      {/* Estado del hotel ante la plataforma */}
+      <Reveal delay={40}>
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-white px-5 py-4 shadow-card">
+          <p className="text-sm text-muted">
+            Tu hotel está <b className="text-ink">visible para los turistas</b> porque un administrador aprobó tu inscripción.
+          </p>
+          <BadgeHotel estado={hotel.aprobado} />
         </div>
       </Reveal>
 
@@ -291,6 +313,3 @@ function Accion({ onClick, clase, icono, texto }: { onClick: () => void; clase: 
     </button>
   );
 }
-
-// Import auxiliar para mantener las referencias de iconos usadas arriba
-void MUNICIPIOS;

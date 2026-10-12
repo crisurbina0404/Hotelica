@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha } from "../data";
-import type { Hotel } from "../data";
+import type { Hotel, CuentaHotelero } from "../data";
 import { Reveal, BadgeHotel, Modal, TituloSeccion } from "../ui";
 import {
   IconoEscudo, IconoCheck, IconoX, IconoOjo, IconoHotel, IconoGrafica, IconoPin,
@@ -13,8 +13,10 @@ import {
 import { useState } from "react";
 
 export function PanelAdmin({ navegar }: { navegar: Navegar }) {
-  const { hoteles, reservas, decidirHotel, avisar } = useApp();
+  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, avisar } = useApp();
   const [viendo, setViendo] = useState<Hotel | null>(null);
+  const [cuentaCreada, setCuentaCreada] = useState<CuentaHotelero | null>(null);
+  const [enviandoCorreo, setEnviandoCorreo] = useState(false);
 
   const pendientes = hoteles.filter((h) => h.aprobado === "pendiente");
   const aprobados = hoteles.filter((h) => h.aprobado === "aprobado");
@@ -34,9 +36,24 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
     return { porDepto, max };
   }, [hoteles, reservas]);
 
-  const aprobar = (h: Hotel) => {
-    decidirHotel(h.id, "aprobado");
-    avisar(`"${h.nombre}" aprobado: ya aparece en las búsquedas de los turistas.`, "ok");
+  const aprobar = async (h: Hotel) => {
+    // Al aprobar se crea la cuenta de hotelero que le da acceso al panel (HU-021)
+    const cuenta = decidirHotel(h.id, "aprobado");
+    if (cuenta) {
+      setCuentaCreada(cuenta);
+      avisar(`"${h.nombre}" aprobado: cuenta creada para ${cuenta.correo}.`, "ok");
+      // Enviamos el correo real con las credenciales al hotelero
+      setEnviandoCorreo(true);
+      const resultado = await enviarCuentaHotelero(cuenta, h.nombre);
+      setEnviandoCorreo(false);
+      if (resultado.ok) {
+        avisar(`Correo con credenciales enviado a ${cuenta.correo}.`, "ok");
+      } else {
+        avisar(`No se pudo enviar el correo: ${resultado.error ?? "error desconocido"}. Copiá las credenciales del modal.`, "error");
+      }
+    } else {
+      avisar(`"${h.nombre}" aprobado: ya aparece en las búsquedas de los turistas.`, "ok");
+    }
   };
   const rechazar = (h: Hotel) => {
     decidirHotel(h.id, "rechazado");
@@ -208,6 +225,31 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
         </section>
       </div>
 
+      {/* Modal con la cuenta creada al aprobar una solicitud (HU-021) */}
+      <Modal abierto={!!cuentaCreada} alCerrar={() => setCuentaCreada(null)} ancho="max-w-md">
+        {cuentaCreada && (
+          <div className="p-7">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#DCFCE7] text-[#166534]"><IconoCheck size={22} /></span>
+            <h3 className="mt-4 font-display text-xl font-bold text-ink">Cuenta de hotelero creada</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              {enviandoCorreo
+                ? "Enviando el correo con las credenciales al dueño del hotel..."
+                : `Se envió un correo a ${cuentaCreada.correo} con estos datos. También podés enviárselos manualmente:`}
+            </p>
+            <div className="mt-4 rounded-xl bg-canvas p-4 text-sm">
+              <p className="flex justify-between py-0.5"><span className="text-muted">Correo</span><b className="text-ink">{cuentaCreada.correo}</b></p>
+              <p className="flex justify-between py-0.5"><span className="text-muted">Contraseña</span><b className="font-mono text-ink">{cuentaCreada.contrasena}</b></p>
+            </div>
+            <button
+              onClick={() => setCuentaCreada(null)}
+              className="mt-5 w-full rounded-lg bg-admin py-3 text-sm font-bold text-white transition-colors hover:bg-[#312E81]"
+            >
+              Entendido
+            </button>
+          </div>
+        )}
+      </Modal>
+
       {/* Modal de revisión del hotel */}
       <Modal abierto={!!viendo} alCerrar={() => setViendo(null)} ancho="max-w-lg">
         {viendo && (
@@ -223,6 +265,9 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
             <p className="mt-3.5 text-sm leading-relaxed text-muted">{viendo.descripcion}</p>
             <div className="mt-4 rounded-xl bg-canvas p-4 text-sm">
               <p className="flex justify-between py-0.5"><span className="text-muted">Dueño</span><b className="text-ink">{viendo.dueno}</b></p>
+              {viendo.contacto && (
+                <p className="flex justify-between py-0.5"><span className="text-muted">Contacto</span><b className="text-ink">{viendo.contacto}</b></p>
+              )}
               <p className="flex justify-between py-0.5"><span className="text-muted">Solicitud</span><b className="text-ink">{fmtFecha(viendo.fechaRegistro)}</b></p>
               <p className="flex justify-between py-0.5"><span className="text-muted">Amenidades</span><b className="text-ink">{viendo.amenidades.length}</b></p>
             </div>

@@ -7,9 +7,10 @@ import type { ReactNode } from "react";
 import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED,
   nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
-  claveDeFavoritos, favoritosDe, alternarFavoritoDe,
+  claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel,
+  generarContrasenaHotelero,
 } from "./data";
-import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion } from "./data";
+import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
 
@@ -42,6 +43,7 @@ type Persistido = {
   pagos: Pago[];
   calificaciones: Calificacion[];
   folio: number; // último número de folio usado
+  cuentasHotelero: CuentaHotelero[]; // cuentas creadas por el admin al aprobar hoteles (HU-021)
 };
 
 // Clave de almacenamiento (cambia cuando el catálogo de datos evoluciona)
@@ -61,7 +63,7 @@ function cargar(): Persistido {
         const favoritos: Record<string, string[]> = Array.isArray(viejos)
           ? { invitado: viejos as string[] }
           : (viejos as Record<string, string[]> | undefined) ?? {};
-        return { ...d, favoritos, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [], calificaciones: d.calificaciones ?? [] };
+        return { ...d, favoritos, notificaciones: d.notificaciones ?? [], pagos: d.pagos ?? [], calificaciones: d.calificaciones ?? [], cuentasHotelero: d.cuentasHotelero ?? [] };
       }
     }
   } catch {
@@ -76,6 +78,7 @@ function cargar(): Persistido {
     pagos: [],
     calificaciones: [],
     folio: 1061,
+    cuentasHotelero: [],
   };
 }
 
@@ -102,6 +105,7 @@ type AppCtx = {
   notificaciones: Notificacion[];
   pagos: Pago[];
   calificaciones: Calificacion[];
+  cuentasHotelero: CuentaHotelero[];
   rol: Rol;
   usuario: Usuario | null;
   idioma: Idioma;
@@ -124,7 +128,9 @@ type AppCtx = {
   avisarHotel: (hotelId: string, folio: string, texto: string) => void;
   marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
-  decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => void;
+  decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => CuentaHotelero | null;
+  enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
+  registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
 
@@ -406,12 +412,100 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  // El administrador aprueba o rechaza un hotel registrado
-  const decidirHotel = (hotelId: string, decision: "aprobado" | "rechazado") => {
+  // El administrador aprueba o rechaza un hotel inscrito desde el inicio (HU-021 + HU-031/032)
+  // Al aprobar se crea la cuenta con la que el hotelero entrará a su panel
+  const decidirHotel = (hotelId: string, decision: "aprobado" | "rechazado"): CuentaHotelero | null => {
+    const hotel = datos.hoteles.find((h) => h.id === hotelId);
+    const yaTieneCuenta = datos.cuentasHotelero.some((c) => c.hotelId === hotelId);
+
+    // Solo creamos cuenta si es una aprobación y el hotelero dejó correo
+    const cuentaCreada =
+      decision === "aprobado" && hotel?.correoDueno && !yaTieneCuenta
+        ? {
+            correo: hotel.correoDueno.trim().toLowerCase(),
+            contrasena: generarContrasenaHotelero(),
+            nombre: hotel.dueno,
+            hotelId,
+          }
+        : null;
+
     setDatos((d) => ({
       ...d,
       hoteles: d.hoteles.map((h) => (h.id === hotelId ? { ...h, aprobado: decision } : h)),
+      cuentasHotelero: cuentaCreada ? [...d.cuentasHotelero, cuentaCreada] : d.cuentasHotelero,
     }));
+
+    return cuentaCreada;
+  };
+
+  // Envía el correo con las credenciales de la cuenta creada al hotelero (HU-021)
+  // Usa la Edge Function enviar-cuenta-hotelero (Brevo) igual que el correo de reservas
+  const enviarCuentaHotelero = async (cuenta: CuentaHotelero, hotelNombre: string): Promise<{ ok?: boolean; error?: string }> => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { error: "Configuración de Supabase no encontrada" };
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? supabaseAnonKey;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/enviar-cuenta-hotelero`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          nombre: cuenta.nombre,
+          correo: cuenta.correo,
+          contrasena: cuenta.contrasena,
+          hotelNombre,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { error: data?.error ?? "No se pudo enviar el correo" };
+      }
+
+      return { ok: true };
+    } catch (e) {
+      return { error: "No se pudo enviar el correo de credenciales" };
+    }
+  };
+
+  // Da de alta la solicitud de un hotel nuevo (queda pendiente hasta que el admin la revise)
+  const registrarHotel: AppCtx["registrarHotel"] = (registro) => {
+    // Validamos con la lista más fresca para detectar nombres y correos repetidos
+    const errores = validarRegistroHotel(registro, datos.hoteles);
+    if (Object.keys(errores).length > 0) return { errores };
+
+    const nuevo: Hotel = {
+      id: `h-${Date.now()}`,
+      nombre: registro.nombre.trim(),
+      dueno: registro.dueno.trim(),
+      correoDueno: registro.correo.trim().toLowerCase(),
+      departamentoId: registro.departamentoId,
+      municipioId: registro.municipioId,
+      direccion: registro.direccion.trim(),
+      descripcion: registro.descripcion.trim(),
+      contacto: registro.telefono.trim() || undefined,
+      imagen: registro.imagen,
+      galeria: [registro.imagen],
+      amenidades: [],
+      destacado: false,
+      aprobado: "pendiente", // estado_hotel = 'Pendiente' hasta que el admin lo revise
+      rating: 0,
+      totalResenas: 0,
+      fechaRegistro: hoyISO(),
+    };
+
+    setDatos((d) => ({ ...d, hoteles: [...d.hoteles, nuevo] }));
+    return { hotel: nuevo };
   };
 
   // Disponibilidad = total de unidades - unidades ocupadas en esas fechas
@@ -431,10 +525,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const cambiarRol = (r: Rol) => setRol(r);
 
-  // Login real con Supabase Auth (HU-002)
+  // Login con Supabase Auth (HU-002) o con una cuenta de hotelero creada por el admin (HU-021)
   const login = async (correo: string, contrasena: string) => {
     if (!correo.trim() || !contrasena.trim()) {
       return { error: "Correo y contraseña son obligatorios" };
+    }
+
+    // Primero miramos si es una cuenta de hotelero creada al aprobar una inscripción
+    const cuenta = datos.cuentasHotelero.find(
+      (c) => c.correo === correo.trim().toLowerCase() && c.contrasena === contrasena.trim()
+    );
+    if (cuenta) {
+      setUsuario({ nombre: cuenta.nombre, rol: "Hotel", correo: cuenta.correo, telefono: "", direccion: "" });
+      setRol("hotel"); // el panel del hotel queda visible en el menú
+      const hotel = datos.hoteles.find((h) => h.id === cuenta.hotelId);
+      avisar(`Bienvenido, ${cuenta.nombre}${hotel ? ` — ${hotel.nombre}` : ""}`, "ok");
+      return {};
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -603,6 +709,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       notificaciones: datos.notificaciones,
       pagos: datos.pagos,
       calificaciones: datos.calificaciones,
+      cuentasHotelero: datos.cuentasHotelero,
       rol,
       usuario,
       idioma,
@@ -626,6 +733,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       marcarNotificacionesLeidas,
       calificar,
       decidirHotel,
+      enviarCuentaHotelero,
+      registrarHotel,
       disponiblesDe,
     }),
     [datos, rol, usuario, idioma, toasts]

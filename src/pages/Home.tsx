@@ -10,6 +10,7 @@ import {
 import { t } from "../i18n";
 import { Reveal, TituloSeccion, Estrellas } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
+import { InscribeHotel } from "./InscribeHotel";
 import {
   BanderaNI, IconoBuscar, IconoCalendario, IconoHuespedes, IconoPalmera,
   IconoPin, IconoComillas, IconoLlave, IconoCama, IconoCheck,
@@ -324,29 +325,8 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         </div>
       </section>
 
-      {/* ============ LLAMADO PARA HOTELEROS ============ */}
-      <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6">
-        <Reveal>
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-deep px-7 py-12 shadow-lift sm:px-12">
-            <span className="dot-texture-light absolute inset-0 opacity-40" />
-            <span className="absolute -right-8 -top-10 text-white/10"><IconoPalmera size={220} /></span>
-            <div className="relative grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Para hoteleros</p>
-                <h2 className="mt-3 max-w-lg font-display text-2xl font-bold leading-tight text-white sm:text-3xl">
-                  ¿Tienes un hotel pequeño o familiar? Que toda Nicaragua te encuentre.
-                </h2>
-                <p className="mt-3 max-w-md text-sm leading-relaxed text-teal-100/85">
-                  Regístrate gratis, el administrador revisa tu solicitud y en menos de 48 horas apareces en las búsquedas de miles de viajeros.
-                </p>
-              </div>
-              <p className="flex items-center gap-1.5 text-xs text-teal-100/70 lg:items-end">
-                <IconoCheck size={13} className="text-accent" /> Aprobación revisada por el equipo de Hotelica
-              </p>
-            </div>
-          </div>
-        </Reveal>
-      </section>
+      {/* ============ INSCRIPCIÓN DE HOTELES (HU-021) ============ */}
+      <InscribeHotel />
     </main>
   );
 }

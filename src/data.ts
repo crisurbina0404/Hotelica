@@ -27,6 +27,8 @@ export type Hotel = {
   rating: number; // calificación promedio
   totalResenas: number;
   fechaRegistro: string;
+  contacto?: string; // teléfono opcional que dejó el hotelero al inscribirse (HU-021)
+  correoDueno?: string; // correo con el que el hotelero va a entrar a su panel
 };
 
 export type EstadoHabitacion = "disponible" | "mantenimiento" | "no_disponible";
@@ -436,6 +438,145 @@ export function alternarFavoritoDe(lista: string[], hotelId: string): string[] {
   return lista.includes(hotelId)
     ? lista.filter((f) => f !== hotelId)
     : [...lista, hotelId];
+}
+
+// ----- Inscripción de un hotel desde el inicio público (HU-021) -----
+
+// Lo que el hotelero completa en el formulario de inscripción
+export type DatosRegistroHotel = {
+  dueno: string; // nombre de quien administra el hotel
+  correo: string; // correo con el que va a entrar a su panel (la cuenta la crea el admin)
+  nombre: string;
+  departamentoId: string;
+  municipioId: string;
+  direccion: string;
+  descripcion: string;
+  telefono: string; // opcional
+  imagen: string; // data URL de la foto representativa
+};
+
+// Errores campo por campo; si no queda ninguno, el formulario se puede enviar
+export type ErroresRegistroHotel = Partial<Record<keyof DatosRegistroHotel, string>>;
+
+// Cuenta de hotelero creada por el administrador al aprobar la solicitud (HU-021)
+export type CuentaHotelero = {
+  correo: string;
+  contrasena: string;
+  nombre: string; // nombre del dueño, que es el nombre del usuario
+  hotelId: string;
+};
+
+// Contraseña temporal que recibe el hotelero junto con su cuenta
+export function generarContrasenaHotelero(): string {
+  return `hotel${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+// Revisa todos los campos del formulario antes de enviar la solicitud
+export function validarRegistroHotel(
+  datos: DatosRegistroHotel,
+  hotelesExistentes: Hotel[] = []
+): ErroresRegistroHotel {
+  const errores: ErroresRegistroHotel = {};
+
+  // Dueño: obligatorio, es con quien se comunica la plataforma
+  const dueno = datos.dueno.trim();
+  if (!dueno) {
+    errores.dueno = "Tu nombre es obligatorio: sos el dueño del hotel.";
+  } else if (dueno.length < 4) {
+    errores.dueno = "Escribí tu nombre completo (al menos 4 caracteres).";
+  } else if (dueno.length > 60) {
+    errores.dueno = "El nombre no puede pasar de 60 caracteres.";
+  }
+
+  // Correo: con él el hotelero va a entrar a su panel cuando el admin cree la cuenta
+  const correo = datos.correo.trim().toLowerCase();
+  if (!correo) {
+    errores.correo = "El correo es obligatorio: ahí recibirás tu cuenta de hotelero.";
+  } else if (!esCorreo(correo)) {
+    errores.correo = "Ingresá un correo válido, por ejemplo: dueño@tuhotel.com";
+  } else if (hotelesExistentes.some((h) => h.correoDueno?.toLowerCase() === correo)) {
+    errores.correo = "Ese correo ya tiene un hotel inscrito: entrá con tu cuenta.";
+  }
+
+  // Nombre: obligatorio, con un largo razonable y sin repetir el de otro hotel
+  const nombre = datos.nombre.trim();
+  if (!nombre) {
+    errores.nombre = "El nombre del hotel es obligatorio.";
+  } else if (nombre.length < 4) {
+    errores.nombre = "El nombre debe tener al menos 4 caracteres.";
+  } else if (nombre.length > 60) {
+    errores.nombre = "El nombre no puede pasar de 60 caracteres.";
+  } else if (hotelesExistentes.some((h) => h.nombre?.trim().toLowerCase() === nombre.toLowerCase())) {
+    errores.nombre = "Ya hay un hotel registrado con ese nombre.";
+  }
+
+  // Departamento: tiene que ser uno del catálogo oficial
+  if (!DEPARTAMENTOS.some((d) => d.id === datos.departamentoId)) {
+    errores.departamentoId = "Seleccioná el departamento donde queda el hotel.";
+  }
+
+  // Municipio: tiene que existir y pertenecer al departamento elegido
+  const municipio = MUNICIPIOS.find((m) => m.id === datos.municipioId);
+  if (!municipio) {
+    errores.municipioId = "Seleccioná el municipio.";
+  } else if (municipio.departamentoId !== datos.departamentoId) {
+    errores.municipioId = "Ese municipio no pertenece al departamento elegido.";
+  }
+
+  // Dirección: obligatoria y clara para que el huésped pueda llegar
+  const direccion = datos.direccion.trim();
+  if (!direccion) {
+    errores.direccion = "La dirección es obligatoria.";
+  } else if (direccion.length < 8) {
+    errores.direccion = "Describí la dirección con al menos 8 caracteres.";
+  } else if (direccion.length > 120) {
+    errores.direccion = "La dirección no puede pasar de 120 caracteres.";
+  }
+
+  // Descripción: obligatoria, ni muy corta ni interminable
+  const descripcion = datos.descripcion.trim();
+  if (!descripcion) {
+    errores.descripcion = "La descripción es obligatoria.";
+  } else if (descripcion.length < 30) {
+    errores.descripcion = "Contá un poco más del hotel: al menos 30 caracteres.";
+  } else if (descripcion.length > 600) {
+    errores.descripcion = "La descripción no puede pasar de 600 caracteres.";
+  }
+
+  // Teléfono: opcional, pero si se llena tiene que ser nicaragüense de 8 dígitos
+  const telefono = datos.telefono.trim();
+  if (telefono && !esTelefonoNicaragua(telefono)) {
+    errores.telefono = "Ingresá un teléfono de 8 dígitos o dejalo vacío.";
+  }
+
+  // Imagen representativa: la revisamos al elegir el archivo
+  if (!datos.imagen) {
+    errores.imagen = "Cargá al menos una imagen representativa del hotel.";
+  }
+
+  return errores;
+}
+
+// Revisa que la foto elegida sea imagen y no pese más de 5 MB
+export function validarImagenHotel(archivo: File): string {
+  if (!archivo.type.startsWith("image/")) {
+    return "El archivo tiene que ser una imagen (JPG, PNG o WEBP).";
+  }
+  if (archivo.size > 5 * 1024 * 1024) {
+    return "La imagen pesa más de 5 MB: elegí una más liviana.";
+  }
+  return "";
+}
+
+// Correo con formato usuario@dominio.algo
+function esCorreo(texto: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(texto);
+}
+
+// Teléfono de Nicaragua: 8 dígitos (se dejan pasar espacios y guiones al escribir)
+function esTelefonoNicaragua(texto: string): boolean {
+  const digitos = texto.replace(/[\s-]/g, "");
+  return /^\d{8}$/.test(digitos) || /^505\d{8}$/.test(digitos);
 }
 
 // Dice si dos rangos de fechas se traslapan (para la disponibilidad)
