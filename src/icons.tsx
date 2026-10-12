@@ -112,6 +112,10 @@ export const IconoOjo = (p: P) => (
   <Base {...p}><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.8" /></Base>
 );
 
+export const IconoLapiz = (p: P) => (
+  <Base {...p}><path d="M16.5 4.5 19.5 7.5 8 19H5v-3L16.5 4.5Z" /><path d="m14.5 6.5 3 3" /></Base>
+);
+
 export const IconoChevronAbajo = (p: P) => (
   <Base {...p}><path d="m6 9.5 6 6 6-6" /></Base>
 );

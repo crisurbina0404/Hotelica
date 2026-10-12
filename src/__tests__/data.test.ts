@@ -589,6 +589,15 @@ describe("validarRegistroHotel", () => {
     expect(errores.nombre).toContain("ese nombre");
   });
 
+  it("al editar, permite conservar el nombre y correo del propio hotel (HU-022)", () => {
+    // El store excluye el hotel editado de la lista: así no se compara consigo mismo
+    const otrosHoteles = [{ nombre: "Hotel Ajues", correoDueno: "otro@ajues.com" } as Hotel];
+    expect(validarRegistroHotel(registroOk, otrosHoteles)).toEqual({});
+    // Pero el nombre de otro hotel sigue bloqueado
+    const chocaConOtro = validarRegistroHotel({ ...registroOk, nombre: "Hotel Ajues" }, otrosHoteles);
+    expect(chocaConOtro.nombre).toBeTruthy();
+  });
+
   it("rechaza un municipio que no pertenece al departamento", () => {
     // m-leon pertenece a León, no a Rivas
     const errores = validarRegistroHotel({ ...registroOk, municipioId: "m-leon" });

@@ -24,7 +24,7 @@
 | 20 | HU-019 | Reservas | Calificar una estadía | Baja | ✅ Terminada |
 | 21 | HU-020 | Reservas | Gestionar hoteles favoritos | Baja | ✅ Terminada |
 | 22 | HU-021 | Gestión Hotel | Registrar un hotel | Alta | ✅ Terminada |
-| 23 | HU-022 | Gestión Hotel | Editar información del hotel | Alta | ⬜ Escrita |
+| 23 | HU-022 | Gestión Hotel | Editar información del hotel | Alta | ✅ Terminada |
 | 24 | HU-023 | Gestión Hotel | Registrar habitaciones | Alta | ⬜ Escrita |
 | 25 | HU-024 | Gestión Hotel | Configurar precios | Alta | ⬜ Escrita |
 | 26 | HU-025 | Gestión Hotel | Subir fotografías | Media | ⬜ Escrita |

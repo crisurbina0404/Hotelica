@@ -9,15 +9,15 @@ import { useApp } from "../store";
 import {
   DEPARTAMENTOS, HABITACIONES_SEED, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO,
 } from "../data";
-import type { Reserva } from "../data";
+import type { DatosRegistroHotel, ErroresRegistroHotel, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica,
-  IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana,
+  IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella,
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario } = useApp();
+  const { hoteles, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -26,6 +26,68 @@ export function PanelHotel() {
     : undefined;
   const hotel = mio ?? hoteles.find((h) => h.id === "h-sanjuan")!;
   const HOTEL_ID = hotel.id;
+
+  // Edición de la información del hotel (HU-022)
+  const [editando, setEditando] = useState(false);
+  const [formEdicion, setFormEdicion] = useState<DatosRegistroHotel | null>(null);
+  const [erroresEdicion, setErroresEdicion] = useState<ErroresRegistroHotel>({});
+  const [editadoEnviado, setEditadoEnviado] = useState(false);
+
+  // Los municipios se filtran según el departamento elegido
+  const municipiosDelDepto = formEdicion
+    ? MUNICIPIOS.filter((m) => m.departamentoId === formEdicion.departamentoId)
+    : [];
+
+  // Abre el formulario con los datos actuales del hotel ya cargados
+  const abrirEdicion = () => {
+    setFormEdicion({
+      dueno: hotel.dueno,
+      correo: hotel.correoDueno ?? "",
+      nombre: hotel.nombre,
+      departamentoId: hotel.departamentoId,
+      municipioId: hotel.municipioId,
+      direccion: hotel.direccion,
+      descripcion: hotel.descripcion,
+      telefono: hotel.contacto ?? "",
+      imagen: hotel.imagen,
+    });
+    setErroresEdicion({});
+    setEditadoEnviado(false);
+    setEditando(true);
+  };
+
+  // Actualiza un campo del formulario de edición y borra su error al escribir
+  const cambiarCampoEdicion = (campo: keyof DatosRegistroHotel, valor: string) => {
+    setFormEdicion((f) => (f ? { ...f, [campo]: valor } : f));
+    setErroresEdicion((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
+  };
+
+  // Al cambiar el departamento volvemos a elegir el municipio
+  const cambiarDepartamentoEdicion = (id: string) => {
+    setFormEdicion((f) => (f ? { ...f, departamentoId: id, municipioId: "" } : f));
+    setErroresEdicion((e) => ({ ...e, departamentoId: undefined, municipioId: undefined }));
+  };
+
+  // Guarda los cambios solo si todas las reglas pasan
+  const guardarEdicion = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditadoEnviado(true);
+    if (!formEdicion) return;
+
+    const resultado = actualizarHotel(HOTEL_ID, formEdicion);
+    if (resultado.errores) {
+      setErroresEdicion(resultado.errores);
+      avisar("Revisá los campos marcados: no se guardaron los cambios.", "error");
+      return;
+    }
+
+    setEditando(false);
+    setFormEdicion(null);
+    avisar("Cambios guardados: la información del hotel quedó actualizada.", "ok");
+  };
+
+  // Mientras el hotel esté en revisión no se permite editar (HU-022)
+  const edicionBloqueada = hotel.aprobado === "pendiente";
 
   // Municipio y departamento para el encabezado
   const municipio = MUNICIPIOS.find((m) => m.id === hotel.municipioId)?.nombre ?? "";
@@ -90,16 +152,33 @@ export function PanelHotel() {
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6">
-      {/* Encabezado del panel con identidad del rol hotel */}
+      {/* Portada del hotel: su propia foto con overlay oscuro — panel rol Hotel */}
       <Reveal>
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-hotel to-[#7C2D12] p-7 text-white shadow-lift sm:p-8">
-          <div className="flex flex-wrap items-center justify-between gap-5">
+        <div className="relative overflow-hidden rounded-2xl shadow-lift">
+          {/* Foto del hotel de fondo */}
+          <img
+            src={hotel.imagen}
+            alt={`Foto de ${hotel.nombre}`}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          {/* Capa oscura para que el texto se lea bien */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#07242C]/90 via-[#07242C]/70 to-[#B45309]/40" />
+          <span className="dot-texture-light absolute inset-0 opacity-30" />
+
+          <div className="relative flex flex-wrap items-center justify-between gap-5 p-7 sm:p-9">
             <div className="flex items-center gap-4">
               <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm"><IconoHotel size={28} /></span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Panel del hotel · Rol Hotel</p>
-                <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">{hotel.nombre}</h1>
-                <p className="mt-0.5 text-sm text-amber-100/85">{municipio}, {departamento} · atendido por {hotel.dueno}</p>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Panel del hotel · Rol Hotel</p>
+                <h1 className="mt-1 font-display text-2xl font-bold text-white sm:text-3xl">{hotel.nombre}</h1>
+                <p className="mt-0.5 text-sm text-white/80">{municipio}, {departamento} · atendido por {hotel.dueno}</p>
+                {/* Estrellas si el hotel ya tiene calificaciones */}
+                {hotel.rating > 0 && (
+                  <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-accent">
+                    <IconoEstrella llena size={13} />
+                    {hotel.rating.toFixed(1)} · {hotel.totalResenas} reseña{hotel.totalResenas === 1 ? "" : "s"}
+                  </p>
+                )}
               </div>
             </div>
             <div className="rounded-xl bg-white/12 px-5 py-3.5 text-right backdrop-blur-sm">
@@ -117,6 +196,176 @@ export function PanelHotel() {
             Tu hotel está <b className="text-ink">visible para los turistas</b> porque un administrador aprobó tu inscripción.
           </p>
           <BadgeHotel estado={hotel.aprobado} />
+        </div>
+      </Reveal>
+
+      {/* ===== Información del hotel y edición (HU-022) ===== */}
+      <Reveal delay={80}>
+        <div className="mt-5 rounded-xl border border-line bg-white p-5 shadow-card">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="max-w-2xl">
+              <span className="flex items-center gap-2 text-sm font-bold text-ink">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-hotel-soft text-hotel"><IconoHotel size={17} /></span>
+                Información del hotel
+              </span>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{hotel.descripcion}</p>
+              <p className="mt-2 text-xs text-muted">
+                {hotel.direccion} · {municipio}, {departamento}
+                {hotel.contacto && ` · Tel: ${hotel.contacto}`}
+              </p>
+            </div>
+            {edicionBloqueada ? (
+              <span
+                className="cursor-not-allowed rounded-lg bg-line/60 px-4 py-2 text-xs font-bold text-muted"
+                title="Esperá a que un administrador apruebe tu hotel para editar su información"
+              >
+                Editar información (en revisión)
+              </span>
+            ) : (
+              <button
+                onClick={() => (editando ? setEditando(false) : abrirEdicion())}
+                className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-primary-dark"
+              >
+                <IconoLapiz size={14} />
+                {editando ? "Cerrar edición" : "Editar información"}
+              </button>
+            )}
+          </div>
+
+          {/* Formulario de edición con los datos actuales precargados */}
+          {editando && formEdicion && (
+            <form onSubmit={guardarEdicion} noValidate className="mt-5 grid gap-5 border-t border-line pt-5 sm:grid-cols-2">
+              {editadoEnviado && Object.values(erroresEdicion).some(Boolean) && (
+                <p role="alert" className="anim-pop rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C] sm:col-span-2">
+                  Revisá los campos marcados: no se guardaron los cambios.
+                </p>
+              )}
+
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Nombre del hotel</span>
+                <input
+                  type="text"
+                  value={formEdicion.nombre}
+                  onChange={(e) => cambiarCampoEdicion("nombre", e.target.value)}
+                  maxLength={60}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${
+                    erroresEdicion.nombre ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
+                  }`}
+                />
+                {erroresEdicion.nombre && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.nombre}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Departamento</span>
+                <select
+                  value={formEdicion.departamentoId}
+                  onChange={(e) => cambiarDepartamentoEdicion(e.target.value)}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${
+                    erroresEdicion.departamentoId ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
+                  }`}
+                >
+                  <option value="">Elegí un departamento</option>
+                  {DEPARTAMENTOS.map((d) => (
+                    <option key={d.id} value={d.id}>{d.nombre}</option>
+                  ))}
+                </select>
+                {erroresEdicion.departamentoId && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.departamentoId}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Municipio</span>
+                <select
+                  value={formEdicion.municipioId}
+                  onChange={(e) => cambiarCampoEdicion("municipioId", e.target.value)}
+                  disabled={!formEdicion.departamentoId}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted ${
+                    erroresEdicion.municipioId ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
+                  }`}
+                >
+                  <option value="">
+                    {formEdicion.departamentoId ? "Elegí un municipio" : "Elegí primero el departamento"}
+                  </option>
+                  {municipiosDelDepto.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nombre}</option>
+                  ))}
+                </select>
+                {erroresEdicion.municipioId && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.municipioId}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Dirección</span>
+                <input
+                  type="text"
+                  value={formEdicion.direccion}
+                  onChange={(e) => cambiarCampoEdicion("direccion", e.target.value)}
+                  maxLength={120}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${
+                    erroresEdicion.direccion ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
+                  }`}
+                />
+                {erroresEdicion.direccion && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.direccion}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Teléfono (opcional)</span>
+                <input
+                  type="tel"
+                  value={formEdicion.telefono}
+                  onChange={(e) => cambiarCampoEdicion("telefono", e.target.value)}
+                  maxLength={20}
+                  placeholder="Ej: 8888-8888"
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${
+                    erroresEdicion.telefono ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
+                  }`}
+                />
+                {erroresEdicion.telefono && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.telefono}</p>
+                )}
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Descripción</span>
+                <textarea
+                  value={formEdicion.descripcion}
+                  onChange={(e) => cambiarCampoEdicion("descripcion", e.target.value)}
+                  maxLength={600}
+                  rows={4}
+                  className={`w-full resize-y rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${
+                    erroresEdicion.descripcion ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
+                  }`}
+                />
+                <p className="mt-1 text-[11px] text-muted">{formEdicion.descripcion.length}/600 caracteres (mínimo 30).</p>
+                {erroresEdicion.descripcion && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.descripcion}</p>
+                )}
+              </label>
+
+              <div className="flex justify-end gap-3 border-t border-line pt-5 sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => setEditando(false)}
+                  className="rounded-lg border border-line px-5 py-2.5 text-sm font-bold text-muted transition-colors hover:bg-canvas"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
+                >
+                  <IconoCheck size={15} />
+                  Guardar cambios
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </Reveal>
 
@@ -206,7 +455,7 @@ export function PanelHotel() {
           <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-white shadow-card">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead>
-                <tr className="border-b border-line bg-primary-soft/60 text-[11px] font-bold uppercase tracking-wider text-primary-dark">
+                <tr className="border-b border-line bg-[#FEF3C7] text-[11px] font-bold uppercase tracking-wider text-[#92400E]">
                   <th className="px-4 py-3.5">Folio</th>
                   <th className="px-4 py-3.5">Turista</th>
                   <th className="px-4 py-3.5">Habitación</th>

@@ -131,6 +131,7 @@ type AppCtx = {
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => CuentaHotelero | null;
   enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
+  actualizarHotel: (hotelId: string, datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
 
@@ -138,8 +139,6 @@ const Ctx = createContext<AppCtx | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [datos, setDatos] = useState<Persistido>(cargar);
-  const [rol, setRol] = useState<Rol>("turista");
-  const [toasts, setToasts] = useState<Toast[]>([]);
   // Login simulado: usuario autenticado (persiste en localStorage)
   const [usuario, setUsuario] = useState<Usuario | null>(() => {
     try {
@@ -147,6 +146,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return crudo ? JSON.parse(crudo) : null;
     } catch { return null; }
   });
+  // El rol también se guarda al recargar la página, si hay sesión de hotelero/admin
+  const [rol, setRol] = useState<Rol>(() => {
+    if (!localStorage.getItem("hotelica-usuario")) return "turista";
+    const guardado = localStorage.getItem("hotelica-rol");
+    return guardado === "hotel" || guardado === "admin" ? guardado : "turista";
+  });
+  const [toasts, setToasts] = useState<Toast[]>([]);
   // Selector de idioma (persiste en localStorage)
   const [idioma, setIdioma] = useState<Idioma>(() => {
     return (localStorage.getItem("hotelica-idioma") as Idioma) || "es";
@@ -178,6 +184,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem("hotelica-usuario");
   }, [usuario]);
 
+  // Persistir el rol junto con la sesión (si no hay sesión, vuelve a turista)
+  useEffect(() => {
+    if (usuario) localStorage.setItem("hotelica-rol", rol);
+    else localStorage.removeItem("hotelica-rol");
+  }, [rol, usuario]);
+
   // Persistir idioma en localStorage
   useEffect(() => {
     localStorage.setItem("hotelica-idioma", idioma);
@@ -197,6 +209,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUsuario((actual) => {
         // Evita re-render si ya es el mismo usuario (p. ej. refresco de token)
         if (actual?.correo === correo && actual.nombre === nombre) return actual;
+        // La sesión de hotelero (HU-021) manda: no la pisa la sesión de turista de Supabase
+        if (actual?.rol === "Hotel") return actual;
         return { nombre, rol: "Turista", correo, telefono, direccion };
       });
       // Bienvenida cuando el usuario regresa de un proveedor social (OAuth)
@@ -508,6 +522,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return { hotel: nuevo };
   };
 
+  // Actualiza la información de un hotel ya inscrito (HU-022)
+  const actualizarHotel: AppCtx["actualizarHotel"] = (hotelId, registro) => {
+    // Validamos dejando afuera el propio hotel, para que pueda conservar su nombre y correo
+    const otrosHoteles = datos.hoteles.filter((h) => h.id !== hotelId);
+    const errores = validarRegistroHotel(registro, otrosHoteles);
+    if (Object.keys(errores).length > 0) return { errores };
+
+    setDatos((d) => ({
+      ...d,
+      hoteles: d.hoteles.map((h) =>
+        h.id === hotelId
+          ? {
+              ...h,
+              nombre: registro.nombre.trim(),
+              dueno: registro.dueno.trim(),
+              correoDueno: registro.correo.trim().toLowerCase(),
+              departamentoId: registro.departamentoId,
+              municipioId: registro.municipioId,
+              direccion: registro.direccion.trim(),
+              descripcion: registro.descripcion.trim(),
+              contacto: registro.telefono.trim() || undefined,
+            }
+          : h
+      ),
+    }));
+    return {};
+  };
+
   // Disponibilidad = total de unidades - unidades ocupadas en esas fechas
   const disponiblesDe = (habitacionId: string, llegada: string, salida: string) => {
     const ocupadas = datos.reservas.filter(
@@ -735,6 +777,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       decidirHotel,
       enviarCuentaHotelero,
       registrarHotel,
+      actualizarHotel,
       disponiblesDe,
     }),
     [datos, rol, usuario, idioma, toasts]

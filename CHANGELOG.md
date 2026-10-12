@@ -6,6 +6,56 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.44.0] — 2026-10-12 · Revert: selector de roles restaurado
+
+### Revertido
+- **`src/layout.tsx`**: se revierte v0.43.0. El selector de roles vuelve a ofrecer Turista, Hotel y Admin como antes (la demo completa para presentaciones). El cambio de v0.42.0 (rol persistente al recargar y sesión de hotelero que no se pisa) se mantiene.
+
+---
+
+## [v0.43.0] — 2026-10-12 · Selector de roles: el rol Hotel solo se gana con cuenta
+
+### Cambiado
+- **`src/layout.tsx`**: el menú de "Cambiar de perfil" ya **no ofrece el rol Hotel**. El panel del hotel se alcanza únicamente iniciando sesión con la cuenta de hotelero creada por el administrador (HU-021), no con un atajo de demostración. En el menú se explica esa regla.
+- **`src/layout.tsx`**: el rol Admin aparece etiquetado como **"Vista demo"** (la consola de administración todavía no tiene login propio).
+- **`src/layout.tsx`**: cuando hay sesión activa, el botón del header muestra el **nombre real del usuario** (p. ej. "Hotel · Carlos") en lugar del nombre de la demo.
+
+---
+
+## [v0.42.0] — 2026-10-12 · Sesión de hotelero persistente al recargar
+
+### Arreglado
+- **`src/store.tsx`**: el **rol ahora se persiste** en `localStorage` (`hotelica-rol`) junto con el usuario. Antes, al recargar la página la sesión de hotelero se perdía y el usuario volvía a verse como turista, aunque hubiera entrado con la contraseña del hotel.
+- **`src/store.tsx`**: `onAuthStateChange` de Supabase **ya no pisa la sesión de hotelero** (`rol: "Hotel"`) con la sesión de turista del mismo correo. Si el usuario entró al panel con su cuenta de hotelero creada por el admin, esa sesión manda hasta que cierre sesión.
+
+---
+
+## [v0.41.0] — 2026-10-12 · Panel del hotel: portada con foto y estilo rol Hotel
+
+### Cambiado
+- **`src/pages/HotelPanel.tsx`**: el encabezado ahora es una **portada con la foto del hotel de fondo** (overlay oscuro teal→ámbar para que el texto se lea), con el nombre, ubicación, dueño y —si el hotel ya tiene reseñas— sus estrellas y calificación.
+- **Color del rol Hotel**: la cabecera de la tabla de reservas usa ahora el fondo ámbar del rol (`#FEF3C7` / texto `#92400E`) en lugar del teal genérico, siguiendo la guía de diseño.
+
+---
+
+## [v0.40.0] — 2026-10-12 · HU-022: editar información del hotel
+
+### Agregado
+- **Sección "Información del hotel" en `src/pages/HotelPanel.tsx`**: el hotelero ve la descripción, dirección, ubicación y teléfono de su hotel, con un botón **"Editar información"** que abre un formulario con los datos actuales precargados (nombre, departamento, municipio, dirección, descripción y teléfono).
+- **`src/store.tsx`**: función `actualizarHotel()` que valida con las mismas reglas de la inscripción (excluyendo el propio hotel para que pueda conservar su nombre y correo) y actualiza el hotel en el estado global.
+- **Ícono `IconoLapiz`** en `src/icons.tsx`.
+
+### Cambiado
+- **Restricción de edición (HU-022)**: mientras el hotel tiene estado **Pendiente**, el botón de edición aparece deshabilitado con el aviso "Editar información (en revisión)".
+
+### Arreglado
+- **`src/App.tsx`** (v0.39.x): al cerrar sesión desde una ruta protegida (reservas, perfil, panel, admin), el usuario ahora queda redirigido al Inicio en lugar de ver la pantalla vacía.
+
+### Pruebas
+- Test en `src/__tests__/data.test.ts` que cubre el caso de edición: conservar nombre y correo del propio hotel sin chocar con duplicados (90 pruebas en total).
+
+---
+
 ## [v0.39.0] — 2026-10-12 · HU-021: correo de credenciales y consulta de estado
 
 ### Agregado
