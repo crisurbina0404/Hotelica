@@ -6,6 +6,62 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.50.0] — 2026-10-16 · HU-025: el hotelero sube las fotografías de su hotel
+
+### Agregado
+- **`historias-usuario/HU-025-subir-fotografias.md`**: historia de usuario del módulo Gestión Hotel, con 7 escenarios BDD y las subtareas HOTELICA-225 a 231. Otra vez había que redactarla: la tabla del backlog la daba por escrita y el archivo no existía.
+- **`src/imagen.ts` (nuevo)**: `optimizarFoto()` lee el archivo elegido, lo reescala en un `canvas` a un máximo de 1280 px de ancho y lo devuelve como JPEG, así las fotos no se comen el almacenamiento del navegador; `pesoDeFoto()` dice cuánto pesa una foto ya optimizada.
+- **`src/icons.tsx`**: icono propio `IconoFoto` (marco con sol y cerro) para la sección de la galería.
+- **`src/data.ts`**: `MAXIMO_FOTOS` (6 por hotel), `cupoDeFotos()` y `errorDeGaleria()` para el tope, y `conPortada()` para mover al primer lugar la foto que el hotelero elige como portada.
+- **`src/store.tsx`**: `agregarFotosHotel()`, `ponerPortadaHotel()` y `quitarFotoHotel()`. La galería y `imagen` (la portada que leen las tarjetas de los resultados y la cabecera del panel) se guardan siempre juntas, y la última foto no se puede quitar.
+- **`src/pages/HotelPanel.tsx`**: sección **"Fotografías del hotel"** bajo los precios, con el contador de fotos ("3 de 6"), la portada en grande, el campo de subida múltiple, las miniaturas con su peso y los botones "Usar como portada" y "Quitar".
+- **`src/pages/HotelDetail.tsx`**: la galería del turista ahora **se navega**: la foto grande cambia al tocar las laterales y una tira de miniaturas deja ver todas las fotos, también desde el celular (antes, en pantalla chica solo se veía la primera).
+
+### Cambiado
+- **`src/store.tsx`**: el guardado en el navegador ahora atrapa el error de espacio. Con las fotos dentro de los datos, llenar el almacenamiento dejaba de guardar en silencio; ahora la app sigue funcionando y avisa que hay que quitar una foto.
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Prueba manual en el navegador con archivos reales inyectados en el campo de subida: una imagen de 2000×1200 y 64 KB se guarda como JPEG de **1280×768 y 9 KB**; un `.txt` se rechaza con "El archivo tiene que ser una imagen (JPG, PNG o WEBP)" y una imagen de 6 MB con "La imagen pesa más de 5 MB", sin agregar nada a la galería; "Usar como portada" mueve la foto elegida al primer lugar y la tarjeta de resultados pasa a mostrar esa foto; quitar baja el contador 4→3→2→1 y la última se rechaza con "El hotel necesita al menos una foto"; con la galería en 6, un lote de 3 sube 2 y avisa "Solo entran 2 fotos más", y una más se rechaza; simulando que el navegador se queda sin espacio, la app no se rompe y aparece el aviso correspondiente. En el detalle del turista, la foto principal cambia al tocar las miniaturas (se probaron las 6) y en 390 px la sección del panel no desborda, con las miniaturas en dos columnas y la tira del detalle desplazándose en horizontal.
+
+### Limitación
+Sigue sin haber pruebas automatizadas en el proyecto, así que la evidencia es la prueba manual en el navegador más `typecheck` y `build`. Las fotos viven dentro de los datos del navegador: si más adelante se suben fotos de verdad en producción, van a un servicio de archivos y no al `localStorage`.
+
+---
+
+## [v0.49.0] — 2026-10-16 · HU-024: el hotelero configura sus precios
+
+### Agregado
+- **`historias-usuario/HU-024-configurar-precios.md`**: historia de usuario del módulo Gestión Hotel, con 6 escenarios BDD y las subtareas HOTELICA-218 a 224 como notas de implementación. El archivo no existía aunque la tabla del backlog ya la daba por escrita, así que la HU se redactó completa antes de tocar el código.
+- **`src/data.ts`**: reglas de precio en un solo lugar. `errorDePrecio()` (mayor que cero y máximo C$ 50,000.00), la lista `TEMPORADAS` (normal 0 %, alta +20 %, baja −15 %), `errorDeAjuste()` (entre −50 % y +100 %) y `ajustarPrecio()`, que aplica el porcentaje y deja el precio en córdobas enteros.
+- **`src/store.tsx`**: acciones `cambiarPrecioHabitacion()` y `ajustarPreciosDelHotel()`, las dos validando antes de guardar y devolviendo el motivo cuando no corresponde.
+- **`src/pages/HotelPanel.tsx`**: sección nueva **"Precios del hotel"** bajo las habitaciones, con una tarjeta por tipo de habitación donde se corrige el precio por noche, el botón "Guardar precio" (que se habilita solo si hay un cambio) y "Deshacer"; arriba, el control de **ajuste por temporada** con vista previa del rango resultante y la opción de escribir un porcentaje propio.
+
+### Cambiado
+- **`src/data.ts`**: `validarHabitacion()` (HU-023) ahora usa `errorDePrecio()`, así el alta de habitaciones y la configuración de precios comparten la misma regla y no se pueden desincronizar.
+
+### Nota
+Cada tarjeta muestra el total por noche que paga el turista con el IVA del 15 % calculado por `calcularTotales()`, y un aviso recuerda que **las reservas ya hechas conservan el precio con el que se crearon**: subir o bajar una tarifa hoy no toca lo ya cobrado, solo las reservas siguientes.
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Prueba manual en el navegador contra los escenarios BDD: las tarifas se ven con IVA y total (Estándar Mar C$ 1,400.00 + C$ 210.00); cambiar un precio a C$ 1,800.00 deja el total en C$ 2,070.00 con su aviso; un precio en cero se rechaza con el campo marcado y sin guardar nada; la temporada alta muestra la vista previa (de C$ 1,800.00 a C$ 2,600.00) y al aplicarla confirma "Ajuste aplicado a 3 habitaciones"; un ajuste propio de −50 % y de +100 % recalcula las tres tarifas y uno de 200 % se rechaza con su motivo; con el hotel en **Pendiente** la sección queda en modo lectura con el campo y el botón deshabilitados; y el turista ve el precio nuevo en los destacados, en el detalle y en el asistente de reserva (C$ 2,200.00 × 2 noches + IVA = C$ 5,060.00), mientras las reservas viejas siguen en su total original (HC-1038 en C$ 11,960.00). En celular (390 px) la sección no desborda y los controles quedan a lo ancho.
+
+### Limitación
+El proyecto no tiene pruebas automatizadas en este momento (se retiraron antes por pedido), así que la evidencia de esta historia es la prueba manual en el navegador más `typecheck` y `build`.
+
+---
+
+## [v0.48.2] — 2026-10-16 · Interfaz móvil: cabecera, paneles y tablas adaptadas al celular
+
+### Arreglado
+- **`src/layout.tsx`** y **`src/ui.tsx`**: en el celular la marca **por fin se ve** y el botón de menú ya no se sale de la barra. La barra superior no cabía en 390 px, así que el logo (el único elemento flexible) se comprimía a 0 px y el menú quedaba recortado 3 px; ahora en pantallas chicas se usa el sello compacto de la marca y "Registrarse", "Iniciar sesión", el idioma y el perfil pasan al menú desplegable.
+- **`src/pages/HotelPanel.tsx`** y **`src/pages/AdminPanel.tsx`**: las tablas de reservas (9 columnas) se reemplazan por **tarjetas** en el celular, cada una con sus acciones a la vista. Antes había que descubrir un scroll lateral para llegar a Confirmar, Check-in, Check-out o Aprobar, y la última acción quedaba en x = 761 dentro de una pantalla de 390 px.
+- **`src/pages/HotelPanel.tsx`**: el botón "Cancelar" salía como un recuadro vacío porque el `text-white` de la clase base ganaba sobre el `text-danger` del uso; ahora cada botón declara su color y el texto y el ícono se ven (coral para cancelar, blanco para confirmar).
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Revisión en el navegador a 390 px: inicio, resultados, detalle del hotel, asistente de reserva, panel del hotel y consola de admin sin desbordes de página, con la marca visible y todas las acciones alcanzables. En escritorio (1219 px) la tabla y los controles de sesión siguen igual.
+
+---
+
 ## [v0.48.1] — 2026-10-15 · Arreglado: el selector de perfil vuelve a abrir los paneles
 
 ### Arreglado

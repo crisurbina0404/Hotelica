@@ -40,6 +40,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   const [habitacion, setHabitacion] = useState<Habitacion | null>(null);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
   const [vistaComparativa, setVistaComparativa] = useState(false);
+  const [fotoActiva, setFotoActiva] = useState(0);
 
   // Cálculo de noches para sugerencias
   const noches = calcularNoches(llegada, salida);
@@ -74,6 +75,12 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   const muni = MUNICIPIOS.find((m) => m.id === hotel.municipioId);
   const depto = DEPARTAMENTOS.find((d) => d.id === hotel.departamentoId);
   const esFavorito = favoritos.includes(hotel.id);
+
+  // Fotos del hotel (HU-025): la primera es la portada y se puede cambiar la que se ve en grande
+  const galeria = hotel.galeria ?? [];
+  const activa = Math.min(fotoActiva, Math.max(0, galeria.length - 1));
+  // Las fotos laterales son las que no se están viendo en grande
+  const otrasFotos = galeria.map((f, i) => ({ f, i })).filter((o) => o.i !== activa).slice(0, 2);
 
   // Distribución de estrellas para las barras de reseñas
   const distro = [5, 4, 3, 2, 1].map((n) => ({
@@ -110,21 +117,43 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
         </button>
       </Reveal>
 
-      {/* ===== Galería principal ===== */}
+      {/* ===== Galería principal: se navega entre las fotos del hotel (HU-025) ===== */}
       <Reveal delay={80}>
         <div className="mt-5 grid gap-2.5 overflow-hidden rounded-2xl sm:grid-cols-3 sm:grid-rows-2">
           <div className="relative h-72 overflow-hidden sm:col-span-2 sm:h-[420px] sm:row-span-2">
-            <img src={hotel.galeria[0]} alt={hotel.nombre} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+            <img src={galeria[activa] ?? hotel.imagen} alt={hotel.nombre} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
             {hotel.destacado && (
               <span className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-md">Hotel destacado</span>
             )}
           </div>
-          {hotel.galeria.slice(1, 3).map((g, i) => (
-            <div key={i} className="relative hidden h-full overflow-hidden sm:block">
-              <img src={g} alt={`${hotel.nombre} — vista ${i + 2}`} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
-            </div>
+          {otrasFotos.map((o) => (
+            <button
+              key={o.i}
+              onClick={() => setFotoActiva(o.i)}
+              aria-label={`Ver la foto ${o.i + 1} de ${galeria.length}`}
+              className="relative hidden h-full overflow-hidden sm:block"
+            >
+              <img src={o.f} alt="" className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
+            </button>
           ))}
         </div>
+
+        {/* Tira de miniaturas: deja ver todas las fotos, también desde el celular */}
+        {galeria.length > 1 && (
+          <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
+            {galeria.map((f, i) => (
+              <button
+                key={i}
+                onClick={() => setFotoActiva(i)}
+                aria-label={`Ver la foto ${i + 1} de ${galeria.length}`}
+                aria-current={i === activa}
+                className={`shrink-0 overflow-hidden rounded-lg border-2 transition-colors ${i === activa ? "border-primary" : "border-transparent hover:border-primary/40"}`}
+              >
+                <img src={f} alt="" className="h-16 w-24 object-cover sm:h-20 sm:w-32" />
+              </button>
+            ))}
+          </div>
+        )}
       </Reveal>
 
       {/* ===== Encabezado del hotel ===== */}

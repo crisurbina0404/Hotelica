@@ -9,6 +9,8 @@ import {
   nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
   claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel,
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
+  errorDePrecio, errorDeAjuste, ajustarPrecio,
+  cupoDeFotos, errorDeGaleria, conPortada,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
 import type { Idioma } from "./i18n";
@@ -150,6 +152,11 @@ type AppCtx = {
   actualizarHotel: (hotelId: string, datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel };
   agregarHabitacion: (hotelId: string, datos: DatosHabitacion) => { errores?: ErroresHabitacion; habitacion?: Habitacion };
   cambiarEstadoHabitacion: (habitacionId: string, estado: EstadoHabitacion) => void;
+  cambiarPrecioHabitacion: (habitacionId: string, precio: number) => { error?: string };
+  ajustarPreciosDelHotel: (hotelId: string, porcentaje: number) => { error?: string; cantidad?: number };
+  agregarFotosHotel: (hotelId: string, fotos: string[]) => { error?: string; cantidad?: number };
+  ponerPortadaHotel: (hotelId: string, indice: number) => { error?: string };
+  quitarFotoHotel: (hotelId: string, indice: number) => { error?: string };
   cambiarContrasenaHotelero: (nueva: string, confirmar: string) => { error?: string };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
@@ -179,7 +186,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Guardamos los cambios en el navegador cada vez que cambian los datos
   useEffect(() => {
-    localStorage.setItem(CLAVE_LS, JSON.stringify(datos));
+    try {
+      localStorage.setItem(CLAVE_LS, JSON.stringify(datos));
+    } catch {
+      // Las fotografías del hotel pueden llenar el almacenamiento del navegador (HU-025):
+      // avisamos y seguimos trabajando con lo que ya está en memoria
+      avisar("No hay espacio en el navegador para guardar los últimos cambios. Probá quitando una foto.", "error");
+    }
   }, [datos]);
 
   // Si otra pestaña guarda cambios, copiamos su estado para no pisarnos (bug sobreventa)
@@ -603,6 +616,87 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  // Corrige el precio por noche de una habitación ya registrada (HU-024)
+  const cambiarPrecioHabitacion: AppCtx["cambiarPrecioHabitacion"] = (habitacionId, precio) => {
+    // La regla de precio es la misma que usa el registro de habitaciones (HU-023)
+    const error = errorDePrecio(precio);
+    if (error) return { error };
+
+    const limpio = Math.round(Number(precio));
+    setDatos((d) => ({
+      ...d,
+      habitaciones: d.habitaciones.map((h) => (h.id === habitacionId ? { ...h, precio: limpio } : h)),
+    }));
+    return {};
+  };
+
+  // Aplica un ajuste de temporada a todas las tarifas del hotel (HU-024)
+  const ajustarPreciosDelHotel: AppCtx["ajustarPreciosDelHotel"] = (hotelId, porcentaje) => {
+    const error = errorDeAjuste(porcentaje);
+    if (error) return { error };
+
+    const delHotel = datos.habitaciones.filter((h) => h.hotelId === hotelId);
+    setDatos((d) => ({
+      ...d,
+      habitaciones: d.habitaciones.map((h) =>
+        h.hotelId === hotelId ? { ...h, precio: ajustarPrecio(h.precio, porcentaje) } : h
+      ),
+    }));
+    return { cantidad: delHotel.length };
+  };
+
+  // Deja la galería del hotel con la portada también en `imagen`, que es el campo
+  // que leen las tarjetas de los resultados y la cabecera del panel (HU-025)
+  const guardarGaleria = (hotelId: string, galeria: string[]) =>
+    setDatos((d) => ({
+      ...d,
+      hoteles: d.hoteles.map((h) =>
+        h.id === hotelId ? { ...h, galeria, imagen: galeria[0] ?? h.imagen } : h
+      ),
+    }));
+
+  // Suma fotos optimizadas a la galería del hotel, respetando el tope (HU-025)
+  const agregarFotosHotel: AppCtx["agregarFotosHotel"] = (hotelId, fotos) => {
+    const hotel = datos.hoteles.find((h) => h.id === hotelId);
+    if (!hotel) return { error: "No encontramos ese hotel." };
+
+    const galeria = hotel.galeria ?? [];
+    const nuevas = fotos.filter((f) => !!f);
+    if (nuevas.length === 0) return { error: "No se pudo leer ninguna de las fotos elegidas." };
+
+    // El tope se mide sobre todo lo que se está subiendo junto
+    const error = errorDeGaleria(galeria.length + nuevas.length - 1);
+    if (error) return { error };
+
+    guardarGaleria(hotelId, [...galeria, ...nuevas]);
+    return { cantidad: nuevas.length };
+  };
+
+  // Mueve una de las fotos al primer lugar: esa pasa a ser la portada (HU-025)
+  const ponerPortadaHotel: AppCtx["ponerPortadaHotel"] = (hotelId, indice) => {
+    const hotel = datos.hoteles.find((h) => h.id === hotelId);
+    if (!hotel) return { error: "No encontramos ese hotel." };
+
+    const galeria = hotel.galeria ?? [];
+    if (indice <= 0 || indice >= galeria.length) return { error: "Elegí una de las fotos de la galería." };
+
+    guardarGaleria(hotelId, conPortada(galeria, indice));
+    return {};
+  };
+
+  // Quita una foto; la última no se puede quitar porque el hotel necesita portada (HU-025)
+  const quitarFotoHotel: AppCtx["quitarFotoHotel"] = (hotelId, indice) => {
+    const hotel = datos.hoteles.find((h) => h.id === hotelId);
+    if (!hotel) return { error: "No encontramos ese hotel." };
+
+    const galeria = hotel.galeria ?? [];
+    if (indice < 0 || indice >= galeria.length) return { error: "Esa foto ya no está en la galería." };
+    if (galeria.length <= 1) return { error: "El hotel necesita al menos una foto: subí otra antes de quitar esta." };
+
+    guardarGaleria(hotelId, galeria.filter((_, i) => i !== indice));
+    return {};
+  };
+
   // El hotelero cambia la contraseña temporal que le dio el admin (debe hacerlo en 24h)
   const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = (nueva, confirmar) => {
     if (!usuario?.correo) return { error: "No hay sesión de hotelero activa" };
@@ -872,6 +966,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       actualizarHotel,
       agregarHabitacion,
       cambiarEstadoHabitacion,
+      cambiarPrecioHabitacion,
+      ajustarPreciosDelHotel,
+      agregarFotosHotel,
+      ponerPortadaHotel,
+      quitarFotoHotel,
       cambiarContrasenaHotelero,
       disponiblesDe,
     }),

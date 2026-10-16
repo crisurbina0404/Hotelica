@@ -26,8 +26,8 @@
 | 22 | HU-021 | Gestión Hotel | Registrar un hotel | Alta | ✅ Terminada |
 | 23 | HU-022 | Gestión Hotel | Editar información del hotel | Alta | ✅ Terminada |
 | 24 | HU-023 | Gestión Hotel | Registrar habitaciones | Alta | ✅ Terminada |
-| 25 | HU-024 | Gestión Hotel | Configurar precios | Alta | ⬜ Escrita |
-| 26 | HU-025 | Gestión Hotel | Subir fotografías | Media | ⬜ Escrita |
+| 25 | HU-024 | Gestión Hotel | Configurar precios | Alta | ✅ Terminada |
+| 26 | HU-025 | Gestión Hotel | Subir fotografías | Media | ✅ Terminada |
 | 27 | HU-026 | Gestión Hotel | Consultar reservas recibidas | Alta | ⬜ Escrita |
 | 28 | HU-027 | Gestión Hotel | Confirmar o rechazar reservas | Alta | ⬜ Escrita |
 | 29 | HU-028 | Gestión Hotel | Registrar check-in | Media | ⬜ Escrita |

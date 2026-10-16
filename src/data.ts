@@ -622,13 +622,9 @@ export function validarHabitacion(
     errores.capacidad = "La capacidad no puede pasar de 10 huéspedes.";
   }
 
-  // Precio por noche: regla de negocio, siempre mayor que cero
-  const precio = Number(datos.precio);
-  if (!Number.isFinite(precio) || precio <= 0) {
-    errores.precio = "El precio por noche debe ser mayor que cero.";
-  } else if (precio > 50000) {
-    errores.precio = "El precio por noche no puede pasar de C$ 50,000.00.";
-  }
+  // Precio por noche: la misma regla que usa la configuración de precios (HU-024)
+  const errorPrecio = errorDePrecio(datos.precio);
+  if (errorPrecio) errores.precio = errorPrecio;
 
   // Unidades: cuántas habitaciones iguales existen en el hotel
   const unidades = Number(datos.unidades);
@@ -654,6 +650,74 @@ export function validarHabitacion(
   }
 
   return errores;
+}
+
+// ----- Precios por noche del hotel (HU-024) -----
+
+// Precio máximo por noche que acepta el sistema
+const PRECIO_MAXIMO = 50000;
+
+// Ajustes de temporada que el hotelero puede aplicar a todas sus tarifas
+// El ajuste va en tanto por uno: 0.2 es un 20 % más
+// ("personalizado" no es una temporada: la usa el panel para escribir otro porcentaje)
+export const TEMPORADAS = [
+  { id: "normal", nombre: "Temporada normal (0 %)", ajuste: 0, nota: "Deja las tarifas tal como están hoy." },
+  { id: "alta", nombre: "Temporada alta (+20 %)", ajuste: 0.2, nota: "Feriados y vacaciones: las noches se venden más caras." },
+  { id: "baja", nombre: "Temporada baja (−15 %)", ajuste: -0.15, nota: "Meses flojos: baja la tarifa para llenar el hotel." },
+] as const;
+
+// Límites del ajuste que se puede aplicar a un precio
+const AJUSTE_MINIMO = -0.5;
+const AJUSTE_MAXIMO = 1;
+
+// Revisa un precio por noche y devuelve el motivo del error, o "" si está bien (HU-024)
+export function errorDePrecio(precio: number): string {
+  const n = Number(precio);
+  if (!Number.isFinite(n) || n <= 0) return "El precio por noche debe ser mayor que cero.";
+  if (n > PRECIO_MAXIMO) return `El precio por noche no puede pasar de ${fmtDinero(PRECIO_MAXIMO)}.`;
+  return "";
+}
+
+// Revisa el ajuste de temporada antes de aplicarlo a las tarifas (HU-024)
+export function errorDeAjuste(ajuste: number): string {
+  const n = Number(ajuste);
+  if (!Number.isFinite(n)) return "Elegí un ajuste válido para la temporada.";
+  if (n < AJUSTE_MINIMO) return "El ajuste no puede bajar más del 50 %.";
+  if (n > AJUSTE_MAXIMO) return "El ajuste no puede subir más del 100 %.";
+  return "";
+}
+
+// Aplica un ajuste de temporada a un precio y lo deja en córdobas enteros.
+// El resultado nunca sale de los límites que acepta el sistema (HU-024)
+export function ajustarPrecio(precio: number, ajuste: number): number {
+  const base = Number.isFinite(precio) && precio > 0 ? precio : 0;
+  // Un ajuste escrito a medias (por ejemplo vacío) no cambia el precio
+  if (!Number.isFinite(ajuste)) return base;
+  const nuevo = Math.round(base * (1 + ajuste));
+  return Math.min(PRECIO_MAXIMO, Math.max(1, nuevo));
+}
+
+// ----- Fotografías del hotel (HU-025) -----
+
+// Tope de fotos por hotel: la maqueta las guarda dentro de los datos del navegador
+export const MAXIMO_FOTOS = 6;
+
+// Cuántas fotos más entran en la galería del hotel (HU-025)
+export function cupoDeFotos(cantidadActual: number): number {
+  return Math.max(0, MAXIMO_FOTOS - cantidadActual);
+}
+
+// Revisa si la galería todavía admite fotos; devuelve el motivo o "" (HU-025)
+export function errorDeGaleria(cantidadActual: number): string {
+  if (cupoDeFotos(cantidadActual) > 0) return "";
+  return `Ya tenés ${MAXIMO_FOTOS} fotos, el máximo por hotel. Quitá una para subir otra.`;
+}
+
+// Devuelve la galería con la foto elegida en el primer lugar, que es la portada (HU-025)
+export function conPortada(galeria: string[], indice: number): string[] {
+  if (indice <= 0 || indice >= galeria.length) return galeria;
+  const elegida = galeria[indice];
+  return [elegida, ...galeria.filter((_, i) => i !== indice)];
 }
 
 // Correo con formato usuario@dominio.algo

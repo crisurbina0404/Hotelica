@@ -7,17 +7,19 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_HABITACION, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida,
+  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_HABITACION, MAXIMO_FOTOS, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
+  calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida, validarImagenHotel,
 } from "../data";
-import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Reserva } from "../data";
+import { optimizarFoto, pesoDeFoto } from "../imagen";
+import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
 import {
-  IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica,
+  IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica, IconoBillete, IconoFoto,
   IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella,
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, habitaciones: todasLasHabitaciones, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
+  const { hoteles, habitaciones: todasLasHabitaciones, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -62,6 +64,17 @@ export function PanelHotel() {
   const [formHabitacion, setFormHabitacion] = useState<DatosHabitacion>(HABITACION_VACIA);
   const [erroresHabitacion, setErroresHabitacion] = useState<ErroresHabitacion>({});
   const [habitacionEnviada, setHabitacionEnviada] = useState(false);
+
+  // Configuración de precios de cada tipo de habitación (HU-024)
+  const [borradores, setBorradores] = useState<Record<string, string>>({});
+  const [erroresPrecio, setErroresPrecio] = useState<Record<string, string>>({});
+  const [temporada, setTemporada] = useState<string>("normal");
+  const [ajustePropio, setAjustePropio] = useState("10");
+  const [errorAjuste, setErrorAjuste] = useState("");
+
+  // Galería de fotografías del hotel (HU-025)
+  const [errorFoto, setErrorFoto] = useState("");
+  const [subiendo, setSubiendo] = useState(false);
 
   // Los municipios se filtran según el departamento elegido
   const municipiosDelDepto = formEdicion
@@ -204,6 +217,138 @@ export function PanelHotel() {
 
   // Habitaciones que el hotelero tiene registradas en su hotel (HU-023)
   const habitaciones = todasLasHabitaciones.filter((h) => h.hotelId === HOTEL_ID);
+
+  // ----- Configuración de precios del hotel (HU-024) -----
+
+  // Lo que se está escribiendo en una tarjeta; sin borrador, se muestra el precio guardado
+  const borradorDe = (h: Habitacion) => borradores[h.id] ?? String(h.precio);
+
+  // Precio más bajo y más alto de una lista, para mostrar el rango de las tarifas
+  const rangoDe = (lista: number[]) =>
+    lista.length ? { min: Math.min(...lista), max: Math.max(...lista) } : { min: 0, max: 0 };
+  const rangoActual = rangoDe(habitaciones.map((h) => h.precio));
+
+  // Ajuste elegido: el de la temporada o el que el hotelero escribió en porcentaje
+  const ajusteElegido =
+    temporada === "propio" ? Number(ajustePropio) / 100 : TEMPORADAS.find((t) => t.id === temporada)!.ajuste;
+
+  // Cómo quedarían las tarifas con ese ajuste (vista previa, antes de aplicarlo)
+  const rangoConAjuste = rangoDe(habitaciones.map((h) => ajustarPrecio(h.precio, ajusteElegido)));
+
+  // ----- Fotografías del hotel (HU-025) -----
+
+  const galeria = hotel.galeria ?? [];
+  // La portada es la primera foto de la galería; si no hay ninguna, la foto del hotel
+  const portada = galeria[0] ?? hotel.imagen;
+
+  // Sube una o varias fotos: se validan, se optimizan y recién ahí se guardan (HU-025)
+  const elegirFotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const elegidos = Array.from(e.target.files ?? []);
+    e.target.value = ""; // así se puede volver a elegir el mismo archivo
+    if (elegidos.length === 0) return;
+
+    setErrorFoto("");
+
+    // Tope de la galería: si ya está llena, avisamos sin procesar nada
+    const cupo = cupoDeFotos((hotel.galeria ?? []).length);
+    if (cupo === 0) {
+      setErrorFoto(errorDeGaleria((hotel.galeria ?? []).length));
+      return;
+    }
+
+    setSubiendo(true);
+    const paraSubir = elegidos.slice(0, cupo);
+    const optimizadas: string[] = [];
+    let motivo = "";
+
+    for (const archivo of paraSubir) {
+      // Revisamos el archivo y después lo achicamos antes de guardarlo
+      const errorArchivo = validarImagenHotel(archivo);
+      if (errorArchivo) {
+        motivo = errorArchivo;
+        continue;
+      }
+      const resultado = await optimizarFoto(archivo);
+      if (resultado.error || !resultado.foto) {
+        motivo = resultado.error ?? "No se pudo procesar la imagen.";
+        continue;
+      }
+      optimizadas.push(resultado.foto);
+    }
+
+    if (optimizadas.length > 0) {
+      const guardado = agregarFotosHotel(HOTEL_ID, optimizadas);
+      if (guardado.error) motivo = guardado.error;
+      else avisar(`Subimos ${optimizadas.length} ${optimizadas.length === 1 ? "foto" : "fotos"} a tu galería.`, "ok");
+    }
+
+    // Si eligió más de las que entran, quedan afuera y lo decimos
+    if (elegidos.length > cupo) {
+      motivo = motivo || `Solo entran ${cupo} fotos más: el máximo es ${MAXIMO_FOTOS} por hotel.`;
+    }
+
+    setErrorFoto(motivo);
+    setSubiendo(false);
+  };
+
+  // Mueve una foto al primer lugar: esa pasa a ser la portada (HU-025)
+  const usarComoPortada = (indice: number) => {
+    const resultado = ponerPortadaHotel(HOTEL_ID, indice);
+    if (resultado.error) {
+      avisar(resultado.error, "error");
+      return;
+    }
+    avisar("Listo: esa foto es ahora la portada del hotel.", "ok");
+  };
+
+  // Quita una foto de la galería (HU-025)
+  const quitarFoto = (indice: number) => {
+    const resultado = quitarFotoHotel(HOTEL_ID, indice);
+    if (resultado.error) {
+      avisar(resultado.error, "error");
+      return;
+    }
+    avisar("Foto quitada de la galería.", "info");
+  };
+
+  // Guarda el precio escrito en la tarjeta de una habitación (HU-024)
+  const guardarPrecio = (h: Habitacion) => {
+    const escrito = borradorDe(h);
+    const resultado = cambiarPrecioHabitacion(h.id, Number(escrito));
+    if (resultado.error) {
+      setErroresPrecio((e) => ({ ...e, [h.id]: resultado.error as string }));
+      avisar("Ese precio no se puede guardar: revisá el valor.", "error");
+      return;
+    }
+
+    // Sin borrador, el campo vuelve a mostrar el precio que quedó guardado
+    setBorradores((b) => {
+      const copia = { ...b };
+      delete copia[h.id];
+      return copia;
+    });
+    setErroresPrecio((e) => {
+      const copia = { ...e };
+      delete copia[h.id];
+      return copia;
+    });
+    avisar(`Listo: ${h.tipo} queda en ${fmtDinero(Number(escrito))} por noche.`, "ok");
+  };
+
+  // Aplica el ajuste de temporada a todas las habitaciones del hotel (HU-024)
+  const aplicarTemporada = () => {
+    const resultado = ajustarPreciosDelHotel(HOTEL_ID, ajusteElegido);
+    if (resultado.error) {
+      setErrorAjuste(resultado.error);
+      avisar("No se aplicó el ajuste: revisá el porcentaje.", "error");
+      return;
+    }
+
+    setErrorAjuste("");
+    setBorradores({}); // los borradores viejos ya no sirven con las tarifas nuevas
+    const cuantas = resultado.cantidad ?? 0;
+    avisar(`Ajuste aplicado a ${cuantas} ${cuantas === 1 ? "habitación" : "habitaciones"}.`, "ok");
+  };
 
   // Indicadores del tablero (fórmulas de la guía de negocio)
   const pendientes = delHotel.filter((r) => r.estado === "pendiente").length;
@@ -897,8 +1042,285 @@ export function PanelHotel() {
           })}
         </div>
       </section>
+
+      {/* ===== Precios del hotel (HU-024) ===== */}
+      <section className="mt-12">
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <TituloSeccion ceja="Tarifas" titulo="Precios del hotel" />
+            {habitaciones.length > 0 && (
+              <span className="rounded-lg bg-hotel-soft px-3.5 py-2 text-xs font-bold text-hotel tabular-nums">
+                Tus noches van de {fmtDinero(rangoActual.min)} a {fmtDinero(rangoActual.max)}
+              </span>
+            )}
+          </div>
+        </Reveal>
+
+        {habitaciones.length === 0 ? (
+          <p className="mt-6 rounded-xl border border-dashed border-line bg-white px-5 py-8 text-center text-sm font-semibold text-muted">
+            Todavía no hay precios que configurar: registrá primero un tipo de habitación.
+          </p>
+        ) : (
+          <>
+            {edicionBloqueada && (
+              <p className="mt-5 rounded-xl border border-[#FCD34D] bg-hotel-soft px-4 py-3 text-xs font-semibold text-[#92400E]">
+                Tu hotel está en revisión: cuando el administrador lo apruebe vas a poder cambiar tus precios.
+              </p>
+            )}
+
+            {/* Ajuste de temporada: cambia todas las tarifas de una sola vez */}
+            <Reveal>
+              <div className="mt-5 rounded-xl border border-line bg-white p-5 shadow-card">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-light text-accent-dark"><IconoBillete size={18} /></span>
+                  <div>
+                    <h3 className="font-display text-base font-bold text-ink">Ajuste por temporada</h3>
+                    <p className="mt-0.5 text-xs leading-relaxed text-muted">
+                      Subí o bajá todas las tarifas de una vez. Con este ajuste tus noches quedarían de {fmtDinero(rangoConAjuste.min)} a {fmtDinero(rangoConAjuste.max)}.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+                  <label className="block">
+                    <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Temporada</span>
+                    <select
+                      value={temporada}
+                      disabled={edicionBloqueada}
+                      onChange={(e) => {
+                        setTemporada(e.target.value);
+                        setErrorAjuste("");
+                      }}
+                      className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-hotel focus:ring-2 focus:ring-hotel/25 disabled:cursor-not-allowed disabled:bg-canvas"
+                    >
+                      {TEMPORADAS.map((t) => (
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                      ))}
+                      <option value="propio">Ajuste propio</option>
+                    </select>
+                  </label>
+
+                  {temporada === "propio" && (
+                    <label className="block">
+                      <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Ajuste (%)</span>
+                      <input
+                        type="number"
+                        min={-50}
+                        max={100}
+                        step={5}
+                        value={ajustePropio}
+                        disabled={edicionBloqueada}
+                        onChange={(e) => {
+                          setAjustePropio(e.target.value);
+                          setErrorAjuste("");
+                        }}
+                        className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 disabled:cursor-not-allowed disabled:bg-canvas ${errorAjuste ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-hotel focus:ring-hotel/25"}`}
+                      />
+                      <span className="mt-1 block text-[11px] font-semibold text-muted">Entre −50 % y +100 %.</span>
+                    </label>
+                  )}
+
+                  <button
+                    onClick={aplicarTemporada}
+                    disabled={edicionBloqueada}
+                    className="flex items-center justify-center gap-2 rounded-lg bg-hotel px-5 py-2.5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <IconoGrafica size={15} /> Aplicar a todas
+                  </button>
+                </div>
+
+                {errorAjuste && (
+                  <p role="alert" className="mt-3 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-semibold text-[#B91C1C]">
+                    {errorAjuste}
+                  </p>
+                )}
+              </div>
+            </Reveal>
+
+            {/* Una tarjeta por tipo de habitación, con su precio editable */}
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {habitaciones.map((h, i) => {
+                // Total por noche que paga el turista, con la fórmula oficial
+                const { iva, total } = calcularTotales(h.precio, 1);
+                const sinGuardar = borradorDe(h) !== String(h.precio);
+                return (
+                  <Reveal key={h.id} delay={i * 80}>
+                    <div className="flex h-full flex-col rounded-xl border border-line bg-white p-5 shadow-card">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="font-display text-base font-bold text-ink">{h.tipo}</h3>
+                          <p className="mt-0.5 text-xs text-muted">Capacidad: {h.capacidad} · {h.unidades} unidades</p>
+                        </div>
+                        <BadgeHabitacion estado={h.estado} />
+                      </div>
+
+                      <p className="mt-3.5 text-xs font-semibold text-muted">
+                        El turista paga{" "}
+                        <span className="font-display text-base font-bold text-hotel tabular-nums">{fmtDinero(total)}</span> por noche
+                      </p>
+                      <p className="mt-0.5 text-[11px] font-medium text-muted tabular-nums">
+                        {fmtDinero(h.precio)} + {fmtDinero(iva)} de IVA {Math.round(TASA_IVA * 100)} %
+                      </p>
+
+                      <label className="mt-3.5 block">
+                        <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Precio por noche (C$)</span>
+                        <input
+                          type="number"
+                          min={1}
+                          step={50}
+                          value={borradorDe(h)}
+                          disabled={edicionBloqueada}
+                          onChange={(e) => {
+                            setBorradores((b) => ({ ...b, [h.id]: e.target.value }));
+                            setErroresPrecio((er) => (er[h.id] ? { ...er, [h.id]: "" } : er));
+                          }}
+                          className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 disabled:cursor-not-allowed disabled:bg-canvas ${erroresPrecio[h.id] ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-hotel focus:ring-hotel/25"}`}
+                        />
+                        {erroresPrecio[h.id] && (
+                          <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresPrecio[h.id]}</p>
+                        )}
+                      </label>
+
+                      <div className="mt-auto flex flex-wrap items-center gap-2 pt-3.5">
+                        <button
+                          onClick={() => guardarPrecio(h)}
+                          disabled={edicionBloqueada || !sinGuardar}
+                          className="flex items-center gap-1.5 rounded-md bg-hotel px-3.5 py-2 text-[11px] font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:bg-line/60 disabled:text-muted"
+                        >
+                          <IconoCheck size={13} /> Guardar precio
+                        </button>
+                        {sinGuardar && !edicionBloqueada && (
+                          <button
+                            onClick={() =>
+                              setBorradores((b) => {
+                                const copia = { ...b };
+                                delete copia[h.id];
+                                return copia;
+                              })
+                            }
+                            className="rounded-md border border-line px-3 py-2 text-[11px] font-bold text-muted transition-colors hover:border-primary/40"
+                          >
+                            Deshacer
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </Reveal>
+                );
+              })}
+            </div>
+
+            <p className="mt-4 rounded-xl border border-line bg-white px-4 py-3 text-xs font-semibold text-muted">
+              Las reservas que ya te hicieron conservan el precio con el que se crearon: los cambios se aplican a las reservas nuevas.
+            </p>
+          </>
+        )}
+      </section>
+
+      {/* ===== Fotografías del hotel (HU-025) ===== */}
+      <section className="mt-12">
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <TituloSeccion ceja="Galería" titulo="Fotografías del hotel" />
+            <span className="rounded-lg bg-hotel-soft px-3.5 py-2 text-xs font-bold text-hotel tabular-nums">
+              {galeria.length} de {MAXIMO_FOTOS} fotos
+            </span>
+          </div>
+        </Reveal>
+
+        {edicionBloqueada && (
+          <p className="mt-5 rounded-xl border border-[#FCD34D] bg-hotel-soft px-4 py-3 text-xs font-semibold text-[#92400E]">
+            Tu hotel está en revisión: cuando el administrador lo apruebe vas a poder subir y ordenar tus fotos.
+          </p>
+        )}
+
+        <Reveal>
+          <div className="mt-5 grid gap-5 rounded-xl border border-line bg-white p-5 shadow-card lg:grid-cols-[1.15fr_1fr]">
+            {/* La portada es la primera foto de la galería */}
+            <div>
+              <span className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+                <IconoFoto size={13} /> Portada (la primera foto)
+              </span>
+              <div className="overflow-hidden rounded-xl border border-line">
+                <img src={portada} alt={`Portada de ${hotel.nombre}`} className="h-52 w-full object-cover sm:h-64" />
+              </div>
+              <p className="mt-2 text-xs font-medium text-muted">
+                Es la foto que ve el turista en los resultados de búsqueda y la que abre tu panel.
+              </p>
+            </div>
+
+            {/* Subida de fotos nuevas */}
+            <div className="flex flex-col gap-3">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Subir fotos</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  multiple
+                  disabled={edicionBloqueada || subiendo}
+                  onChange={elegirFotos}
+                  className={`block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent-light file:px-4 file:py-2 file:text-xs file:font-bold file:text-hotel transition-colors hover:file:bg-accent hover:file:text-white disabled:cursor-not-allowed disabled:opacity-60 ${errorFoto ? "rounded-lg border border-[#FCA5A5] p-2" : ""}`}
+                />
+              </label>
+              <p className="text-[11px] font-semibold leading-relaxed text-muted">
+                JPG, PNG o WEBP de hasta 5 MB. Las fotos se achican antes de guardarse: entran hasta {MAXIMO_FOTOS} por hotel
+                {cupoDeFotos(galeria.length) > 0 && ` y te quedan ${cupoDeFotos(galeria.length)} lugares libres.`}
+              </p>
+              {subiendo && <p className="text-xs font-semibold text-hotel">Optimizando las fotos…</p>}
+              {errorFoto && (
+                <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-semibold text-[#B91C1C]">
+                  {errorFoto}
+                </p>
+              )}
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Miniaturas: cambiar de portada o quitar una foto */}
+        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          {galeria.map((f, i) => (
+            <div key={i} className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
+              <img src={f} alt={`Foto ${i + 1} de ${hotel.nombre}`} className="h-24 w-full object-cover sm:h-28" />
+              <div className="p-2.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted tabular-nums">
+                  {etiquetaFoto(i, f)}
+                </p>
+                <div className="mt-2 flex flex-col gap-1.5">
+                  {i !== 0 && (
+                    <button
+                      onClick={() => usarComoPortada(i)}
+                      disabled={edicionBloqueada}
+                      className="rounded-md bg-hotel px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:bg-line/60 disabled:text-muted"
+                    >
+                      Usar como portada
+                    </button>
+                  )}
+                  <button
+                    onClick={() => quitarFoto(i)}
+                    disabled={edicionBloqueada}
+                    className="rounded-md border border-danger/35 px-2.5 py-1.5 text-[11px] font-bold text-danger transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-line disabled:text-muted"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <p className="mt-4 rounded-xl border border-line bg-white px-4 py-3 text-xs font-semibold text-muted">
+          Las fotos viajan dentro de los datos del navegador y se optimizan al subirlas. El hotel nunca se queda sin ninguna: la portada es la que lo representa en las búsquedas.
+        </p>
+      </section>
     </main>
   );
+}
+
+// Etiqueta de cada miniatura: si es portada o su número, y su peso cuando la foto se subió (HU-025)
+function etiquetaFoto(indice: number, foto: string): string {
+  const nombre = indice === 0 ? "Portada" : `Foto ${indice + 1}`;
+  const peso = pesoDeFoto(foto);
+  return peso ? `${nombre} · ${peso}` : nombre;
 }
 
 // Valores con los que arranca el formulario de registro de habitación (HU-023)

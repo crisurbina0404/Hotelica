@@ -172,6 +172,15 @@ export const IconoGrafica = (p: P) => (
   <Base {...p}><path d="M4 4v16h16" /><path d="M8 16v-5m4 5V7m4 9v-3" /></Base>
 );
 
+// Fotografía: marco con sol y cerro, para la galería del hotel (HU-025)
+export const IconoFoto = (p: P) => (
+  <Base {...p}>
+    <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+    <circle cx="8.2" cy="9.6" r="1.5" />
+    <path d="m3.6 17.6 5-5 3.4 3.4 3.4-3.4 5 5" />
+  </Base>
+);
+
 export const IconoCampana = (p: P) => (
   <Base {...p}><path d="M18 8.5a6 6 0 1 0-12 0c0 4.8-2.3 6.3-2.3 6.3h16.6S18 13.3 18 8.5" /><path d="M10.3 18.2a2 2 0 0 0 3.4 0" /></Base>
 );
