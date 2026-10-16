@@ -13,7 +13,7 @@ import { TarjetaHotel } from "../tarjeta";
 import { InscribeHotel } from "./InscribeHotel";
 import {
   BanderaNI, IconoBuscar, IconoCalendario, IconoHuespedes, IconoPalmera,
-  IconoPin, IconoComillas, IconoLlave, IconoCama, IconoCheck,
+  IconoPin, IconoComillas, IconoCheck,
 } from "../icons";
 import { SiluetaDepto } from "../siluetas";
 
@@ -39,6 +39,8 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
   const [salida, setSalida] = useState(sumarDias(hoyISO(), 10));
   const [huespedes, setHuespedes] = useState(2);
   const [error, setError] = useState("");
+  // Guarda cuál campo falló, para pintarlo y anunciarlo al enviar (no al escribir)
+  const [campoError, setCampoError] = useState("");
 
   // Solo aprobados son visibles para el turista (regla de negocio)
   const aprobados = hoteles.filter((h) => h.aprobado === "aprobado");
@@ -52,22 +54,32 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
     e.preventDefault();
     if (!depto) {
       setError("Selecciona un departamento para comenzar tu búsqueda.");
+      setCampoError("depto");
       return;
     }
     if (salida <= llegada) {
       setError("La fecha de salida debe ser posterior a la fecha de llegada.");
+      setCampoError("fechas");
       return;
     }
     if (huespedes < 1) {
       setError("El número de huéspedes debe ser mayor o igual a 1.");
+      setCampoError("huespedes");
       return;
     }
     setError("");
+    setCampoError("");
     navegar({ nombre: "resultados", depto, muni: muni || undefined, llegada, salida, huespedes });
   };
 
   const claseCampo =
     "w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
+
+  // Borde coral del campo que falló, y enlace con el mensaje de error
+  const marcar = (quien: string) =>
+    campoError === quien ? " border-danger focus:border-danger focus:ring-danger/25" : "";
+  const esInvalido = (quien: string) => (campoError === quien ? true : undefined);
+  const enlazarError = (quien: string) => (campoError === quien ? "error-busqueda" : undefined);
 
   return (
     <main>
@@ -127,13 +139,17 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               </div>
             </div>
 
-            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-[1.15fr_1.15fr_1fr_1fr_0.8fr_auto]">
+            {/* Jerarquía de campos: dónde (ancho) → cuándo (medio) → cuántos (compacto) */}
+            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-[1.5fr_1.25fr_1fr_1fr_0.65fr_auto]">
               <label className="block">
                 <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Departamento *</span>
                 <select
                   value={depto}
                   onChange={(e) => { setDepto(e.target.value); setMuni(""); }}
-                  className={claseCampo}
+                  className={claseCampo + marcar("depto")}
+                  aria-required="true"
+                  aria-invalid={esInvalido("depto")}
+                  aria-describedby={enlazarError("depto")}
                 >
                   <option value="">Elige un departamento</option>
                   {DEPARTAMENTOS.map((d) => (
@@ -154,12 +170,24 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
 
               <label className="block">
                 <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted"><IconoCalendario size={12} /> Llegada</span>
-                <input type="date" value={llegada} min={hoyISO()} onChange={(e) => setLlegada(e.target.value)} className={claseCampo} />
+                <input
+                  type="date" value={llegada} min={hoyISO()}
+                  onChange={(e) => setLlegada(e.target.value)}
+                  className={claseCampo + marcar("fechas")}
+                  aria-invalid={esInvalido("fechas")}
+                  aria-describedby={enlazarError("fechas")}
+                />
               </label>
 
               <label className="block">
                 <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted"><IconoCalendario size={12} /> Salida</span>
-                <input type="date" value={salida} min={llegada} onChange={(e) => setSalida(e.target.value)} className={claseCampo} />
+                <input
+                  type="date" value={salida} min={llegada}
+                  onChange={(e) => setSalida(e.target.value)}
+                  className={claseCampo + marcar("fechas")}
+                  aria-invalid={esInvalido("fechas")}
+                  aria-describedby={enlazarError("fechas")}
+                />
               </label>
 
               <label className="block">
@@ -167,14 +195,16 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
                 <input
                   type="number" min={1} max={10} value={huespedes}
                   onChange={(e) => setHuespedes(Number(e.target.value))}
-                  className={claseCampo}
+                  className={claseCampo + marcar("huespedes")}
+                  aria-invalid={esInvalido("huespedes")}
+                  aria-describedby={enlazarError("huespedes")}
                 />
               </label>
 
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="group flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] lg:w-auto"
+                  className="group flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.97] lg:w-auto"
                 >
                   <IconoBuscar size={16} className="transition-transform group-hover:rotate-12" />
                   {t(idioma, "buscarBtn")}
@@ -184,8 +214,8 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
 
             {/* Mensaje de validación del formulario */}
             {error && (
-              <p role="alert" className="anim-pop mt-3.5 flex items-center gap-2 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C]">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5v.01" /></svg>
+              <p id="error-busqueda" role="alert" className="anim-pop mt-3.5 flex items-center gap-2 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C]">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5v.01" /></svg>
                 {error}
               </p>
             )}
@@ -236,6 +266,33 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         </div>
       </section>
 
+      {/* ============ LLAMADO PARA HOTELEROS ============
+          Va justo después de los destinos: de "mira estos lugares" a
+          "anuncia el tuyo". Al no cerrar la página, se rompe el orden
+          predecible destacados → cómo funciona → testimonios → hoteleros. */}
+      <section className="mx-auto max-w-7xl px-4 pt-16 sm:px-6">
+        <Reveal>
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary to-primary-deep px-7 py-12 shadow-lift sm:px-12">
+            <span className="dot-texture-light absolute inset-0 opacity-40" />
+            <span className="absolute -right-8 -top-10 text-white/10"><IconoPalmera size={220} /></span>
+            <div className="relative grid items-center gap-8 lg:grid-cols-[1.4fr_1fr]">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Para hoteleros</p>
+                <h2 className="mt-3 max-w-lg font-display text-2xl font-bold leading-tight text-white sm:text-3xl">
+                  ¿Tienes un hotel pequeño o familiar? Que toda Nicaragua te encuentre.
+                </h2>
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-teal-100/85">
+                  Regístrate gratis, el administrador revisa tu solicitud y en menos de 48 horas apareces en las búsquedas de miles de viajeros.
+                </p>
+              </div>
+              <p className="flex items-center gap-1.5 text-xs text-teal-100/70 lg:items-end">
+                <IconoCheck size={13} className="text-accent" /> Aprobación revisada por el equipo de Hotelica
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ============ HOTELES DESTACADOS ============ */}
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
         <Reveal>
@@ -246,50 +303,58 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
             </p>
           </div>
         </Reveal>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {destacados.map((h, i) => (
-            <Reveal key={h.id} delay={i * 90}>
+        {/* Retícula rota a propósito: una tarjeta grande en horizontal y las
+            otras tres en su propia fila, en vez de cuatro tarjetas idénticas */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          {destacados[0] && (
+            <Reveal className="lg:col-span-3">
+              <TarjetaHotel hotel={destacados[0]} navegar={navegar} variante="grande" />
+            </Reveal>
+          )}
+          {destacados.slice(1).map((h, i) => (
+            <Reveal key={h.id} delay={(i + 1) * 90}>
               <TarjetaHotel hotel={h} navegar={navegar} />
             </Reveal>
           ))}
         </div>
       </section>
 
-      {/* ============ CÓMO FUNCIONA (flujo Buscar → Reservar) ============ */}
+      {/* ============ CÓMO FUNCIONA (línea de tiempo, en vez de cuatro columnas iguales) ============ */}
       <section className="relative mt-24 overflow-hidden bg-primary-deep py-20">
         <span className="dot-texture-light absolute inset-0 opacity-30" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <Reveal>
             <TituloSeccionCentro
               ceja="Así de fácil"
-              titulo="De la búsqueda a la hamaca en cuatro pasos"
+              titulo="De la búsqueda a la hamaca"
             />
           </Reveal>
 
-          <div className="mt-14 grid gap-10 lg:grid-cols-4 lg:gap-6">
+          <ol className="mt-14 grid gap-10 lg:grid-cols-4 lg:gap-8">
             {[
-              { n: "01", t: "Busca tu destino", d: "Elige departamento, fechas y huéspedes. Te mostramos hoteles familiares aprobados.", icono: <IconoBuscar size={24} /> },
-              { n: "02", t: "Compara habitaciones", d: "Revisa capacidad, disponibilidad real y reseñas de otros viajeros.", icono: <IconoCama size={24} /> },
-              { n: "03", t: "Reserva con cálculo claro", d: "Noches, subtotal e IVA 15% siempre a la vista. Sin cargos sorpresa.", icono: <IconoLlave size={24} /> },
-              { n: "04", t: "Disfruta tu estadía", d: "Check-in en recepción, califica al final y guarda tus favoritos.", icono: <IconoPalmera size={24} /> },
-            ].map((p, i) => (
-              <Reveal key={p.n} delay={i * 130}>
-                <div className={`relative ${i % 2 === 1 ? "lg:translate-y-8" : ""}`}>
-                  {i < 3 && (
-                    <svg className="absolute -right-4 top-8 hidden text-accent/60 lg:block" width="34" height="14" viewBox="0 0 34 14" fill="none" aria-hidden="true">
-                      <path d="M1 7h28m0 0-6-5.5M29 7l-6 5.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
+              { n: "01", t: "Busca tu destino", d: "Elige departamento, fechas y huéspedes. Te mostramos hoteles familiares verificados por nuestro equipo." },
+              { n: "02", t: "Compara habitaciones", d: "Revisa capacidad, disponibilidad real y reseñas de otros viajeros." },
+              { n: "03", t: "Reserva con cálculo claro", d: "Noches, subtotal e IVA 15% siempre a la vista. Sin cargos sorpresa." },
+              { n: "04", t: "Disfruta tu estadía", d: "Check-in en recepción, califica al final y guarda tus favoritos." },
+            ].map((p, i, arr) => (
+              <li key={p.n} className="relative">
+                {/* El número en Fraunces es la marca gráfica de cada etapa */}
+                <span className="block font-display text-[3.5rem] font-extrabold leading-none text-accent">{p.n}</span>
+                <div className="relative mt-4">
+                  {/* Trazo que cruza el hueco y une esta etapa con la siguiente */}
+                  {i < arr.length - 1 && (
+                    <span
+                      className="absolute left-3 right-[-2rem] top-1/2 hidden h-px -translate-y-1/2 bg-white/25 lg:block"
+                      aria-hidden="true"
+                    />
                   )}
-                  <span className="font-display text-5xl font-extrabold text-white/10">{p.n}</span>
-                  <div className="mt-2 flex h-12 w-12 items-center justify-center rounded-xl bg-accent text-white shadow-lg">
-                    {p.icono}
-                  </div>
-                  <h3 className="mt-4 font-display text-lg font-bold text-white">{p.t}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-teal-200/75">{p.d}</p>
+                  <span className="relative block h-3 w-3 rounded-full bg-accent ring-4 ring-primary-deep" />
                 </div>
-              </Reveal>
+                <h3 className="mt-5 font-display text-lg font-bold text-white">{p.t}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-teal-200/75">{p.d}</p>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       </section>
 

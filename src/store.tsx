@@ -5,12 +5,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
-  HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED,
+  HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED, HABITACIONES_SEED,
   nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
   claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel,
-  generarContrasenaHotelero, contrasenaTemporalVencida,
+  generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
 } from "./data";
-import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero } from "./data";
+import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
 
@@ -44,6 +44,7 @@ type Persistido = {
   calificaciones: Calificacion[];
   folio: number; // último número de folio usado
   cuentasHotelero: CuentaHotelero[]; // cuentas creadas por el admin al aprobar hoteles (HU-021)
+  habitaciones: Habitacion[]; // inventario de cada hotel, que el hotelero administra (HU-023)
 };
 
 // Clave de almacenamiento (cambia cuando el catálogo de datos evoluciona)
@@ -65,6 +66,8 @@ function cargar(): Persistido {
           : (viejos as Record<string, string[]> | undefined) ?? {};
         return {
           ...d, favoritos,
+          // Los guardados viejos no traían habitaciones: usamos las semillas (HU-023)
+          habitaciones: d.habitaciones ?? HABITACIONES_SEED,
           notificaciones: d.notificaciones ?? [],
           pagos: d.pagos ?? [],
           calificaciones: d.calificaciones ?? [],
@@ -90,6 +93,7 @@ function cargar(): Persistido {
     calificaciones: [],
     folio: 1061,
     cuentasHotelero: [],
+    habitaciones: HABITACIONES_SEED,
   };
 }
 
@@ -110,6 +114,7 @@ export type Toast = { id: number; texto: string; tono: "ok" | "error" | "info" }
 
 type AppCtx = {
   hoteles: Hotel[];
+  habitaciones: Habitacion[]; // inventario de habitaciones que el hotelero administra (HU-023)
   reservas: Reserva[];
   resenas: Resena[];
   favoritos: string[];
@@ -143,6 +148,8 @@ type AppCtx = {
   enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
   actualizarHotel: (hotelId: string, datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel };
+  agregarHabitacion: (hotelId: string, datos: DatosHabitacion) => { errores?: ErroresHabitacion; habitacion?: Habitacion };
+  cambiarEstadoHabitacion: (habitacionId: string, estado: EstadoHabitacion) => void;
   cambiarContrasenaHotelero: (nueva: string, confirmar: string) => { error?: string };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
@@ -274,7 +281,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rr.estado !== "completada" &&
           seTraslapan(r.llegada, r.salida, rr.llegada, rr.salida)
       ).length;
-      if (ocupadas >= unidadesDe(r.habitacionId)) return d; // ya no hay cupo: no escribimos
+      // Las unidades salen del inventario que tenemos en memoria
+      const unidades = d.habitaciones.find((h) => h.id === r.habitacionId)?.unidades ?? 0;
+      if (ocupadas >= unidades) return d; // ya no hay cupo: no escribimos
       return {
         ...d,
         folio: Math.max(d.folio, guardado?.folio ?? 0) + 1,
@@ -338,7 +347,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           huespedes: reserva.huespedes,
           total: reserva.total,
           // Extras para que el comprobante salga completo (HU comprobantes)
-          habitacion: HABITACIONES_SEED.find((h) => h.id === reserva.habitacionId)?.tipo ?? "",
+          habitacion: datos.habitaciones.find((h) => h.id === reserva.habitacionId)?.tipo ?? "",
           subtotal: reserva.subtotal,
           iva: reserva.iva,
           pago: reserva.pago,
@@ -564,6 +573,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
+  // Registra un tipo de habitación nuevo en el hotel del hotelero logueado (HU-023)
+  const agregarHabitacion: AppCtx["agregarHabitacion"] = (hotelId, registro) => {
+    // Revisamos contra las habitaciones que ya tiene ese hotel
+    const delHotel = datos.habitaciones.filter((h) => h.hotelId === hotelId);
+    const errores = validarHabitacion(registro, delHotel);
+    if (Object.keys(errores).length > 0) return { errores };
+
+    const nueva: Habitacion = {
+      id: `hab-${Date.now()}`,
+      hotelId,
+      tipo: registro.tipo.trim(),
+      capacidad: Number(registro.capacidad),
+      precio: Number(registro.precio),
+      unidades: Number(registro.unidades),
+      estado: registro.estado,
+      detalle: registro.detalle.trim(),
+    };
+
+    setDatos((d) => ({ ...d, habitaciones: [...d.habitaciones, nueva] }));
+    return { habitacion: nueva };
+  };
+
+  // Pone una habitación disponible, en mantenimiento o fuera de venta
+  const cambiarEstadoHabitacion: AppCtx["cambiarEstadoHabitacion"] = (habitacionId, estado) => {
+    setDatos((d) => ({
+      ...d,
+      habitaciones: d.habitaciones.map((h) => (h.id === habitacionId ? { ...h, estado } : h)),
+    }));
+  };
+
   // El hotelero cambia la contraseña temporal que le dio el admin (debe hacerlo en 24h)
   const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = (nueva, confirmar) => {
     if (!usuario?.correo) return { error: "No hay sesión de hotelero activa" };
@@ -594,9 +633,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         r.estado !== "completada" &&
         seTraslapan(llegada, salida, r.llegada, r.salida)
     ).length;
-    const hab = datos.hoteles.flatMap(() => []); // (solo para mantener tipos)
-    void hab;
-    const unidades = unidadesDe(habitacionId);
+    const unidades = datos.habitaciones.find((h) => h.id === habitacionId)?.unidades ?? 0;
     return Math.max(0, unidades - ocupadas);
   };
 
@@ -799,6 +836,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const valor = useMemo<AppCtx>(
     () => ({
       hoteles: datos.hoteles,
+      habitaciones: datos.habitaciones,
       reservas: datos.reservas,
       resenas: datos.resenas,
       favoritos: favoritosDe(datos.favoritos, usuario),
@@ -832,6 +870,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       enviarCuentaHotelero,
       registrarHotel,
       actualizarHotel,
+      agregarHabitacion,
+      cambiarEstadoHabitacion,
       cambiarContrasenaHotelero,
       disponiblesDe,
     }),
@@ -839,12 +879,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
-}
-
-// Unidades registradas de una habitación (según las semillas)
-import { HABITACIONES_SEED } from "./data";
-function unidadesDe(habitacionId: string): number {
-  return HABITACIONES_SEED.find((h) => h.id === habitacionId)?.unidades ?? 0;
 }
 
 // Acceso al contexto desde cualquier componente

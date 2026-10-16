@@ -8,12 +8,12 @@
 import { useState } from "react";
 import { useApp } from "./store";
 import type { Hotel } from "./data";
-import { AMENIDADES, DEPARTAMENTOS, MUNICIPIOS, fmtDinero } from "./data";
+import { AMENIDADES, DEPARTAMENTOS, MUNICIPIOS, calcularTotales, fmtDinero } from "./data";
 import type { Navegar } from "./rutas";
 import { Estrellas } from "./ui";
 import { IconoCorazon, IconoPin } from "./icons";
 
-export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, huespedes = 2 }: { hotel: Hotel; navegar: Navegar; retraso?: number; llegada?: string; salida?: string; huespedes?: number }) {
+export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, huespedes = 2, variante = "columna" }: { hotel: Hotel; navegar: Navegar; retraso?: number; llegada?: string; salida?: string; huespedes?: number; variante?: "columna" | "grande" }) {
   const { favoritos, alternarFavorito, avisar } = useApp();
   const [latido, setLatido] = useState(false);
   const esFavorito = favoritos.includes(hotel.id);
@@ -28,6 +28,10 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
   const muni = MUNICIPIOS.find((m) => m.id === hotel.municipioId);
   const depto = DEPARTAMENTOS.find((d) => d.id === hotel.departamentoId);
 
+  // Precio más barato del hotel y su total con IVA 15%, para mostrarlo a la vista
+  const precio = precioDesde(hotel.id);
+  const totalNoche = calcularTotales(precio, 1).total;
+
   // Marca o quita el hotel de favoritos con una pequeña animación
   const alTocarCorazon = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,12 +43,19 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
 
   return (
     <article
-      className="group cursor-pointer overflow-hidden rounded-xl border border-line bg-white shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-lift"
+      className={`group cursor-pointer overflow-hidden border border-line bg-white shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-lift ${
+        // La tarjeta grande se queda con esquinas normales; las de columna llevan el arco
+        variante === "grande" ? "flex flex-col rounded-xl sm:flex-row" : "arco"
+      }`}
       onClick={() => navegar({ nombre: "hotel", id: hotel.id })}
       style={{ animationDelay: `${retraso}ms` }}
     >
       {/* Fotografía con zoom suave al pasar el cursor */}
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div
+        className={`relative overflow-hidden ${
+          variante === "grande" ? "aspect-[4/3] sm:aspect-auto sm:w-1/2" : "aspect-[4/3]"
+        }`}
+      >
         <img
           src={hotel.imagen}
           alt={hotel.nombre}
@@ -54,7 +65,7 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
         <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-ink/10" />
 
         {hotel.destacado && (
-          <span className="absolute left-3 top-3 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-md">
+          <span className="absolute left-3 top-4 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-md">
             Destacado
           </span>
         )}
@@ -62,7 +73,7 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
         <button
           onClick={alTocarCorazon}
           aria-label={esFavorito ? "Quitar de favoritos" : "Marcar como favorito"}
-          className={`absolute right-3 top-3 rounded-full p-2 shadow-md transition-colors ${
+          className={`absolute right-3 top-4 rounded-full p-2 shadow-md transition-colors ${
             esFavorito ? "bg-white text-danger" : "bg-ink/35 text-white hover:bg-white hover:text-danger"
           }`}
         >
@@ -76,7 +87,7 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
         </p>
       </div>
 
-      <div className="p-4">
+      <div className={`flex-1 p-4 ${variante === "grande" ? "sm:flex sm:flex-col sm:justify-center sm:p-6" : ""}`}>
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-display text-[1.05rem] font-bold leading-snug text-ink transition-colors group-hover:text-primary">
             {hotel.nombre}
@@ -133,17 +144,28 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
           </p>
         )}
 
-        <div className="mt-4 flex items-end justify-between border-t border-line pt-3.5">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted">Desde</p>
-            <p className="font-display text-lg font-bold leading-none text-primary">
-              {fmtDinero(precioDesde(hotel.id))}
-              <span className="text-xs font-medium text-muted"> / noche</span>
-            </p>
+        <div className="mt-4 pt-3.5">
+          {/* Separador dibujado como trazo de hamaca, en vez de línea recta de 1px */}
+          <svg viewBox="0 0 120 8" preserveAspectRatio="none" className="mb-3 h-2 w-full text-line" aria-hidden="true">
+            <path d="M0 1 Q60 7 120 1" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          </svg>
+          <div className="flex items-end justify-between">
+            <div>
+              {/* Precio por noche y total con IVA a la vista (transparencia) */}
+              <p className="flex items-baseline gap-1.5">
+                <span className="font-display text-lg font-bold leading-none text-primary tabular-nums">
+                  {fmtDinero(precio)}
+                </span>
+                <span className="text-xs font-medium text-muted">por noche</span>
+              </p>
+              <p className="mt-1 text-[11px] font-medium text-muted tabular-nums">
+                {fmtDinero(totalNoche)} con IVA 15%
+              </p>
+            </div>
+            <span className="rounded-lg bg-primary px-3.5 py-2 text-sm font-bold text-white transition-colors group-hover:bg-primary-dark">
+              Ver hotel
+            </span>
           </div>
-          <span className="rounded-lg bg-primary px-3.5 py-2 text-sm font-bold text-white transition-colors group-hover:bg-primary-dark">
-            Ver hotel
-          </span>
         </div>
       </div>
     </article>
@@ -151,26 +173,25 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
 }
 
 // El precio "desde" es el de la habitación más económica del hotel
-import { HABITACIONES_SEED } from "./data";
-
 // Precio más económico del hotel
 function precioDesde(hotelId: string): number {
-  const precios = HABITACIONES_SEED.filter((h) => h.hotelId === hotelId).map((h) => h.precio);
+  const { habitaciones } = useApp();
+  const precios = habitaciones.filter((h) => h.hotelId === hotelId).map((h) => h.precio);
   return precios.length ? Math.min(...precios) : 0;
 }
 
 // Suma todas las unidades disponibles del hotel para unas fechas
 function totalDisponibles(hotelId: string, llegada: string, salida: string): number {
-  const { disponiblesDe } = useApp();
-  const habitaciones = HABITACIONES_SEED.filter((h) => h.hotelId === hotelId && h.estado === "disponible");
-  return habitaciones.reduce((suma, h) => suma + disponiblesDe(h.id, llegada, salida), 0);
+  const { disponiblesDe, habitaciones } = useApp();
+  const delHotel = habitaciones.filter((h) => h.hotelId === hotelId && h.estado === "disponible");
+  return delHotel.reduce((suma, h) => suma + disponiblesDe(h.id, llegada, salida), 0);
 }
 
 // Cuenta habitaciones aptas para una cantidad de huéspedes
 function habitacionesAptas(hotelId: string, llegada: string, salida: string, huespedes: number): number {
-  const { disponiblesDe } = useApp();
-  const habitaciones = HABITACIONES_SEED.filter(
+  const { disponiblesDe, habitaciones } = useApp();
+  const aptas = habitaciones.filter(
     (h) => h.hotelId === hotelId && h.estado === "disponible" && h.capacidad >= huespedes
   );
-  return habitaciones.filter((h) => disponiblesDe(h.id, llegada, salida) > 0).length;
+  return aptas.filter((h) => disponiblesDe(h.id, llegada, salida) > 0).length;
 }

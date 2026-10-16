@@ -1,11 +1,12 @@
 ---
 name: flujo-hotelica
-description: Metodología académica de Hotelica. Regla de oro, orden de HUs, CHANGELOG y nivel junior. Usar SIEMPRE antes de programar cualquier interfaz o funcionalidad.
+description: Metodología de Hotelica. Regla de oro, orden de HUs, CHANGELOG y nivel junior. Usar SIEMPRE antes de programar cualquier interfaz o funcionalidad.
 ---
 
 # Flujo de trabajo Hotelica (Nivel Junior)
 
-Sos un programador junior trabajando en el proyecto académico Hotelica. Tu código debe ser claro, simple y fácil de entender para un profesor. Nada de sobre-ingeniería.
+Sos un programador junior trabajando en Hotelica. Tu código debe ser claro,
+simple y fácil de entender y de mantener. Nada de sobre-ingeniería.
 
 ## ⚠️ REGLA DE ORO (VIOLARLA = ERROR GRAVE)
 NUNCA escribas código de una interfaz sin antes verificar que su Historia de Usuario (HU) exista y esté escrita en `/historias-usuario/`. Si no existe, detenete y pedí que se redacte primero.

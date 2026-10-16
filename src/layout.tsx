@@ -118,9 +118,9 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${clara ? "bg-transparent" : "bg-white/95 shadow-[0_2px_20px_rgba(15,23,42,0.07)] backdrop-blur"}`}>
       <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
-        {/* Marca */}
-        <button onClick={() => navegar({ nombre: "inicio" })} className="flex items-center gap-2.5 self-center" aria-label="Ir al inicio">
-          <Marca clara={clara} />
+        {/* Marca: nunca se comprime, y en celular usa un tamaño más chico */}
+        <button onClick={() => navegar({ nombre: "inicio" })} className="flex shrink-0 items-center gap-2.5 self-center" aria-label="Ir al inicio">
+          <Marca tam="navbar" clara={clara} />
         </button>
 
         {/* Navegación de escritorio */}
@@ -145,7 +145,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
           {/* Toggle de idioma ES | EN */}
           <button
             onClick={cambiarIdioma}
-            className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
+            className={`hidden items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-all lg:flex ${
               clara
                 ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
                 : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
@@ -157,7 +157,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
           {/* Botón de login o usuario autenticado */}
           {usuario ? (
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 lg:flex">
               <button
                 onClick={() => navegar({ nombre: "perfil" })}
                 className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
@@ -182,7 +182,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 lg:flex">
               <button
                 onClick={() => setRegistroAbierto(true)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
@@ -206,7 +206,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             </div>
           )}
           {/* Selector de rol de demostración */}
-          <div className="relative">
+          <div className="relative hidden lg:block">
             <button
               onClick={() => setMenuRol((v) => !v)}
               className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-sm font-semibold transition-all ${
@@ -302,6 +302,56 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                 {rol === "hotel" ? t(idioma, "panelHotel") : t(idioma, "consolaAdmin")}
               </button>
             )}
+
+            {/* Cuenta e idioma: en el celular viven acá, no en la barra superior */}
+            <div className="mt-2 grid gap-1.5 border-t border-line pt-3">
+              {usuario ? (
+                <button
+                  onClick={() => { logout(); setMenuMovil(false); }}
+                  className="rounded-lg border border-line px-3 py-2.5 text-left text-sm font-semibold text-ink transition-colors hover:border-danger hover:text-danger"
+                >
+                  {t(idioma, "cerrarSesion")}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => { setLoginAbierto(true); setMenuMovil(false); }}
+                    className="rounded-lg bg-accent px-3 py-2.5 text-left text-sm font-bold text-white"
+                  >
+                    {t(idioma, "iniciarSesion")}
+                  </button>
+                  <button
+                    onClick={() => { setRegistroAbierto(true); setMenuMovil(false); }}
+                    className="rounded-lg border border-line px-3 py-2.5 text-left text-sm font-bold text-ink transition-colors hover:border-primary/40"
+                  >
+                    Registrarse
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => { cambiarIdioma(); setMenuMovil(false); }}
+                className="rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink transition-colors hover:bg-canvas"
+              >
+                {idioma === "es" ? "Ver en inglés (EN)" : "Ver en español (ES)"}
+              </button>
+            </div>
+
+            {/* Cambiar de perfil: en el celular también, para no perder la demo */}
+            <div className="mt-2 border-t border-line pt-3">
+              <p className="px-1 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">Cambiar de perfil</p>
+              <div className="grid gap-1">
+                {(Object.keys(USUARIOS_DEMO) as Rol[]).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => { elegirRol(r); setMenuMovil(false); }}
+                    className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-canvas ${rol === r ? "bg-primary-soft text-primary" : "text-ink"}`}
+                  >
+                    {USUARIOS_DEMO[r].etiqueta}
+                    {rol === r && <IconoCheck size={14} className="text-primary" />}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </nav>
       )}

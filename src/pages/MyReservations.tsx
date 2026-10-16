@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
-  ETIQUETA_ESTADO, HABITACIONES_SEED, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
+  ETIQUETA_ESTADO, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
   historialDeReservas, TURISTA_DEMO, sePuedeCancelar, FLUJO_RESERVA, pasoDeEstado,
   ETIQUETA_PAGO, sePuedeCalificar, validarCalificacion, calificacionDe,
 } from "../data";
@@ -44,7 +44,7 @@ function marcarEstadoVisto(folio: string, estado: EstadoReserva) {
 }
 
 export function MisReservas({ navegar }: { navegar: Navegar }) {
-  const { reservas, hoteles, cambiarEstadoReserva, calificar, avisar, avisarHotel, usuario } = useApp();
+  const { reservas, hoteles, habitaciones, cambiarEstadoReserva, calificar, avisar, avisarHotel, usuario } = useApp();
   const [filtro, setFiltro] = useState<EstadoReserva | "todas">("todas");
   const [folioDetalle, setFolioDetalle] = useState<string | null>(null);
   const [porCancelar, setPorCancelar] = useState<Reserva | null>(null);
@@ -74,7 +74,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
   }, [mias]);
 
   const hotelDe = (r: Reserva) => hoteles.find((h) => h.id === r.hotelId);
-  const habDe = (r: Reserva) => HABITACIONES_SEED.find((h) => h.id === r.habitacionId);
+  const habDe = (r: Reserva) => habitaciones.find((h) => h.id === r.habitacionId);
 
   // Ejecuta la cancelación confirmada por el turista (HU-016)
   const cancelar = () => {
@@ -276,9 +276,9 @@ const PASO_DESCRIPCION: Record<EstadoReserva, string> = {
 
 // ----- Vista detallada de una reserva -----
 function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
-  const { hoteles, pagos, calificaciones } = useApp();
+  const { hoteles, habitaciones, pagos, calificaciones } = useApp();
   const h = hoteles.find((x) => x.id === r.hotelId);
-  const hab = HABITACIONES_SEED.find((x) => x.id === r.habitacionId);
+  const hab = habitaciones.find((x) => x.id === r.habitacionId);
   const pagoTxt = r.pago === "tarjeta" ? "Tarjeta" : r.pago === "efectivo" ? "Efectivo en recepción" : "Transferencia bancaria";
   // Último pago registrado para este folio (HU-018)
   const pago = pagos.find((p) => p.folio === r.folio);

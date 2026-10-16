@@ -19,7 +19,7 @@ const NOMBRES: Record<string, string> = {
   masaya: "Masaya",
   esteli: "Estelí",
   matagalpa: "Matagalpa",
-  caribe: "RACCS (Caribe Sur)",
+  caribe: "Costa Caribe Sur",
 };
 
 // Cada silueta se encuadra sola dentro del viewBox 64×64, con margen parecido

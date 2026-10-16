@@ -44,6 +44,22 @@ export type Habitacion = {
   detalle: string;
 };
 
+// Los tres estados posibles de una habitación, en el orden en que se ofrecen
+export const ESTADOS_HABITACION: EstadoHabitacion[] = ["disponible", "mantenimiento", "no_disponible"];
+
+// Lo que el hotelero completa al registrar una habitación (HU-023)
+export type DatosHabitacion = {
+  tipo: string;
+  capacidad: number;
+  precio: number;
+  unidades: number;
+  estado: EstadoHabitacion;
+  detalle: string;
+};
+
+// Errores campo por campo del formulario de habitación; sin errores, se puede registrar
+export type ErroresHabitacion = Partial<Record<keyof DatosHabitacion, string>>;
+
 export type EstadoReserva = "pendiente" | "confirmada" | "checkin" | "completada" | "cancelada";
 
 export type Reserva = {
@@ -102,7 +118,7 @@ export const DEPARTAMENTOS: Departamento[] = [
   { id: "masaya", nombre: "Masaya" },
   { id: "esteli", nombre: "Estelí" },
   { id: "matagalpa", nombre: "Matagalpa" },
-  { id: "caribe", nombre: "RACCS (Caribe Sur)" },
+  { id: "caribe", nombre: "Costa Caribe Sur" },
 ];
 
 export const MUNICIPIOS: Municipio[] = [
@@ -577,6 +593,67 @@ export function validarImagenHotel(archivo: File): string {
     return "La imagen pesa más de 5 MB: elegí una más liviana.";
   }
   return "";
+}
+
+// Revisa los datos de una habitación nueva antes de registrarla (HU-023)
+export function validarHabitacion(
+  datos: DatosHabitacion,
+  habitacionesDelHotel: Habitacion[] = []
+): ErroresHabitacion {
+  const errores: ErroresHabitacion = {};
+
+  // Tipo: obligatorio, con largo razonable y sin repetir otro tipo del mismo hotel
+  const tipo = datos.tipo.trim();
+  if (!tipo) {
+    errores.tipo = "El tipo de habitación es obligatorio, por ejemplo: Estándar Doble.";
+  } else if (tipo.length < 4) {
+    errores.tipo = "El tipo debe tener al menos 4 caracteres.";
+  } else if (tipo.length > 40) {
+    errores.tipo = "El tipo no puede pasar de 40 caracteres.";
+  } else if (habitacionesDelHotel.some((h) => h.tipo.trim().toLowerCase() === tipo.toLowerCase())) {
+    errores.tipo = "Ya tenés un tipo de habitación con ese nombre en este hotel.";
+  }
+
+  // Capacidad: cuántos huéspedes admite la habitación
+  const capacidad = Number(datos.capacidad);
+  if (!Number.isInteger(capacidad) || capacidad < 1) {
+    errores.capacidad = "La capacidad debe ser un número entero de al menos 1 huésped.";
+  } else if (capacidad > 10) {
+    errores.capacidad = "La capacidad no puede pasar de 10 huéspedes.";
+  }
+
+  // Precio por noche: regla de negocio, siempre mayor que cero
+  const precio = Number(datos.precio);
+  if (!Number.isFinite(precio) || precio <= 0) {
+    errores.precio = "El precio por noche debe ser mayor que cero.";
+  } else if (precio > 50000) {
+    errores.precio = "El precio por noche no puede pasar de C$ 50,000.00.";
+  }
+
+  // Unidades: cuántas habitaciones iguales existen en el hotel
+  const unidades = Number(datos.unidades);
+  if (!Number.isInteger(unidades) || unidades < 1) {
+    errores.unidades = "Las unidades deben ser un número entero de al menos 1.";
+  } else if (unidades > 50) {
+    errores.unidades = "No podés registrar más de 50 unidades de un mismo tipo.";
+  }
+
+  // Estado: tiene que ser uno de los tres que maneja la base de datos
+  if (!ESTADOS_HABITACION.includes(datos.estado)) {
+    errores.estado = "Elegí un estado válido para la habitación.";
+  }
+
+  // Detalle: texto corto que describe la habitación al turista
+  const detalle = datos.detalle.trim();
+  if (!detalle) {
+    errores.detalle = "Escribí una descripción breve de la habitación.";
+  } else if (detalle.length < 15) {
+    errores.detalle = "La descripción debe tener al menos 15 caracteres.";
+  } else if (detalle.length > 200) {
+    errores.detalle = "La descripción no puede pasar de 200 caracteres.";
+  }
+
+  return errores;
 }
 
 // Correo con formato usuario@dominio.algo

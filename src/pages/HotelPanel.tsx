@@ -7,9 +7,9 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, HABITACIONES_SEED, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida,
+  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_HABITACION, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida,
 } from "../data";
-import type { DatosRegistroHotel, ErroresRegistroHotel, Reserva } from "../data";
+import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica,
@@ -17,7 +17,7 @@ import {
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
+  const { hoteles, habitaciones: todasLasHabitaciones, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -56,6 +56,12 @@ export function PanelHotel() {
   const [formEdicion, setFormEdicion] = useState<DatosRegistroHotel | null>(null);
   const [erroresEdicion, setErroresEdicion] = useState<ErroresRegistroHotel>({});
   const [editadoEnviado, setEditadoEnviado] = useState(false);
+
+  // Registro de habitaciones del hotel (HU-023)
+  const [registrando, setRegistrando] = useState(false);
+  const [formHabitacion, setFormHabitacion] = useState<DatosHabitacion>(HABITACION_VACIA);
+  const [erroresHabitacion, setErroresHabitacion] = useState<ErroresHabitacion>({});
+  const [habitacionEnviada, setHabitacionEnviada] = useState(false);
 
   // Los municipios se filtran según el departamento elegido
   const municipiosDelDepto = formEdicion
@@ -110,6 +116,38 @@ export function PanelHotel() {
     avisar("Cambios guardados: la información del hotel quedó actualizada.", "ok");
   };
 
+  // Actualiza un campo del formulario de habitación y borra su error al escribir
+  const cambiarCampoHabitacion = (campo: keyof DatosHabitacion, valor: string | number) => {
+    setFormHabitacion((f) => ({ ...f, [campo]: valor }));
+    setErroresHabitacion((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
+  };
+
+  // Borde coral del campo que quedó con error (mismo patrón que la edición del hotel)
+  const bordeHabitacion = (campo: keyof DatosHabitacion) =>
+    erroresHabitacion[campo]
+      ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25"
+      : "border-line focus:border-hotel focus:ring-hotel/25";
+
+  // Registra la habitación solo si todas las reglas pasan
+  const guardarHabitacion = (e: React.FormEvent) => {
+    e.preventDefault();
+    setHabitacionEnviada(true);
+
+    const resultado = agregarHabitacion(HOTEL_ID, formHabitacion);
+    if (resultado.errores) {
+      setErroresHabitacion(resultado.errores);
+      avisar("Revisá los campos marcados: la habitación no se registró.", "error");
+      return;
+    }
+
+    // Dejamos el formulario limpio por si quiere registrar otra
+    setRegistrando(false);
+    setFormHabitacion(HABITACION_VACIA);
+    setErroresHabitacion({});
+    setHabitacionEnviada(false);
+    avisar(`Habitación registrada: ${resultado.habitacion?.tipo}.`, "ok");
+  };
+
   // Mientras el hotel esté en revisión no se permite editar (HU-022)
   const edicionBloqueada = hotel.aprobado === "pendiente";
 
@@ -133,7 +171,39 @@ export function PanelHotel() {
     [reservas]
   );
 
-  const habitaciones = HABITACIONES_SEED.filter((h) => h.hotelId === HOTEL_ID);
+  // Botones que el hotelero puede usar según el estado de la reserva.
+  // Los comparten la tabla de escritorio y las tarjetas del celular
+  const accionesDe = (r: Reserva) => (
+    <>
+      {r.estado === "pendiente" && (
+        <>
+          <Accion onClick={() => confirmar(r)} clase="bg-primary text-white hover:bg-primary-dark" icono={<IconoCheck size={13} />} texto="Confirmar" />
+          <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
+        </>
+      )}
+      {r.estado === "confirmada" && (
+        <>
+          {r.llegada <= hoy ? (
+            <Accion onClick={() => checkIn(r)} clase="bg-primary text-white hover:bg-primary-dark" icono={<IconoEntrada size={13} />} texto="Check-in" />
+          ) : (
+            <span className="cursor-not-allowed rounded-md bg-line/60 px-2.5 py-1.5 text-[11px] font-bold text-muted" title="El check-in se habilita el día de llegada">
+              Check-in el {fmtFecha(r.llegada)}
+            </span>
+          )}
+          <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
+        </>
+      )}
+      {r.estado === "checkin" && (
+        <Accion onClick={() => checkOut(r)} clase="bg-success text-white hover:bg-[#15803D]" icono={<IconoSalida size={13} />} texto="Check-out" />
+      )}
+      {(r.estado === "completada" || r.estado === "cancelada") && (
+        <span className="text-[11px] font-semibold text-muted">—</span>
+      )}
+    </>
+  );
+
+  // Habitaciones que el hotelero tiene registradas en su hotel (HU-023)
+  const habitaciones = todasLasHabitaciones.filter((h) => h.hotelId === HOTEL_ID);
 
   // Indicadores del tablero (fórmulas de la guía de negocio)
   const pendientes = delHotel.filter((r) => r.estado === "pendiente").length;
@@ -534,8 +604,9 @@ export function PanelHotel() {
         <Reveal>
           <TituloSeccion ceja="Flujo: Pendiente → Confirmada → Check-in → Completada" titulo="Gestión de reservas" />
         </Reveal>
+        {/* En escritorio mostramos la tabla completa */}
         <Reveal delay={100}>
-          <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-white shadow-card">
+          <div className="mt-6 hidden overflow-x-auto rounded-xl border border-line bg-white shadow-card lg:block">
             <table className="w-full min-w-[860px] text-left text-sm">
               <thead>
                 <tr className="border-b border-line bg-[#FEF3C7] text-[11px] font-bold uppercase tracking-wider text-[#92400E]">
@@ -552,7 +623,7 @@ export function PanelHotel() {
               </thead>
               <tbody>
                 {delHotel.map((r, i) => {
-                  const hab = HABITACIONES_SEED.find((h) => h.id === r.habitacionId);
+                  const hab = habitaciones.find((h) => h.id === r.habitacionId);
                   return (
                     <tr key={r.folio} className={`border-b border-line/70 transition-colors last:border-0 hover:bg-canvas ${i % 2 === 1 ? "bg-canvas/50" : ""}`}>
                       <td className="px-4 py-3.5 font-mono text-xs font-bold text-primary-dark">{r.folio}</td>
@@ -564,32 +635,7 @@ export function PanelHotel() {
                       <td className="px-4 py-3.5 font-semibold text-ink">{fmtDinero(r.total)}</td>
                       <td className="px-4 py-3.5"><BadgeEstado estado={r.estado} /></td>
                       <td className="px-4 py-3.5">
-                        <div className="flex justify-end gap-1.5">
-                          {r.estado === "pendiente" && (
-                            <>
-                              <Accion onClick={() => confirmar(r)} clase="bg-primary hover:bg-primary-dark" icono={<IconoCheck size={13} />} texto="Confirmar" />
-                              <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
-                            </>
-                          )}
-                          {r.estado === "confirmada" && (
-                            <>
-                              {r.llegada <= hoy ? (
-                                <Accion onClick={() => checkIn(r)} clase="bg-primary hover:bg-primary-dark" icono={<IconoEntrada size={13} />} texto="Check-in" />
-                              ) : (
-                                <span className="cursor-not-allowed rounded-md bg-line/60 px-2.5 py-1.5 text-[11px] font-bold text-muted" title="El check-in se habilita el día de llegada">
-                                  Check-in el {fmtFecha(r.llegada)}
-                                </span>
-                              )}
-                              <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
-                            </>
-                          )}
-                          {r.estado === "checkin" && (
-                            <Accion onClick={() => checkOut(r)} clase="bg-success hover:bg-[#15803D]" icono={<IconoSalida size={13} />} texto="Check-out" />
-                          )}
-                          {(r.estado === "completada" || r.estado === "cancelada") && (
-                            <span className="text-[11px] font-semibold text-muted">—</span>
-                          )}
-                        </div>
+                        <div className="flex justify-end gap-1.5">{accionesDe(r)}</div>
                       </td>
                     </tr>
                   );
@@ -598,13 +644,211 @@ export function PanelHotel() {
             </table>
           </div>
         </Reveal>
+
+        {/* En celular, una tarjeta por reserva con los datos y las acciones a la vista */}
+        <div className="mt-6 grid gap-3 lg:hidden">
+          {delHotel.map((r) => {
+            const hab = habitaciones.find((h) => h.id === r.habitacionId);
+            return (
+              <Reveal key={r.folio}>
+                <div className="rounded-xl border border-line bg-white p-4 shadow-card">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-xs font-bold text-primary-dark">{r.folio}</p>
+                      <p className="mt-0.5 font-display text-base font-bold text-ink">{r.turista}</p>
+                    </div>
+                    <BadgeEstado estado={r.estado} />
+                  </div>
+                  <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5">
+                    <div>
+                      <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Habitación</dt>
+                      <dd className="mt-0.5 text-sm font-semibold text-ink">{hab?.tipo}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Huéspedes</dt>
+                      <dd className="mt-0.5 text-sm font-semibold text-ink">{r.huespedes}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Llegada</dt>
+                      <dd className="mt-0.5 text-sm text-muted">{fmtFecha(r.llegada)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Salida</dt>
+                      <dd className="mt-0.5 text-sm text-muted">{fmtFecha(r.salida)}</dd>
+                    </div>
+                    <div className="col-span-2">
+                      <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Total</dt>
+                      <dd className="mt-0.5 text-sm font-bold text-ink">{fmtDinero(r.total)}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-3.5 flex flex-wrap justify-end gap-1.5 border-t border-line pt-3">
+                    {accionesDe(r)}
+                  </div>
+                </div>
+              </Reveal>
+            );
+          })}
+        </div>
       </section>
 
-      {/* ===== Habitaciones del hotel ===== */}
+      {/* ===== Habitaciones del hotel (HU-023) ===== */}
       <section className="mt-12">
         <Reveal>
-          <TituloSeccion ceja="Inventario" titulo="Habitaciones del hotel" />
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <TituloSeccion ceja="Inventario" titulo="Habitaciones del hotel" />
+            {edicionBloqueada ? (
+              <span
+                className="cursor-not-allowed rounded-lg bg-line/60 px-4 py-2 text-xs font-bold text-muted"
+                title="Esperá a que un administrador apruebe tu hotel para registrar habitaciones"
+              >
+                Registrar habitación (en revisión)
+              </span>
+            ) : (
+              <button
+                onClick={() => setRegistrando((v) => !v)}
+                className="flex items-center gap-2 rounded-lg bg-hotel px-4 py-2 text-xs font-bold text-white transition-all hover:opacity-90 active:scale-95"
+              >
+                <IconoCama size={14} />
+                {registrando ? "Cerrar formulario" : "Registrar habitación"}
+              </button>
+            )}
+          </div>
         </Reveal>
+
+        {/* Formulario para dar de alta un tipo de habitación */}
+        {registrando && (
+          <Reveal>
+            <form onSubmit={guardarHabitacion} noValidate className="mt-5 grid gap-5 rounded-xl border border-line bg-white p-5 shadow-card sm:grid-cols-2">
+              {habitacionEnviada && Object.values(erroresHabitacion).some(Boolean) && (
+                <p role="alert" className="anim-pop rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C] sm:col-span-2">
+                  Revisá los campos marcados: la habitación no se registró.
+                </p>
+              )}
+
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Tipo de habitación</span>
+                <input
+                  type="text"
+                  value={formHabitacion.tipo}
+                  onChange={(e) => cambiarCampoHabitacion("tipo", e.target.value)}
+                  maxLength={40}
+                  placeholder="Estándar Doble"
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("tipo")}`}
+                />
+                {erroresHabitacion.tipo && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.tipo}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Capacidad (huéspedes)</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={formHabitacion.capacidad}
+                  onChange={(e) => cambiarCampoHabitacion("capacidad", Number(e.target.value))}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("capacidad")}`}
+                />
+                {erroresHabitacion.capacidad && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.capacidad}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Unidades de este tipo</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  value={formHabitacion.unidades}
+                  onChange={(e) => cambiarCampoHabitacion("unidades", Number(e.target.value))}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("unidades")}`}
+                />
+                {erroresHabitacion.unidades && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.unidades}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Precio por noche (C$)</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={50}
+                  value={formHabitacion.precio}
+                  onChange={(e) => cambiarCampoHabitacion("precio", Number(e.target.value))}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("precio")}`}
+                />
+                {erroresHabitacion.precio && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.precio}</p>
+                )}
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Estado inicial</span>
+                <select
+                  value={formHabitacion.estado}
+                  onChange={(e) => cambiarCampoHabitacion("estado", e.target.value)}
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("estado")}`}
+                >
+                  {ESTADOS_HABITACION.map((es) => (
+                    <option key={es} value={es}>{ETIQUETA_HABITACION[es]}</option>
+                  ))}
+                </select>
+                {erroresHabitacion.estado && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.estado}</p>
+                )}
+              </label>
+
+              <label className="block sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Descripción para el turista</span>
+                <textarea
+                  rows={3}
+                  maxLength={200}
+                  value={formHabitacion.detalle}
+                  onChange={(e) => cambiarCampoHabitacion("detalle", e.target.value)}
+                  placeholder="Cama doble, baño privado y vista al patio de las buganvilias."
+                  className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("detalle")}`}
+                />
+                <span className="mt-1 block text-[11px] font-semibold text-muted">
+                  {formHabitacion.detalle.length}/200 caracteres (mínimo 15).
+                </span>
+                {erroresHabitacion.detalle && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.detalle}</p>
+                )}
+              </label>
+
+              <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+                <button
+                  type="submit"
+                  className="flex items-center gap-2 rounded-lg bg-hotel px-5 py-2.5 text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
+                >
+                  <IconoCheck size={15} /> Registrar habitación
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRegistrando(false);
+                    setFormHabitacion(HABITACION_VACIA);
+                    setErroresHabitacion({});
+                    setHabitacionEnviada(false);
+                  }}
+                  className="rounded-lg border border-line px-5 py-2.5 text-sm font-bold text-muted transition-colors hover:border-primary/40"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </Reveal>
+        )}
+
+        {habitaciones.length === 0 && (
+          <p className="mt-6 rounded-xl border border-dashed border-line bg-white px-5 py-8 text-center text-sm font-semibold text-muted">
+            Todavía no registraste habitaciones. Usá "Registrar habitación" para que los turistas puedan reservarlas.
+          </p>
+        )}
+
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           {habitaciones.map((h, i) => {
             // Unidades ocupadas ahora mismo (reservas en estado Check-in)
@@ -627,6 +871,26 @@ export function PanelHotel() {
                     </div>
                   </div>
                   <p className="mt-3 text-sm font-bold text-primary">{fmtDinero(h.precio)} <span className="text-[11px] font-medium text-muted">/ noche</span></p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-muted">{h.detalle}</p>
+
+                  {/* Cambiar la disponibilidad de un tipo de habitación (HU-023) */}
+                  <label className="mt-3.5 block">
+                    <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Cambiar estado</span>
+                    <select
+                      value={h.estado}
+                      disabled={edicionBloqueada}
+                      onChange={(e) => {
+                        const nuevo = e.target.value as EstadoHabitacion;
+                        cambiarEstadoHabitacion(h.id, nuevo);
+                        avisar(`${h.tipo}: ahora está "${ETIQUETA_HABITACION[nuevo]}".`, "info");
+                      }}
+                      className="w-full rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-ink outline-none transition-all focus:border-hotel focus:ring-2 focus:ring-hotel/25 disabled:cursor-not-allowed disabled:bg-canvas"
+                    >
+                      {ESTADOS_HABITACION.map((es) => (
+                        <option key={es} value={es}>{ETIQUETA_HABITACION[es]}</option>
+                      ))}
+                    </select>
+                  </label>
                 </div>
               </Reveal>
             );
@@ -637,10 +901,21 @@ export function PanelHotel() {
   );
 }
 
+// Valores con los que arranca el formulario de registro de habitación (HU-023)
+const HABITACION_VACIA: DatosHabitacion = {
+  tipo: "",
+  capacidad: 2,
+  precio: 0,
+  unidades: 1,
+  estado: "disponible",
+  detalle: "",
+};
+
 // Botón pequeño de acción para la tabla de reservas
 function Accion({ onClick, clase, icono, texto }: { onClick: () => void; clase: string; icono: React.ReactNode; texto: string }) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-bold text-white transition-all active:scale-95 ${clase}`}>
+    // El color del texto lo pone cada uso: si vive acá, gana sobre el que pase el botón
+    <button onClick={onClick} className={`flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition-all active:scale-95 ${clase}`}>
       {icono} {texto}
     </button>
   );

@@ -6,6 +6,40 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.48.1] — 2026-10-15 · Arreglado: el selector de perfil vuelve a abrir los paneles
+
+### Arreglado
+- **`src/App.tsx`**: elegir el rol **Hotel** o **Admin** en el selector de perfil ya entra a su panel. La protección de rutas revisaba el permiso dentro de `navegar()` con el rol de la pantalla anterior, y como el selector cambia el rol y navega en el mismo clic, esa revisión todavía veía el rol viejo (Turista) y devolvía al inicio. El resultado era que el panel del hotel y la consola de admin quedaban **inalcanzables para la demo** (y para la presentación), porque el único camino que quedaba era una cuenta de hotelero creada por el admin.
+
+### Cambiado
+- **`src/App.tsx`**: el permiso ahora se evalúa al renderizar con `puedeVer()`, así que el clic del selector funciona de una y el cambio de rol se aplica sin parpadeo. Los paneles se abren con el rol de demostración que corresponde (rol Hotel → panel del hotel, rol Admin → consola) **sin inventar una sesión**: el turista, las cuentas reales y las pantallas que sí exigen sesión ("Mis reservas" y "Mi perfil") siguen exactamente igual.
+- **`src/App.tsx`**: `pantalla()` recibe la ruta que se puede ver, de modo que la pantalla y el enlace activo de la barra siempre coinciden con el permiso vigente.
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Prueba manual en el navegador sin sesión: el selector abre el panel del hotel y la consola de admin; al volver al rol Turista se regresa al inicio, y "Mis reservas" sin sesión sigue redirigiendo al inicio.
+
+---
+
+## [v0.48.0] — 2026-10-15 · HU-023: el hotelero registra sus habitaciones
+
+### Agregado
+- **`historias-usuario/HU-023-registrar-habitaciones.md`**: historia de usuario del módulo Gestión Hotel, con 6 escenarios BDD y las subtareas HOTELICA-211 a 217 como notas de implementación.
+- **`src/data.ts`**: tipos `DatosHabitacion` y `ErroresHabitacion`, la lista `ESTADOS_HABITACION` y la función `validarHabitacion()`: el tipo no puede repetirse dentro del mismo hotel, la capacidad va de 1 a 10 huéspedes, el precio por noche debe ser mayor que cero, las unidades van de 1 a 50 y la descripción de 15 a 200 caracteres.
+- **`src/store.tsx`**: `habitaciones` pasa a formar parte de lo que se guarda en el navegador y el panel puede dar de alta tipos de habitación (`agregarHabitacion()`) y sacarlos de venta o ponerlos en mantenimiento (`cambiarEstadoHabitacion()`).
+- **`src/pages/HotelPanel.tsx`**: la sección "Habitaciones del hotel" ahora trae el botón "Registrar habitación", un formulario validado que marca en rojo cada campo con error y un selector de estado en cada tarjeta.
+
+### Cambiado
+- **`src/pages/HotelDetail.tsx`, `src/pages/Results.tsx`, `src/pages/MyReservations.tsx`, `src/tarjeta.tsx` y `src/pages/HotelPanel.tsx`**: el inventario se lee del estado global en lugar de `HABITACIONES_SEED`, así que lo que registra el hotelero se ve de inmediato en las búsquedas, en el detalle del hotel y en las reservas del turista.
+- **`src/pages/HotelPanel.tsx`**: se quitó el cálculo de unidades que vivía fuera del estado (`unidadesDe`) y la disponibilidad se calcula con las unidades que el hotel tiene registradas.
+
+### Nota
+Los guardados viejos que no traen habitaciones se completan con `HABITACIONES_SEED`, igual que se hizo con los favoritos por cuenta en la v0.x de la HU-020, así que nadie pierde datos al actualizar.
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Prueba manual en el navegador contra los 6 escenarios BDD: alta válida, campos obligatorios, tipo repetido, habitación visible y reservable por el turista (C$ 1,500 × 3 noches + IVA 15% = C$ 5,175) y bloqueo del alta mientras el hotel está Pendiente.
+
+---
+
 ## [v0.47.0] — 2026-10-12 · Recuperar contraseña: el enlace vuelve a la app correcta
 
 ### Arreglado
@@ -137,6 +171,114 @@ El hotel nuevo no aparece en las búsquedas hasta que un administrador lo aprueb
 
 ### Agregado
 - **`historias-usuario/HU-021-registrar-un-hotel.md`**: historia de usuario del módulo Gestión Hotel, con 6 escenarios BDD (registro válido, campos obligatorios, imagen representativa, aviso de revisión y ocultamiento hasta aprobación) y los subtaskos HOTELICA-199 a 204 del Jira como notas de implementación.
+
+---
+
+## [v0.35.3] — 2026-10-11 · Plan de pruebas automatizado con Playwright
+
+Se tomaron los casos de prueba del plan **"Planificacion de Pruebas -
+Hotelica.xlsx"** y se automatizaron los tres que van con Playwright (CP-001,
+CP-002 y CP-005). CP-003, CP-004 y CP-006 quedan fuera de esta versión: el plan
+los asigna a JavaScript E2E, Jest y revisión manual respectivamente.
+
+### Añadido
+- **`tests/CP-001-reserva-sin-sesion.spec.ts`** — recorre el wizard completo sin
+  sesión y comprueba que el sistema bloquea la reserva (HU-013, caja negra).
+- **`tests/CP-002-mis-reservas.spec.ts`** — inicia sesión con un correo distinto
+  al de la turista demo, crea una reserva y verifica que "Mis reservas" sólo
+  lista las suyas. Necesita una cuenta real: se omite si no se definen las
+  variables `E2E_CORREO` y `E2E_CLAVE`, para no tocar el proyecto de Supabase.
+- **`tests/CP-005-calendario.spec.ts`** — abre el calendario de disponibilidad y
+  comprueba dos cosas: que el tooltip de un día parcial compara contra el total
+  de unidades, y que un día sin disponibilidad pueda elegirse como fecha de
+  salida (esa noche la habitación ya no se necesita).
+
+### Cambiado
+- **`tests/CP-001-iva.spec.ts` → `tests/CP-007-iva.spec.ts`** — la prueba del
+  IVA pasó al número CP-007: en el plan de pruebas el CP-001 corresponde a "no
+  reservar sin sesión", así que el nombre libre más cercano era el siguiente
+  número fuera del plan. Sólo cambió el nombre del archivo y el del `test()`.
+
+### Estado de la suite
+Verde: **CP-007** (subtotal, IVA 15% y total). Omitida: **CP-002** (faltan
+credenciales). En rojo, documentando bugs abiertos:
+
+- **CP-001** — se creó la reserva **HC-1062 sin sesión**. `crearReserva()`
+  (`src/store.tsx`) no tiene ninguna validación de `usuario`, y
+  `RUTAS_PROTEGIDAS` (`src/App.tsx`) no incluye `"hotel"`, así que el wizard es
+  alcanzable sin iniciar sesión.
+- **CP-005** — ocho días parciales muestran `"10 de 10"` y `"11 de 11"` en vez
+  de comparar contra el total: en `src/pages/CalendarioDisponibilidad.tsx` el
+  tooltip usa `` `${d.disponibles} de ${d.disponibles}` ``. Además los 6 días
+  marcados "Sin disponibilidad" están deshabilitados, cuando deberían poder
+  elegirse como fecha de salida.
+
+---
+
+## [v0.35.2] — 2026-10-11 · Rediseño de interfaz (precios, retícula y oficio)
+
+Pase de diseño para quitar el aspecto de plantilla. **La identidad oficial se
+conserva** (teal `#0B3540` / dorado `#F7A81B` / coral / crema, Fraunces +
+Outfit + Libre Baskerville): no se tocaron los tokens de color ni las familias.
+
+### Cambiado
+- **`src/tarjeta.tsx`** — precio: desaparece `DESDE` en mayúsculas (competía con
+  el nombre del hotel) y ahora se muestra **el total con IVA 15% a la vista**
+  debajo del precio por noche. El cálculo sale de `calcularTotales()`, no de una
+  fórmula escrita a mano.
+- **`src/pages/Home.tsx`** — retícula de destacados: eran 4 tarjetas idénticas
+  en fila; ahora **una manda** (variante `grande`, horizontal, a todo el ancho)
+  y las otras 3 van en su propia fila.
+- **`src/pages/Home.tsx`** — "De la búsqueda a la hamaca en cuatro pasos" deja
+  de ser el patrón icono-título-texto en 4 columnas. Pasa a **línea de tiempo
+  horizontal**: número en Fraunces como marca gráfica, nodo y trazo que une las
+  etapas. Título nuevo: "De la búsqueda a la hamaca".
+- **`src/pages/Home.tsx`** — buscador con jerarquía de campos: departamento
+  ancho, municipio y fechas medianos, huéspedes compacto (antes los 6 campos
+  casi del mismo ancho).
+- **`src/pages/Home.tsx`** — la franja **"Para hoteleros"** salió del final de
+  la página y quedó justo después de los destinos, para romper el orden
+  predecible destacados → cómo funciona → testimonios → hoteleros. La página
+  cierra con testimonios.
+- **`src/index.css`** — nuevo motivo `.arco`: borde superior de las tarjetas de
+  columna en forma de arco de medio punto tendido (portales coloniales), en vez
+  de dos esquinas redondeadas iguales. La tarjeta grande conserva `rounded-xl`.
+
+### Añadido
+- **`src/index.css`** — `font-optical-sizing: auto` y `text-wrap: balance` en
+  `h1–h4`, para que Fraunces dé más contraste al H1 que al H3. Clase `.num` con
+  `font-variant-numeric: tabular-nums` y utilidad `tabular-nums` usada en los
+  precios, que ahora alinean al escanear la columna.
+- **`src/tarjeta.tsx`** — separador dibujado como **trazo de hamaca** en SVG
+  inline sobre el bloque de precio, en vez de línea recta de 1px.
+
+### Accesibilidad (WCAG 2.2 AA)
+- **`src/pages/Home.tsx`** — el buscador marca **cuál campo falló** al enviar
+  (`campoError`): borde coral, `aria-invalid` y `aria-describedby` enlazando con
+  el mensaje. El `<select>` de departamento declara `aria-required`. El botón de
+  búsqueda gana `focus-visible`. La validación sigue siendo **al enviar**, no
+  mientras se escribe.
+
+### Corregido (copy)
+- **`src/data.ts`** y **`src/siluetas.tsx`** — "RACCS (Caribe Sur)" →
+  **"Costa Caribe Sur"**, para el visitante internacional.
+- **`src/pages/Home.tsx`** — "hoteles familiares aprobados" → "verificados por
+  nuestro equipo" (decía el sello pero no quién lo daba).
+
+### Documentación
+- **`.opencode/skills/hotelica-design/SKILL.md`** — nueva sección **§10
+  Criterios de oficio**: composición anti-genérica, formato de precio con IVA,
+  detalles tipográficos, accesibilidad AA, convenciones de copy, fotografía y
+  motivos gráficos. Se ampliaron el Do/Don't (§7) y el checklist (§8). La
+  referencia de tokens (§9) apuntaba a un `tokens.css` que no existe: ahora
+  apunta a `src/index.css`, que es la fuente real.
+- **`.opencode/skills/flujo-hotelica/SKILL.md`** — quitadas las menciones a
+  "proyecto académico" y a "fácil de entender para un profesor", coherente con
+  lo ya retirado del código en v0.35.0.
+
+### Verificado
+`typecheck` sin errores · 75 pruebas en verde · E2E Playwright en verde ·
+`npm run build` correcto · 0 caracteres U+FFFD en `src/`.
 
 ---
 

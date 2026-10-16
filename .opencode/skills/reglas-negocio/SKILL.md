@@ -31,7 +31,7 @@ description: Reglas de negocio y cálculos de Hotelica (IVA 15%, disponibilidad,
 
 ## Formatos de Nicaragua
 - Moneda: córdobas (C$) con dos decimales.
-- Departamentos: Granada, León, Rivas, Managua, Masaya, Estelí, Matagalpa, RACCS (8 en total).
+- Departamentos: Granada, León, Rivas, Managua, Masaya, Estelí, Matagalpa, Costa Caribe Sur (8 en total).
 - Teléfono: 8 dígitos.
 
 ## Ejemplo de implementación (humanizado)

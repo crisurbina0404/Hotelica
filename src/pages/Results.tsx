@@ -8,14 +8,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Ruta, Navegar } from "../rutas";
 import {
-  DEPARTAMENTOS, MUNICIPIOS, HABITACIONES_SEED, fmtFecha, hoyISO, sumarDias,
+  DEPARTAMENTOS, MUNICIPIOS, fmtFecha, hoyISO, sumarDias,
 } from "../data";
 import { Reveal, Spinner, EstadoVacio, Estrellas } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
 import { IconoBuscar, IconoEstrella, IconoFiltro, IconoX, IconoHuespedes, IconoCalendario } from "../icons";
 
 export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "resultados" }>; navegar: Navegar }) {
-  const { hoteles, disponiblesDe } = useApp();
+  const { hoteles, habitaciones, disponiblesDe } = useApp();
 
   // Parámetros que llegan del buscador del inicio
   const [depto, setDepto] = useState(ruta.depto ?? "");
@@ -53,7 +53,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
 
   // Precio mínimo de cada hotel (para ordenar y filtrar)
   const precioMin = (hotelId: string) => {
-    const ps = HABITACIONES_SEED.filter((h) => h.hotelId === hotelId && h.estado === "disponible").map((h) => h.precio);
+    const ps = habitaciones.filter((h) => h.hotelId === hotelId && h.estado === "disponible").map((h) => h.precio);
     return ps.length ? Math.min(...ps) : Infinity;
   };
 
@@ -68,7 +68,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
       const min = precioMin(h.id);
       if (min > precioMax) return false;
       // Debe existir al menos una habitación que admita a los huéspedes con cupo
-      const aptas = HABITACIONES_SEED.filter(
+      const aptas = habitaciones.filter(
         (hab) =>
           hab.hotelId === h.id &&
           hab.estado === "disponible" &&
@@ -85,7 +85,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
       if (orden === "rating") return b.rating - a.rating;
       return Number(b.destacado) - Number(a.destacado) || b.rating - a.rating;
     });
-  }, [hoteles, depto, muni, llegada, salida, huespedes, precioMax, ratingMin, soloDestacados, orden, disponiblesDe]);
+  }, [hoteles, habitaciones, depto, muni, llegada, salida, huespedes, precioMax, ratingMin, soloDestacados, orden, disponiblesDe]);
 
   const nombreDepto = DEPARTAMENTOS.find((d) => d.id === depto)?.nombre;
   const nombreMuni = MUNICIPIOS.find((m) => m.id === muni)?.nombre;

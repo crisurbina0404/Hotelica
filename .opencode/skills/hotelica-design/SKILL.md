@@ -187,6 +187,10 @@ bucles decorativos): consumen CPU/GPU/batería y ya fueron retiradas en v0.5.0.
 | SVG inline con `currentColor` | Librerías de iconos, imágenes raster para UI |
 | Animaciones finitas + reduced-motion | Marquesinas, loops infinitos, parallax pesado |
 | Estados visibles en cada pantalla | Pantallas sin vacío/error/carga pensados |
+| Una tarjeta manda y las demás acompañan (§10.1) | N tarjetas idénticas en fila perfecta |
+| Precio con el total IVA a la vista (§10.2) | `DESDE` en caps compitiendo con el nombre |
+| `<label>` + foco visible en todo control (§10.4) | Controles sin etiqueta, `outline: none` |
+| Copy que dice quién respalda lo afirma (§10.5) | Siglas sin traducir, sellos sin autor, "Fase 1/2" |
 
 ## 8. Checklist antes de dar por terminado un cambio visual
 
@@ -195,9 +199,88 @@ bucles decorativos): consumen CPU/GPU/batería y ya fueron retiradas en v0.5.0.
 - [ ] Si toqué el nombre HOTELICA, es el bloque `.brand` completo.
 - [ ] Iconos/siluetas son SVG inline accesibles.
 - [ ] No quedó ninguna animación infinita; `prefers-reduced-motion` cubierto.
+- [ ] Ninguna fila de tarjetas quedó idéntica; alterné el ritmo de secciones (§10.1).
+- [ ] Todo precio muestra el total con IVA y va con `tabular-nums` (§10.2).
+- [ ] Cada control tiene etiqueta y foco visible; validación al enviar (§10.4).
+- [ ] Sin lenguaje académico ni siglas sin traducir en textos visibles (§10.5).
 - [ ] Móvil (360px), tablet (768px) y desktop (1280px) verificados.
 - [ ] Cambio registrado en `CHANGELOG.md` con versión y fecha.
 
 ## 9. Referencia de tokens
 
-Ver `tokens.css` en esta misma carpeta: variables listas para copiar.
+La fuente real de tokens es `src/index.css` (bloque `@theme`). De ahí salen los
+`--color-*` y `--font-*` que usa el código.
+
+---
+
+## 10. Criterios de oficio (orientación 2026)
+
+Dice **cómo componer** con los tokens de §1–§2, no los reemplaza.
+Si algo de esta sección entra en conflicto con §1–§2, **gana §1–§2**.
+
+### 10.1 Composición
+
+- **Romper la retícula uniforme.** Nada de N tarjetas idénticas en fila perfecta
+  (`grid-cols-4` con contenido repetido). Una manda (más ancha, en horizontal) y
+  las demás van debajo en su propia fila. `TarjetaHotel` acepta
+  `variante="grande"` justamente para eso.
+- **Alternar el ritmo vertical.** Si todas las secciones respiran igual, la
+  página se lee como plantilla. Mezclar secciones amplias con apretadas.
+- **El orden no se puede adivinar.** Si tras hacer scroll ya se sabe qué viene,
+  el patrón es genérico. Los bloques de sitio no están clavados en su posición
+  (p. ej. "Para hoteleros" no tiene por qué cerrar la página).
+- **Prohibido el patrón "N pasos" numerado** con icono + título + texto en N
+  columnas: es el más saturado. Si hay que explicar un flujo, usar línea de
+  tiempo horizontal o meterlo en el contexto.
+
+### 10.2 Precios (transparencia)
+
+- En tarjetas: precio por noche en Fraunces + **total con IVA 15% a la vista**
+  en la línea siguiente. Nunca `DESDE` en mayúsculas compitiendo con el nombre.
+- Siempre `tabular-nums` (`.num` o la utilidad de Tailwind) en precios, totales
+  y folios, para que las cifras alineen al escanear la columna.
+- **No tocar `fmtDinero`.** Su formato `C$ 1,200.00` es regla de negocio, está
+  testeado y debe coincidir con el wizard de reserva.
+- El total con IVA sale de `calcularTotales()`, nunca con la fórmula escrita a
+  mano en el componente.
+
+### 10.3 Detalles tipográficos
+
+- Fraunces corre con `font-optical-sizing: auto` en `h1–h4`: el H1 gana
+  contraste y el H3 no se deforma, aunque compartan familia.
+- `text-wrap: balance` en titulares, para que los títulos largos no dejen
+  una última línea huérfana.
+
+### 10.4 Accesibilidad (WCAG 2.2 AA)
+
+- `<label>` visible o `aria-label` en **cada** control de formulario.
+- Foco visible en todo lo clicable. Nunca `outline: none` sin sustituto.
+- Validación al enviar, no mientras se escribe.
+- `alt` en toda imagen informativa; `role="img"` + `aria-label` en siluetas.
+- Contraste mínimo 4.5:1 en texto normal y 3:1 en texto grande.
+- Carruseles pausables.
+
+### 10.5 Copy
+
+- **Sin lenguaje académico ni de fases**: nada de "Fase 1 / Fase 2",
+  "proyecto académico", curso, grupo ni docente. Tampoco en el README ni en
+  el footer.
+- Siglas nicaragüenses traducidas para el visitante: **"Costa Caribe Sur"**,
+  no "RACCS (Caribe Sur)".
+- Toda afirmación dice quién la respalda: "verificados por nuestro equipo",
+  no "aprobados" a secas ni sellos sin autor.
+- Nada de cargos sorpresa: el IVA se muestra antes de confirmar, siempre.
+
+### 10.6 Fotografía
+
+- Encuadres variados (3:4, 5:4, 16:9), no todas recortadas igual.
+- Nunca stock genérico de playa caribeña.
+- Un detalle recurrente propio (patio, hamaca, taza de café) repetido como
+  motivo entre secciones.
+
+### 10.7 Motivos gráficos propios
+
+- Arco de medio punto en el borde superior de las tarjetas, citando los
+  portales coloniales, en vez de `border-radius` uniforme.
+- Separadores dibujados en SVG propio, no líneas de 1px.
+- Las siluetas del §4 son para **navegar** (departamento clicable), no adorno.

@@ -62,7 +62,7 @@ export function Marca({
   clara = false,
   className = "",
 }: {
-  tam?: "chica" | "md" | "grande" | "enorme";
+  tam?: "chica" | "md" | "grande" | "enorme" | "navbar";
   centrada?: boolean;
   conIcono?: boolean;
   clara?: boolean;
@@ -75,6 +75,8 @@ export function Marca({
     md: "h-60 w-auto",
     grande: "h-60 w-auto",
     enorme: "h-72 w-auto",
+    // La barra superior: más chica en celular, para que entren la marca y los botones
+    navbar: "h-36 w-auto lg:h-60",
   };
 
   const cls = `${clases[tam]} ${centrada ? "mx-auto" : ""} ${className}`.trim();

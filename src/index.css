@@ -44,6 +44,27 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Titulares en Fraunces: escalado óptico (opsz) para que el H1 se dibuje con
+   más contraste que el H3, y equilibrio automático de líneas en títulos largos */
+h1, h2, h3, h4 {
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+/* Cifras de ancho fijo: los precios y totales quedan alineados al escanear la
+   columna, en vez de bailar por el ancho de cada dígito */
+.num, .tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Motivo de portales coloniales: en vez de dos esquinas redondeadas iguales,
+   el borde superior de la tarjeta se abre como un arco de medio punto tendido.
+   El radio horizontal es 50% del ancho, así que el arco siempre cruza la
+   tarjeta entera aunque cambie de tamaño. */
+.arco {
+  border-radius: 50% 50% 12px 12px / 20px 20px 12px 12px;
+}
+
 /* Selección de texto con la marca */
 ::selection {
   background: var(--color-accent);

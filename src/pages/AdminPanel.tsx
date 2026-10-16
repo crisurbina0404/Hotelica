@@ -60,6 +60,21 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
     avisar(`"${h.nombre}" rechazado: no será visible para turistas.`, "error");
   };
 
+  // Botones de la solicitud. Los comparten la tabla de escritorio y las tarjetas del celular
+  const accionesHotel = (h: Hotel) => (
+    <>
+      <button onClick={() => setViendo(h)} className="flex items-center gap-1 rounded-md border border-line px-2.5 py-1.5 text-[11px] font-bold text-muted transition-colors hover:border-admin/50 hover:text-admin">
+        <IconoOjo size={13} /> Ver
+      </button>
+      <button onClick={() => aprobar(h)} className="flex items-center gap-1 rounded-md bg-success px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-[#15803D] active:scale-95">
+        <IconoCheck size={13} /> Aprobar
+      </button>
+      <button onClick={() => rechazar(h)} className="flex items-center gap-1 rounded-md bg-danger px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-[#B91C1C] active:scale-95">
+        <IconoX size={13} /> Rechazar
+      </button>
+    </>
+  );
+
   const stats = [
     { t: "Hoteles aprobados", v: aprobados.length, icono: <IconoHotel size={19} />, color: "bg-[#DCFCE7] text-[#166534]" },
     { t: "Por aprobar", v: pendientes.length, icono: <IconoOjo size={19} />, color: "bg-accent-light text-accent-dark" },
@@ -121,7 +136,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
           </Reveal>
         ) : (
           <Reveal delay={100}>
-            <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-white shadow-card">
+            <div className="mt-6 hidden overflow-x-auto rounded-xl border border-line bg-white shadow-card lg:block">
               <table className="w-full min-w-[760px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-line bg-admin-soft/50 text-[11px] font-bold uppercase tracking-wider text-admin">
@@ -149,17 +164,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                       <td className="px-4 py-3.5 text-muted">{fmtFecha(h.fechaRegistro)}</td>
                       <td className="px-4 py-3.5"><BadgeHotel estado={h.aprobado} /></td>
                       <td className="px-4 py-3.5">
-                        <div className="flex justify-end gap-1.5">
-                          <button onClick={() => setViendo(h)} className="flex items-center gap-1 rounded-md border border-line px-2.5 py-1.5 text-[11px] font-bold text-muted transition-colors hover:border-admin/50 hover:text-admin">
-                            <IconoOjo size={13} /> Ver
-                          </button>
-                          <button onClick={() => aprobar(h)} className="flex items-center gap-1 rounded-md bg-success px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-[#15803D] active:scale-95">
-                            <IconoCheck size={13} /> Aprobar
-                          </button>
-                          <button onClick={() => rechazar(h)} className="flex items-center gap-1 rounded-md bg-danger px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:bg-[#B91C1C] active:scale-95">
-                            <IconoX size={13} /> Rechazar
-                          </button>
-                        </div>
+                        <div className="flex justify-end gap-1.5">{accionesHotel(h)}</div>
                       </td>
                     </tr>
                   ))}
@@ -168,6 +173,42 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
             </div>
           </Reveal>
         )}
+
+        {/* En celular, una tarjeta por solicitud con las acciones a la vista */}
+        <div className="mt-6 grid gap-3 lg:hidden">
+          {pendientes.map((h) => (
+            <Reveal key={h.id}>
+              <div className="rounded-xl border border-line bg-white p-4 shadow-card">
+                <div className="flex items-start gap-3">
+                  <img src={h.imagen} alt={h.nombre} className="h-14 w-16 shrink-0 rounded-md object-cover" />
+                  <div className="min-w-0">
+                    <p className="font-display text-base font-bold text-ink">{h.nombre}</p>
+                    <p className="mt-0.5 text-xs text-muted">{h.dueno}</p>
+                  </div>
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5">
+                  <div>
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Ubicación</dt>
+                    <dd className="mt-0.5 text-sm font-semibold text-ink">
+                      {MUNICIPIOS.find((m) => m.id === h.municipioId)?.nombre}, {DEPARTAMENTOS.find((d) => d.id === h.departamentoId)?.nombre}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Registro</dt>
+                    <dd className="mt-0.5 text-sm text-muted">{fmtFecha(h.fechaRegistro)}</dd>
+                  </div>
+                  <div className="col-span-2">
+                    <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Estado</dt>
+                    <dd className="mt-1"><BadgeHotel estado={h.aprobado} /></dd>
+                  </div>
+                </dl>
+                <div className="mt-3.5 flex flex-wrap justify-end gap-1.5 border-t border-line pt-3">
+                  {accionesHotel(h)}
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
       </section>
 
       <div className="mt-12 grid gap-8 lg:grid-cols-[1.1fr_1fr]">

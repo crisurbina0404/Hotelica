@@ -30,7 +30,7 @@ function IconoAmenidad({ a }: { a: string }) {
 }
 
 export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) {
-  const { hoteles, resenas, favoritos, alternarFavorito, disponiblesDe, avisar } = useApp();
+  const { hoteles, habitaciones, resenas, favoritos, alternarFavorito, disponiblesDe, avisar } = useApp();
   const hotel = hoteles.find((h) => h.id === id);
 
   // Fechas y huéspedes que controlan la disponibilidad mostrada
@@ -81,8 +81,8 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
     cant: resenasHotel.filter((r) => r.rating === n).length,
   }));
 
-  // Importa las habitaciones del hotel desde el catálogo de semillas
-  const rooms = HABITACIONES.filter((h) => h.hotelId === hotel.id);
+  // Habitaciones del hotel, tal como las tiene registradas el hotelero (HU-023)
+  const rooms = habitaciones.filter((h) => h.hotelId === hotel.id);
 
   // Sugerencias de fechas alternativas cuando no hay disponibilidad
   const sugerencias = useMemo(() => {
@@ -451,5 +451,3 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   );
 }
 
-// Catálogo de habitaciones (mismo origen de datos que el resto de la maqueta)
-import { HABITACIONES_SEED as HABITACIONES } from "../data";

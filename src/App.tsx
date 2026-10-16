@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./store";
 import { supabase } from "./lib/supabase";
 import type { Ruta } from "./rutas";
+import type { Rol } from "./data";
 import { Navbar, Footer, Toasts } from "./layout";
 import { Marca } from "./ui";
 import { Inicio } from "./pages/Home";
@@ -19,21 +20,34 @@ import { Perfil } from "./pages/Profile";
 import { RecuperarContrasena } from "./pages/ForgotPassword";
 import { RestablecerContrasena } from "./pages/ResetPassword";
 
-// Rutas protegidas: requieren usuario autenticado
+// Rutas protegidas: piden permiso antes de mostrarse
 const RUTAS_PROTEGIDAS: Ruta["nombre"][] = ["reservas", "perfil", "panel", "admin"];
 
+// ¿Puede verse esta pantalla? Con sesión siempre; sin sesión, el panel del hotel y la
+// consola de admin también se abren con el rol de demo que elige el selector
+function puedeVer(nombre: Ruta["nombre"], haySesion: boolean, rolActual: Rol): boolean {
+  if (haySesion) return true;
+  if (nombre === "panel") return rolActual === "hotel";
+  if (nombre === "admin") return rolActual === "admin";
+  return !RUTAS_PROTEGIDAS.includes(nombre); // reservas y perfil sí piden sesión
+}
+
 function AppInner() {
-  const { usuario } = useApp();
+  const { usuario, rol } = useApp();
   // La pantalla actual se guarda en el estado (sin URL, es una maqueta)
   const [ruta, setRuta] = useState<Ruta>({ nombre: "inicio" });
 
-  // Al cerrar sesión en una pantalla protegida, volvemos al inicio
+  // Pantalla que de verdad se muestra: si el rol actual no tiene permiso, es el inicio.
+  // El chequeo va al renderizar y no en navegar() porque el selector de demo cambia
+  // el rol y la ruta en el mismo clic, y el rol todavía no se había actualizado
+  const rutaVisible: Ruta = puedeVer(ruta.nombre, !!usuario, rol) ? ruta : { nombre: "inicio" };
+
+  // Dejamos la ruta válida en memoria: al cerrar sesión o cambiar de rol volvemos al inicio
   useEffect(() => {
-    if (!usuario && RUTAS_PROTEGIDAS.includes(ruta.nombre)) {
-      setRuta({ nombre: "inicio" });
-      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    }
-  }, [usuario, ruta.nombre]);
+    if (rutaVisible.nombre === ruta.nombre) return;
+    setRuta({ nombre: "inicio" });
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, [rutaVisible.nombre, ruta.nombre]);
 
   // Detectar si Supabase redirigió con token de recuperación de contraseña
   // Puede llegar en el hash (#access_token=...&type=recovery) o como código PKCE (?code=...)
@@ -71,21 +85,16 @@ function AppInner() {
 
   // Al navegar, volvemos al inicio de la página
   const navegar = (r: Ruta) => {
-    // Protección de rutas: si no hay usuario y la ruta es protegida, redirigir a inicio
-    if (!usuario && RUTAS_PROTEGIDAS.includes(r.nombre)) {
-      setRuta({ nombre: "inicio" });
-      return;
-    }
     setRuta(r);
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   };
 
-  // Renderiza la pantalla que corresponde a la ruta actual
-  const pantalla = () => {
-    switch (ruta.nombre) {
+  // Renderiza la pantalla que corresponde a la ruta que se puede ver
+  const pantalla = (actual: Ruta) => {
+    switch (actual.nombre) {
       case "inicio": return <Inicio navegar={navegar} />;
-      case "resultados": return <Resultados ruta={ruta} navegar={navegar} />;
-      case "hotel": return <DetalleHotel id={ruta.id} navegar={navegar} />;
+      case "resultados": return <Resultados ruta={actual} navegar={navegar} />;
+      case "hotel": return <DetalleHotel id={actual.id} navegar={navegar} />;
       case "destinos": return <Destinos navegar={navegar} />;
       case "reservas": return <MisReservas navegar={navegar} />;
       case "favoritos": return <Favoritos navegar={navegar} />;
@@ -116,8 +125,8 @@ function AppInner() {
 
       {/* Capa ambiental de fondo con los tintes del proyecto */}
       <div className="ambient-bg min-h-screen">
-        <Navbar ruta={ruta} navegar={navegar} />
-        {pantalla()}
+        <Navbar ruta={rutaVisible} navegar={navegar} />
+        {pantalla(rutaVisible)}
         <Footer navegar={navegar} />
         <Toasts />
       </div>
