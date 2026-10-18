@@ -7,7 +7,10 @@
 
 export type Departamento = { id: string; nombre: string };
 
-export type Municipio = { id: string; nombre: string; departamentoId: string };
+export type Municipio = { id: string; nombre: string; departamentoId: string; centro: { lat: number; lng: number } };
+
+// Punto del mapa en coordenadas WGS84 (latitud, longitud)
+export type Punto = { lat: number; lng: number };
 
 export type EstadoHotel = "pendiente" | "aprobado" | "rechazado";
 
@@ -18,6 +21,7 @@ export type Hotel = {
   departamentoId: string;
   municipioId: string;
   direccion: string;
+  ubicacion?: Punto; // punto exacto marcado en el mapa (HU-037)
   descripcion: string;
   imagen: string;
   galeria: string[];
@@ -121,30 +125,32 @@ export const DEPARTAMENTOS: Departamento[] = [
   { id: "caribe", nombre: "Costa Caribe Sur" },
 ];
 
+// El centro de cada municipio sirve para centrar el mapa y para validar la
+// ubicación exacta que marca el hotelero (HU-037)
 export const MUNICIPIOS: Municipio[] = [
-  { id: "m-granada", nombre: "Granada", departamentoId: "granada" },
-  { id: "m-diria", nombre: "Diriá", departamentoId: "granada" },
-  { id: "m-nandaime", nombre: "Nandaime", departamentoId: "granada" },
-  { id: "m-rivas", nombre: "Rivas", departamentoId: "rivas" },
-  { id: "m-sanjuan", nombre: "San Juan del Sur", departamentoId: "rivas" },
-  { id: "m-tola", nombre: "Tola", departamentoId: "rivas" },
-  { id: "m-altagracia", nombre: "Altagracia (Ometepe)", departamentoId: "rivas" },
-  { id: "m-leon", nombre: "León", departamentoId: "leon" },
-  { id: "m-telica", nombre: "Telica", departamentoId: "leon" },
-  { id: "m-nagarote", nombre: "Nagarote", departamentoId: "leon" },
-  { id: "m-masaya", nombre: "Masaya", departamentoId: "masaya" },
-  { id: "m-catarina", nombre: "Catarina", departamentoId: "masaya" },
-  { id: "m-nindirí", nombre: "Nindirí", departamentoId: "masaya" },
-  { id: "m-matagalpa", nombre: "Matagalpa", departamentoId: "matagalpa" },
-  { id: "m-sanramon", nombre: "San Ramón", departamentoId: "matagalpa" },
-  { id: "m-sebaco", nombre: "Sébaco", departamentoId: "matagalpa" },
-  { id: "m-esteli", nombre: "Estelí", departamentoId: "esteli" },
-  { id: "m-condega", nombre: "Condega", departamentoId: "esteli" },
-  { id: "m-managua", nombre: "Managua", departamentoId: "managua" },
-  { id: "m-tipitapa", nombre: "Tipitapa", departamentoId: "managua" },
-  { id: "m-sandino", nombre: "Ciudad Sandino", departamentoId: "managua" },
-  { id: "m-bluefields", nombre: "Bluefields", departamentoId: "caribe" },
-  { id: "m-corn", nombre: "Corn Island", departamentoId: "caribe" },
+  { id: "m-granada", nombre: "Granada", departamentoId: "granada", centro: { lat: 11.9346, lng: -85.956 } },
+  { id: "m-diria", nombre: "Diriá", departamentoId: "granada", centro: { lat: 11.885, lng: -86.035 } },
+  { id: "m-nandaime", nombre: "Nandaime", departamentoId: "granada", centro: { lat: 11.7578, lng: -86.2519 } },
+  { id: "m-rivas", nombre: "Rivas", departamentoId: "rivas", centro: { lat: 11.4014, lng: -85.8292 } },
+  { id: "m-sanjuan", nombre: "San Juan del Sur", departamentoId: "rivas", centro: { lat: 11.2513, lng: -85.873 } },
+  { id: "m-tola", nombre: "Tola", departamentoId: "rivas", centro: { lat: 11.435, lng: -85.95 } },
+  { id: "m-altagracia", nombre: "Altagracia (Ometepe)", departamentoId: "rivas", centro: { lat: 11.467, lng: -85.613 } },
+  { id: "m-leon", nombre: "León", departamentoId: "leon", centro: { lat: 12.4356, lng: -86.8772 } },
+  { id: "m-telica", nombre: "Telica", departamentoId: "leon", centro: { lat: 12.495, lng: -86.69 } },
+  { id: "m-nagarote", nombre: "Nagarote", departamentoId: "leon", centro: { lat: 12.2667, lng: -86.564 } },
+  { id: "m-masaya", nombre: "Masaya", departamentoId: "masaya", centro: { lat: 11.975, lng: -86.252 } },
+  { id: "m-catarina", nombre: "Catarina", departamentoId: "masaya", centro: { lat: 11.913, lng: -86.283 } },
+  { id: "m-nindirí", nombre: "Nindirí", departamentoId: "masaya", centro: { lat: 12.002, lng: -86.222 } },
+  { id: "m-matagalpa", nombre: "Matagalpa", departamentoId: "matagalpa", centro: { lat: 12.9256, lng: -85.9272 } },
+  { id: "m-sanramon", nombre: "San Ramón", departamentoId: "matagalpa", centro: { lat: 12.9233, lng: -85.846 } },
+  { id: "m-sebaco", nombre: "Sébaco", departamentoId: "matagalpa", centro: { lat: 12.9333, lng: -86.1 } },
+  { id: "m-esteli", nombre: "Estelí", departamentoId: "esteli", centro: { lat: 13.0919, lng: -86.3539 } },
+  { id: "m-condega", nombre: "Condega", departamentoId: "esteli", centro: { lat: 13.1653, lng: -86.3267 } },
+  { id: "m-managua", nombre: "Managua", departamentoId: "managua", centro: { lat: 12.115, lng: -86.268 } },
+  { id: "m-tipitapa", nombre: "Tipitapa", departamentoId: "managua", centro: { lat: 12.196, lng: -86.298 } },
+  { id: "m-sandino", nombre: "Ciudad Sandino", departamentoId: "managua", centro: { lat: 12.161, lng: -86.344 } },
+  { id: "m-bluefields", nombre: "Bluefields", departamentoId: "caribe", centro: { lat: 11.964, lng: -83.735 } },
+  { id: "m-corn", nombre: "Corn Island", departamentoId: "caribe", centro: { lat: 11.9417, lng: -83.0536 } },
 ];
 
 // ----- Hoteles registrados en la plataforma -----
@@ -157,6 +163,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "granada",
     municipioId: "m-granada",
     direccion: "Calle La Calzada, a media cuadra del Parque Central, Granada",
+    ubicacion: { lat: 11.9302, lng: -85.9553 }, // La Calzada, Granada
     descripcion:
       "Casona colonial de 1890 restaurada por la familia Bermúdez, con tres patios interiores llenos de flores, fuente de piedra y hamacas bajo los corredores. Desayuno nicaragüense incluido y terraza con vista a los techos de teja y al volcán Mombacho.",
     imagen: IMG.granada,
@@ -175,6 +182,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "rivas",
     municipioId: "m-sanjuan",
     direccion: "Frente al malecón, costado sur de la bahía, San Juan del Sur",
+    ubicacion: { lat: 11.2505, lng: -85.8735 }, // malecón de la bahía
     descripcion:
       "Hotel familiar a 40 pasos de la arena. Terraza de madera frente al mar, tablas de surf de cortesía y los mejores atardeceres de la bahía. Ideal para parejas, surfistas y familias pequeñas que buscan el Pacífico sin multitudes.",
     imagen: IMG.sanjuan,
@@ -193,6 +201,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "rivas",
     municipioId: "m-altagracia",
     direccion: "Camino a la cascada San Ramón, Altagracia, Isla de Ometepe",
+    ubicacion: { lat: 11.4335, lng: -85.6482 }, // camino a la cascada San Ramón
     descripcion:
       "Cabañas de madera construidas por la cooperativa local entre plataneras y bosque, con el volcán Concepción de fondo. Senderismo guiado, kayak en el lago y cocina de leña. Energía solar y cero plásticos de un solo uso.",
     imagen: IMG.ometepe,
@@ -211,6 +220,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "leon",
     municipioId: "m-leon",
     direccion: "Del Parque Central 1 cuadra al este, León",
+    ubicacion: { lat: 12.4353, lng: -86.8745 }, // León centro
     descripcion:
       "Hotel patrimonial en el corazón de León, a pasos de la catedral Patrimonio de la Humanidad. Azotea con vista a los domos naranjas y a la cadena de volcanes, biblioteca de poesía y café de la tarde incluido.",
     imagen: IMG.leon,
@@ -229,6 +239,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "matagalpa",
     municipioId: "m-sanramon",
     direccion: "Km 4 carretera a San Ramón, Matagalpa",
+    ubicacion: { lat: 12.9083, lng: -85.8867 }, // Km 4 hacia San Ramón
     descripcion:
       "Finca cafetalera con cabañas de pino entre neblina y montañas. Recorrido del café de la semilla a la taza, cabalgatas y fogata nocturna. Abrigo incluido: aquí el clima es de suéter y chocolate caliente.",
     imagen: IMG.matagalpa,
@@ -247,6 +258,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "caribe",
     municipioId: "m-corn",
     direccion: "Playa South West Bay, Little Corn Island",
+    ubicacion: { lat: 11.9408, lng: -83.0478 }, // South West Bay, Little Corn
     descripcion:
       "Bungalows de madera y palma frente al mar Caribe, con arena blanca y agua turquesa a tres metros de tu puerta. Snorkel diario, rondón de los domingos y hamacas bajo los cocos. Se llega en lancha, se llega feliz.",
     imagen: IMG.corn,
@@ -265,6 +277,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "masaya",
     municipioId: "m-catarina",
     direccion: "Cuesta de Catarina, junto al mirador de la laguna de Apoyo",
+    ubicacion: { lat: 11.914, lng: -86.281 }, // mirador de Catarina
     descripcion:
       "Posada con vista panorámica a la laguna de Apoyo, viveros de flores y cocina campesina. A 25 minutos de Granada y Masaya.",
     imagen: IMG.matagalpa,
@@ -283,6 +296,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "leon",
     municipioId: "m-telica",
     direccion: "Comunidad Los Portillos, falda del volcán Telica",
+    ubicacion: { lat: 12.5033, lng: -86.7047 }, // Los Portillas, falda del Telica
     descripcion:
       "Alojamiento rural para quienes quieren ver el volcán Telica rugir de noche. Caminatas guiadas y cocina de leña.",
     imagen: IMG.ometepe,
@@ -301,6 +315,7 @@ export const HOTELES_SEED: Hotel[] = [
     departamentoId: "managua",
     municipioId: "m-managua",
     direccion: "Km 11 Carretera Norte, Managua",
+    ubicacion: { lat: 12.1673, lng: -86.2733 }, // Carretera Norte Km 11
     descripcion: "Motel de carretera con habitaciones por hora.",
     imagen: IMG.leon,
     galeria: [IMG.leon],
@@ -466,6 +481,7 @@ export type DatosRegistroHotel = {
   departamentoId: string;
   municipioId: string;
   direccion: string;
+  ubicacion: Punto | null; // punto exacto marcado en el mapa (HU-037)
   descripcion: string;
   telefono: string; // opcional
   imagen: string; // data URL de la foto representativa
@@ -496,6 +512,54 @@ export function contrasenaTemporalVencida(cuenta: CuentaHotelero, ahora = Date.n
 // Contraseña temporal que recibe el hotelero junto con su cuenta
 export function generarContrasenaHotelero(): string {
   return `hotel${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+// ----- Ubicación exacta del hotel en el mapa (HU-037) -----
+
+// Límites aproximados de Nicaragua: un pin fuera de ellos no corresponde
+export const LIMITES_NICARAGUA = { latMin: 10.7, latMax: 15.0, lngMin: -87.7, lngMax: -83.1 };
+
+// Qué tan lejos del centro del municipio declarado se puede marcar el pin
+export const RADIO_MUNICIPIO_KM = 30;
+
+// Distancia en línea recta entre dos puntos, en kilómetros (fórmula haversine)
+export function distanciaKm(a: Punto, b: Punto): number {
+  const rad = (grados: number) => (grados * Math.PI) / 180;
+  const dLat = rad(b.lat - a.lat);
+  const dLng = rad(b.lng - a.lng);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * 6371 * Math.asin(Math.sqrt(h));
+}
+
+// Devuelve el motivo por el que la ubicación no sirve, o undefined si está bien
+export function validarUbicacionExacta(
+  ubicacion: Punto | null,
+  municipioId: string
+): string | undefined {
+  if (!ubicacion || !Number.isFinite(ubicacion.lat) || !Number.isFinite(ubicacion.lng)) {
+    return "Marcá la ubicación exacta del hotel en el mapa.";
+  }
+
+  const { lat, lng } = ubicacion;
+  if (
+    lat < LIMITES_NICARAGUA.latMin || lat > LIMITES_NICARAGUA.latMax ||
+    lng < LIMITES_NICARAGUA.lngMin || lng > LIMITES_NICARAGUA.lngMax
+  ) {
+    return "Ese punto queda fuera de Nicaragua: mové el mapa y marcá dónde está tu hotel.";
+  }
+
+  // El pin tiene que quedar cerca del municipio que se está declarando
+  const municipio = MUNICIPIOS.find((m) => m.id === municipioId);
+  if (municipio) {
+    const distancia = distanciaKm(ubicacion, municipio.centro);
+    if (distancia > RADIO_MUNICIPIO_KM) {
+      return `El punto está a ${Math.round(distancia)} km de ${municipio.nombre}: mové el pin dentro de tu municipio.`;
+    }
+  }
+
+  return undefined;
 }
 
 // Revisa todos los campos del formulario antes de enviar la solicitud
@@ -572,13 +636,20 @@ export function validarRegistroHotel(
 
   // Teléfono: opcional, pero si se llena tiene que ser nicaragüense de 8 dígitos
   const telefono = datos.telefono.trim();
-  if (telefono && !esTelefonoNicaragua(telefono)) {
-    errores.telefono = "Ingresá un teléfono de 8 dígitos o dejalo vacío.";
+  if (telefono) {
+    const errorTelefono = errorTelefonoNicaragua(telefono);
+    if (errorTelefono) errores.telefono = errorTelefono;
   }
 
   // Imagen representativa: la revisamos al elegir el archivo
   if (!datos.imagen) {
     errores.imagen = "Cargá al menos una imagen representativa del hotel.";
+  }
+
+  // Ubicación exacta: obligatoria, dentro de Nicaragua y del municipio declarado (HU-037)
+  const errorUbicacion = validarUbicacionExacta(datos.ubicacion, datos.municipioId);
+  if (errorUbicacion) {
+    errores.ubicacion = errorUbicacion;
   }
 
   return errores;
@@ -725,10 +796,25 @@ function esCorreo(texto: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(texto);
 }
 
-// Teléfono de Nicaragua: 8 dígitos (se dejan pasar espacios y guiones al escribir)
-function esTelefonoNicaragua(texto: string): boolean {
+// Teléfono de Nicaragua: empieza por 2, 5, 7 u 8 y tiene exactamente 8 dígitos
+// (se dejan pasar espacios y guiones al escribir, y un prefijo 505 opcional)
+export function errorTelefonoNicaragua(texto: string): string {
   const digitos = texto.replace(/[\s-]/g, "");
-  return /^\d{8}$/.test(digitos) || /^505\d{8}$/.test(digitos);
+  const nacional = digitos.startsWith("505") && digitos.length === 11 ? digitos.slice(3) : digitos;
+  if (!/^\d*$/.test(nacional)) return "El teléfono solo admite números (sin letras ni símbolos).";
+  if (nacional.length !== 8) return "El teléfono debe tener exactamente 8 dígitos.";
+  if (!/^[2578]/.test(nacional)) return "El teléfono debe empezar por 2, 5, 7 u 8.";
+  return "";
+}
+
+// Versión booleana, para cuando solo hace falta saber si el número sirve
+export function esTelefonoNicaragua(texto: string): boolean {
+  return errorTelefonoNicaragua(texto) === "";
+}
+
+// Deja solo los dígitos escritos, con el máximo de un teléfono nicaragüense
+export function soloDigitosTelefono(texto: string): string {
+  return texto.replace(/\D/g, "").slice(0, 8);
 }
 
 // Dice si dos rangos de fechas se traslapan (para la disponibilidad)

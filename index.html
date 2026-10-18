@@ -9,8 +9,40 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500..900&family=Libre+Baskerville:wght@400;700&family=Outfit:wght@400..800&display=swap" rel="stylesheet" />
     <title>Hotelica — Donde Nicaragua te recibe 🇳🇮</title>
+    <!--
+      Traducción automática (HU-038): Google Traductor lee el idioma del
+      navegador y ofrece traducir la página. Ya no hay selector ES/EN propio.
+    -->
+    <style>
+      /* El widget de Google no se muestra: el idioma lo decide el navegador, así
+         que no debe quedar ningún selector, ni siquiera para lectores de pantalla */
+      #google_translate_element {
+        display: none !important;
+      }
+    </style>
+    <script>
+      // Si el navegador está en otro idioma, Google Traductor traduce la página
+      // sola: la cookie googtrans lo deja configurado antes de cargar su script.
+      (function () {
+        var idiomas = { en: 1, fr: 1, de: 1, pt: 1, it: 1 };
+        var navegador = (navigator.language || "es").slice(0, 2).toLowerCase();
+        var yaElegido = /(^|;\s*)googtrans=/.test(document.cookie);
+        if (navegador !== "es" && idiomas[navegador] && !yaElegido) {
+          document.cookie = "googtrans=/es/" + navegador + ";path=/";
+        }
+      })();
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement(
+          { pageLanguage: "es", includedLanguages: "en,fr,de,pt,it", autoDisplay: true },
+          "google_translate_element"
+        );
+      }
+    </script>
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
   </head>
   <body>
+    <!-- Contenedor sin render: el aviso de traducción lo dibuja Google aparte -->
+    <div id="google_translate_element" aria-hidden="true"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

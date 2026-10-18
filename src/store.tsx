@@ -137,7 +137,9 @@ type AppCtx = {
   actualizarPerfil: (datos: { nombre: string; telefono: string; direccion: string }) => Promise<{ error?: string }>;
   olvidarContrasena: (correo: string) => Promise<{ error?: string; ok?: boolean }>;
   restablecerContrasena: (nuevaContrasena: string) => Promise<{ error?: string }>;
-  cambiarIdioma: () => void;
+  registroAbierto: boolean;
+  abrirRegistro: () => void;
+  cerrarRegistro: () => void;
   alternarFavorito: (hotelId: string) => void;
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
   registrarPago: (pago: { folio: string; monto: number; metodo: Reserva["pago"]; referencia: string }) => Pago;
@@ -179,10 +181,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return guardado === "hotel" || guardado === "admin" ? guardado : "turista";
   });
   const [toasts, setToasts] = useState<Toast[]>([]);
-  // Selector de idioma (persiste en localStorage)
-  const [idioma, setIdioma] = useState<Idioma>(() => {
-    return (localStorage.getItem("hotelica-idioma") as Idioma) || "es";
-  });
+  // El español es el idioma de origen: la traducción al idioma del navegador
+  // la hace Google Traductor (HU-038); ya no existe selector propio de idioma
+  const [idioma] = useState<Idioma>("es");
+  // Modal de registro compartido por toda la app: "Reservar" sin sesión lo abre (HU-038)
+  const [registroAbierto, setRegistroAbierto] = useState(false);
+  const abrirRegistro = () => setRegistroAbierto(true);
+  const cerrarRegistro = () => setRegistroAbierto(false);
 
   // Guardamos los cambios en el navegador cada vez que cambian los datos
   useEffect(() => {
@@ -221,11 +226,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (usuario) localStorage.setItem("hotelica-rol", rol);
     else localStorage.removeItem("hotelica-rol");
   }, [rol, usuario]);
-
-  // Persistir idioma en localStorage
-  useEffect(() => {
-    localStorage.setItem("hotelica-idioma", idioma);
-  }, [idioma]);
 
   // Escucha los cambios de sesión de Supabase (HU-002):
   // cuando el usuario vuelve de Google / Facebook / Apple (OAuth), recibimos su sesión aquí
@@ -542,6 +542,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       departamentoId: registro.departamentoId,
       municipioId: registro.municipioId,
       direccion: registro.direccion.trim(),
+      ubicacion: registro.ubicacion ?? undefined, // punto exacto en el mapa (HU-037)
       descripcion: registro.descripcion.trim(),
       contacto: registro.telefono.trim() || undefined,
       imagen: registro.imagen,
@@ -577,6 +578,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               departamentoId: registro.departamentoId,
               municipioId: registro.municipioId,
               direccion: registro.direccion.trim(),
+              ubicacion: registro.ubicacion ?? undefined,
               descripcion: registro.descripcion.trim(),
               contacto: registro.telefono.trim() || undefined,
             }
@@ -922,11 +924,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
-  // Cambiar idioma ES ↔ EN
-  const cambiarIdioma = () => {
-    setIdioma((prev) => (prev === "es" ? "en" : "es"));
-  };
-
   const valor = useMemo<AppCtx>(
     () => ({
       hoteles: datos.hoteles,
@@ -951,7 +948,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       actualizarPerfil,
       olvidarContrasena,
       restablecerContrasena,
-      cambiarIdioma,
+      registroAbierto,
+      abrirRegistro,
+      cerrarRegistro,
       alternarFavorito,
       crearReserva,
       registrarPago,

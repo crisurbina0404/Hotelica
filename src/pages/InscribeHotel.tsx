@@ -6,11 +6,12 @@
 import { useRef, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, MUNICIPIOS, validarRegistroHotel, validarImagenHotel,
+  DEPARTAMENTOS, MUNICIPIOS, validarRegistroHotel, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import type { DatosRegistroHotel, ErroresRegistroHotel, Hotel } from "../data";
-import { Reveal, TituloSeccion } from "../ui";
-import { IconoCheck, IconoLlave, IconoOjo, IconoPin } from "../icons";
+import { Reveal } from "../ui";
+import { MapaHotel } from "../mapa";
+import { IconoCheck, IconoPin } from "../icons";
 
 // Formulario en blanco para inscribir un hotel
 const FORM_VACIO: DatosRegistroHotel = {
@@ -20,12 +21,13 @@ const FORM_VACIO: DatosRegistroHotel = {
   departamentoId: "",
   municipioId: "",
   direccion: "",
+  ubicacion: null,
   descripcion: "",
   telefono: "",
   imagen: "",
 };
 
-export function InscribeHotel() {
+export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
   const { hoteles, registrarHotel, avisar, usuario } = useApp();
 
   const [registro, setRegistro] = useState<DatosRegistroHotel>(() =>
@@ -50,16 +52,27 @@ export function InscribeHotel() {
   // Los municipios se filtran según el departamento elegido
   const municipiosDelDepto = MUNICIPIOS.filter((m) => m.departamentoId === registro.departamentoId);
 
+  // Centro del municipio elegido: ahí abre el mapa y ahí cae el pin por defecto (HU-037)
+  const centroMunicipio = MUNICIPIOS.find((m) => m.id === registro.municipioId)?.centro ?? null;
+
   // Actualiza un campo y borra su error en cuanto el usuario escribe de nuevo
   const cambiarCampo = (campo: keyof DatosRegistroHotel, valor: string) => {
     setRegistro((r) => ({ ...r, [campo]: valor }));
     setErrores((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
   };
 
-  // Al cambiar el departamento volvemos a elegir el municipio
+  // Al cambiar el departamento volvemos a elegir el municipio (y su pin)
   const cambiarDepartamento = (id: string) => {
-    setRegistro((r) => ({ ...r, departamentoId: id, municipioId: "" }));
-    setErrores((e) => ({ ...e, departamentoId: undefined, municipioId: undefined }));
+    setRegistro((r) => ({ ...r, departamentoId: id, municipioId: "", ubicacion: null }));
+    setErrores((e) => ({ ...e, departamentoId: undefined, municipioId: undefined, ubicacion: undefined }));
+  };
+
+  // Al elegir el municipio ubicamos el pin en su centro: el dueño lo
+  // afina con un clic si la entrada del hotel está en otro punto
+  const cambiarMunicipio = (id: string) => {
+    const centro = MUNICIPIOS.find((m) => m.id === id)?.centro ?? null;
+    setRegistro((r) => ({ ...r, municipioId: id, ubicacion: centro }));
+    setErrores((e) => ({ ...e, municipioId: undefined, ubicacion: undefined }));
   };
 
   // Lee la foto elegida y la deja como imagen representativa
@@ -146,9 +159,12 @@ export function InscribeHotel() {
   const hayErrores = enviado && Object.values(errores).some(Boolean);
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pt-24 sm:px-6" aria-label="Inscribir un hotel">
+    <section
+      className={enVentana ? "" : "mx-auto max-w-7xl px-4 pt-24 sm:px-6"}
+      aria-label="Inscribir un hotel"
+    >
       <Reveal>
-        <div className="overflow-hidden rounded-2xl border border-line bg-white shadow-lift">
+        <div className={`overflow-hidden ${enVentana ? "" : "rounded-2xl border border-line bg-white shadow-lift"}`}>
           {/* Encabezado de la sección */}
           <div className="relative bg-gradient-to-br from-primary to-primary-deep px-7 py-10 sm:px-12">
             <span className="dot-texture-light absolute inset-0 opacity-40" />
@@ -179,9 +195,9 @@ export function InscribeHotel() {
                   <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-[#92400E]">Pendiente</span>
                 </div>
                 <p className="mt-4 text-sm font-medium leading-relaxed text-[#92400E]">
-                  Tu hotel será revisado por un administrador. Cuando sea aprobado vas a recibir
-                  tu <b>cuenta de hotelero</b> con el correo que dejaste ({solicitud.correoDueno}),
-                  y con ella entrarás a tu panel para gestionar reservas.
+                  <b>Tu solicitud está en revisión.</b> El resultado te aparecerá en tu correo
+                  electrónico ({solicitud.correoDueno}): si tu hotel es aprobado, ahí recibirás
+                  también tu cuenta de hotelero para entrar a tu panel.
                 </p>
                 <button
                   type="button"
@@ -270,7 +286,7 @@ export function InscribeHotel() {
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Municipio</span>
                 <select
                   value={registro.municipioId}
-                  onChange={(e) => cambiarCampo("municipioId", e.target.value)}
+                  onChange={(e) => cambiarMunicipio(e.target.value)}
                   disabled={!registro.departamentoId}
                   className={`${errores.municipioId ? claseCampoError : claseCampoNormal} disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted`}
                 >
@@ -285,6 +301,44 @@ export function InscribeHotel() {
                   <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{errores.municipioId}</p>
                 )}
               </label>
+
+              {/* Ubicación exacta en el mapa (HU-037): el pin arranca en el
+                  centro del municipio y el dueño lo mueve a la entrada real */}
+              <div className="sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Ubicación exacta</span>
+                <p className="mb-2 text-[11px] text-muted">
+                  {registro.municipioId
+                    ? "Hacé clic en el mapa para dejar el pin en la entrada de tu hotel (o arrastralo para afinarlo)."
+                    : "Elegí el departamento y el municipio: el mapa se abre sobre tu zona y ahí marcás la entrada exacta."}
+                </p>
+                <div className={errores.ubicacion ? "rounded-xl border border-[#FCA5A5]" : ""}>
+                  <MapaHotel
+                    variante="selector"
+                    nombre={registro.nombre || "tu hotel"}
+                    punto={registro.ubicacion}
+                    centro={centroMunicipio}
+                    zoom={13}
+                    altura="h-72 sm:h-80"
+                    alCambiar={(p) => {
+                      setRegistro((r) => ({ ...r, ubicacion: p }));
+                      setErrores((e) => ({ ...e, ubicacion: undefined }));
+                    }}
+                  />
+                </div>
+                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                  <IconoPin size={12} className="text-primary" />
+                  {registro.ubicacion ? (
+                    <span className="tabular-nums">
+                      Latitud {registro.ubicacion.lat.toFixed(4)} · Longitud {registro.ubicacion.lng.toFixed(4)}
+                    </span>
+                  ) : (
+                    "Sin marcar: elegí un municipio para empezar."
+                  )}
+                </p>
+                {errores.ubicacion && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{errores.ubicacion}</p>
+                )}
+              </div>
 
               <label className="block sm:col-span-2">
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Dirección</span>
@@ -306,11 +360,14 @@ export function InscribeHotel() {
                 <input
                   type="tel"
                   value={registro.telefono}
-                  onChange={(e) => cambiarCampo("telefono", e.target.value)}
-                  maxLength={20}
-                  placeholder="Ej: 8888-8888"
+                  onChange={(e) => cambiarCampo("telefono", soloDigitosTelefono(e.target.value))}
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={8}
+                  placeholder="Ej: 88881234"
                   className={errores.telefono ? claseCampoError : claseCampoNormal}
                 />
+                <p className="mt-1 text-[11px] text-muted">8 dígitos, empezando por 2, 5, 7 u 8.</p>
                 {errores.telefono && (
                   <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{errores.telefono}</p>
                 )}
@@ -354,30 +411,20 @@ export function InscribeHotel() {
                 )}
               </label>
 
-              {/* Cómo funciona el flujo, en tres pasos */}
-              <div className="grid gap-3 border-t border-line pt-5 sm:grid-cols-3 sm:col-span-2">
-                {[
-                  { n: "01", t: "Enviás la solicitud", d: "Sin cuenta: solo tus datos y los del hotel.", icono: <IconoPin size={16} /> },
-                  { n: "02", t: "El admin la revisa", d: "Lee tu solicitud y decide aprobar o rechazar.", icono: <IconoOjo size={16} /> },
-                  { n: "03", t: "Recibís tu cuenta", d: "Al aprobar, entrás a tu panel con correo y contraseña.", icono: <IconoLlave size={16} /> },
-                ].map((p) => (
-                  <div key={p.n} className="flex items-start gap-3 rounded-lg bg-canvas p-3.5">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white">{p.icono}</span>
-                    <div>
-                      <p className="text-xs font-bold text-ink">{p.t}</p>
-                      <p className="mt-0.5 text-[11px] leading-snug text-muted">{p.d}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex justify-end border-t border-line pt-5 sm:col-span-2">
+              {/* Qué pasa después de enviar, en una frase al lado del botón
+                  (HU-036): reemplaza a las tres tarjetas numeradas que cerraban
+                  el formulario y repetían lo que ya dice el encabezado */}
+              <div className="flex flex-col items-start gap-4 border-t border-line pt-5 sm:col-span-2 sm:flex-row sm:items-center sm:justify-end">
+                <p className="max-w-md text-xs leading-relaxed text-muted">
+                  Un administrador del equipo de Hotelica revisa tu solicitud y, si el hotel cumple los requisitos,
+                  tu cuenta de hotelero llega al correo que dejaste arriba.
+                </p>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97]"
+                  className="flex shrink-0 items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97]"
                 >
                   <IconoCheck size={16} />
-                  Enviar solicitud
+                  Finalizar solicitud
                 </button>
               </div>
             </form>
@@ -387,7 +434,7 @@ export function InscribeHotel() {
 
       {/* ===== Consulta pública de estado de la solicitud ===== */}
       <Reveal delay={100}>
-        <div className="mt-6 rounded-2xl border border-line bg-white p-6 shadow-card sm:p-8">
+        <div className={enVentana ? "mt-5 rounded-xl border border-line p-5 sm:p-6" : "mt-6 rounded-2xl border border-line bg-white p-6 shadow-card sm:p-8"}>
           <h3 className="font-display text-lg font-bold text-ink">¿Ya inscribiste tu hotel? Consulta el estado</h3>
           <p className="mt-1 text-sm text-muted">
             Ingresá el correo que usaste al inscribir tu hotel y mirá si ya fue aprobado.

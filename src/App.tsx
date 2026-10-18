@@ -23,6 +23,20 @@ import { RestablecerContrasena } from "./pages/ResetPassword";
 // Rutas protegidas: piden permiso antes de mostrarse
 const RUTAS_PROTEGIDAS: Ruta["nombre"][] = ["reservas", "perfil", "panel", "admin"];
 
+// La maqueta en celular solo ofrece el módulo turista (HU-039)
+const CONSULTA_MOVIL = "(max-width: 1023px)";
+
+function usePantallaMovil(): boolean {
+  const [movil, setMovil] = useState(() => window.matchMedia(CONSULTA_MOVIL).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(CONSULTA_MOVIL);
+    const alCambiar = (e: MediaQueryListEvent) => setMovil(e.matches);
+    mq.addEventListener("change", alCambiar);
+    return () => mq.removeEventListener("change", alCambiar);
+  }, []);
+  return movil;
+}
+
 // ¿Puede verse esta pantalla? Con sesión siempre; sin sesión, el panel del hotel y la
 // consola de admin también se abren con el rol de demo que elige el selector
 function puedeVer(nombre: Ruta["nombre"], haySesion: boolean, rolActual: Rol): boolean {
@@ -36,11 +50,18 @@ function AppInner() {
   const { usuario, rol } = useApp();
   // La pantalla actual se guarda en el estado (sin URL, es una maqueta)
   const [ruta, setRuta] = useState<Ruta>({ nombre: "inicio" });
+  const movil = usePantallaMovil();
+
+  // En celular la única experiencia es la del turista: el panel del hotel y la
+  // consola del admin no se abren aunque el demo haya quedado en ese rol.
+  const rolVisible: Rol = movil ? "turista" : rol;
+  const rutaSoloTurista = movil && (ruta.nombre === "panel" || ruta.nombre === "admin");
 
   // Pantalla que de verdad se muestra: si el rol actual no tiene permiso, es el inicio.
   // El chequeo va al renderizar y no en navegar() porque el selector de demo cambia
   // el rol y la ruta en el mismo clic, y el rol todavía no se había actualizado
-  const rutaVisible: Ruta = puedeVer(ruta.nombre, !!usuario, rol) ? ruta : { nombre: "inicio" };
+  const rutaVisible: Ruta =
+    !rutaSoloTurista && puedeVer(ruta.nombre, !!usuario, rolVisible) ? ruta : { nombre: "inicio" };
 
   // Dejamos la ruta válida en memoria: al cerrar sesión o cambiar de rol volvemos al inicio
   useEffect(() => {
@@ -116,9 +137,15 @@ function AppInner() {
             splashVisible ? "opacity-100" : "pointer-events-none opacity-0"
           }`}
         >
-          {/* El logo tiene márgenes transparentes anclados a la izquierda: lo corregimos para que se vea centrado */}
-          <div className="translate-x-36">
-            <Marca tam="enorme" centrada />
+          {/* El logo tiene márgenes transparentes anclados a la izquierda: lo corremos
+              un cuarto de su propio ancho (no en píxeles fijos) para que quede centrado
+              también en celular, donde antes se salía de la pantalla */}
+          <div className="flex w-full justify-center overflow-hidden px-4">
+            <div className="translate-x-[26%]">
+              {/* max-w-none: el logo no debe encogerse con el ancho del celular,
+                  porque el centrado se calcula sobre su ancho real */}
+              <Marca tam="splash" centrada className="max-w-none" />
+            </div>
           </div>
         </div>
       )}

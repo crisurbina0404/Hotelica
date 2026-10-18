@@ -1,7 +1,7 @@
 // ============================================================
 // Hotelica — Estructura común: Navbar, Footer y avisos (toasts)
 // ============================================================
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "./store";
 import type { Ruta, Navegar } from "./rutas";
 import { DEPARTAMENTOS, USUARIOS_DEMO } from "./data";
@@ -16,7 +16,7 @@ import { IconoBuscar, IconoUsuario } from "./icons";
 import { Marca, Modal, MarcaFooter } from "./ui";
 // ----- Barra de navegación principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
-  const { favoritos, rol, usuario, idioma, cambiarRol, login, registrar, loginSocial, logout, cambiarIdioma, avisar } = useApp();
+  const { favoritos, rol, usuario, idioma, cambiarRol, login, registrar, loginSocial, logout, registroAbierto, abrirRegistro, cerrarRegistro, avisar } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [menuRol, setMenuRol] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
@@ -27,8 +27,8 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   const [loginError, setLoginError] = useState("");
   const [loginCargando, setLoginCargando] = useState(false);
   const [verContrasena, setVerContrasena] = useState(false);
-  // Modal de registro (HU-001)
-  const [registroAbierto, setRegistroAbierto] = useState(false);
+  // Modal de registro (HU-001): su estado vive en el store para que otras
+  // pantallas (como "Reservar") puedan abrirlo (HU-038)
   const [regNombre, setRegNombre] = useState("");
   const [regCorreo, setRegCorreo] = useState("");
   const [regContrasena, setRegContrasena] = useState("");
@@ -43,6 +43,43 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
     window.addEventListener("scroll", alBajar, { passive: true });
     return () => window.removeEventListener("scroll", alBajar);
   }, []);
+
+  // Con el menú móvil abierto, el fondo no se mueve (HU-039): se fija el body
+  // y se devuelve el scroll a su lugar al cerrarlo
+  const scrollAlCerrar = useRef(0);
+  const navegando = useRef(false);
+  useEffect(() => {
+    if (!menuMovil) return;
+    const y = window.scrollY;
+    scrollAlCerrar.current = y;
+    const previo = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+      overflow: document.body.style.overflow,
+    };
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${y}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.position = previo.position;
+      document.body.style.top = previo.top;
+      document.body.style.width = previo.width;
+      document.body.style.overflow = previo.overflow;
+      // Al navegar la pantalla nueva arranca arriba: no devolvemos el scroll viejo
+      if (!navegando.current) window.scrollTo({ top: scrollAlCerrar.current, behavior: "instant" as ScrollBehavior });
+      navegando.current = false;
+    };
+  }, [menuMovil]);
+
+  // Escape cierra el menú móvil
+  useEffect(() => {
+    if (!menuMovil) return;
+    const alTeclear = (e: KeyboardEvent) => e.key === "Escape" && setMenuMovil(false);
+    window.addEventListener("keydown", alTeclear);
+    return () => window.removeEventListener("keydown", alTeclear);
+  }, [menuMovil]);
 
   // Sobre el hero del inicio la barra es transparente con letras claras
   const clara = ruta.nombre === "inicio" && !scrolled && !menuMovil;
@@ -90,7 +127,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
       return;
     }
     // Registro exitoso: cerrar modal y limpiar campos
-    setRegistroAbierto(false);
+    cerrarRegistro();
     setRegNombre("");
     setRegCorreo("");
     setRegContrasena("");
@@ -142,19 +179,6 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2.5">
-          {/* Toggle de idioma ES | EN */}
-          <button
-            onClick={cambiarIdioma}
-            className={`hidden items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-bold transition-all lg:flex ${
-              clara
-                ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
-                : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
-            }`}
-            aria-label={`Cambiar a ${idioma === "es" ? "inglés" : "español"}`}
-          >
-            {idioma === "es" ? "ES" : "EN"}
-          </button>
-
           {/* Botón de login o usuario autenticado */}
           {usuario ? (
             <div className="hidden items-center gap-2 lg:flex">
@@ -184,7 +208,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
           ) : (
             <div className="hidden items-center gap-2 lg:flex">
               <button
-                onClick={() => setRegistroAbierto(true)}
+                onClick={abrirRegistro}
                 className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
                   clara
                     ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
@@ -268,7 +292,9 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
           <button
             onClick={() => setMenuMovil((v) => !v)}
             className={`rounded-lg p-2 lg:hidden ${clara ? "text-white" : "text-ink"}`}
-            aria-label="Abrir menú"
+            aria-label={menuMovil ? "Cerrar menú" : "Abrir menú"}
+            aria-expanded={menuMovil}
+            aria-controls="menu-movil"
           >
             {menuMovil ? <IconoX size={22} /> : <IconoMenu size={22} />}
           </button>
@@ -277,7 +303,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
       {/* Menú móvil desplegable */}
       {menuMovil && (
-        <nav className="anim-pop border-t border-line bg-white px-4 py-4 shadow-lift lg:hidden">
+        <nav id="menu-movil" className="anim-pop max-h-[calc(100vh-4rem)] overflow-y-auto border-t border-line bg-white px-4 py-4 shadow-lift lg:hidden">
           <div className="grid gap-1">
             {([
               ["inicio", t(idioma, "inicio")],
@@ -288,20 +314,14 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             ] as [Ruta["nombre"], string][]).map(([n, texto]) => (
               <button
                 key={n}
-                onClick={() => { navegar({ nombre: n } as Ruta); setMenuMovil(false); }}
+                onClick={() => { navegando.current = true; navegar({ nombre: n } as Ruta); setMenuMovil(false); }}
                 className={`rounded-lg px-3 py-2.5 text-left text-sm font-semibold ${ruta.nombre === n ? "bg-primary-soft text-primary" : "text-ink hover:bg-canvas"}`}
               >
                 {texto}
               </button>
             ))}
-            {rol !== "turista" && (
-              <button
-                onClick={() => { navegar({ nombre: rol === "hotel" ? "panel" : "admin" }); setMenuMovil(false); }}
-                className="rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-primary hover:bg-primary-soft"
-              >
-                {rol === "hotel" ? t(idioma, "panelHotel") : t(idioma, "consolaAdmin")}
-              </button>
-            )}
+            {/* En celular solo existe el módulo turista: no hay accesos al panel
+                del hotel ni a la consola del admin, ni selector de perfil (HU-039) */}
 
             {/* Cuenta e idioma: en el celular viven acá, no en la barra superior */}
             <div className="mt-2 grid gap-1.5 border-t border-line pt-3">
@@ -321,37 +341,15 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                     {t(idioma, "iniciarSesion")}
                   </button>
                   <button
-                    onClick={() => { setRegistroAbierto(true); setMenuMovil(false); }}
+                    onClick={() => { abrirRegistro(); setMenuMovil(false); }}
                     className="rounded-lg border border-line px-3 py-2.5 text-left text-sm font-bold text-ink transition-colors hover:border-primary/40"
                   >
                     Registrarse
                   </button>
                 </>
               )}
-              <button
-                onClick={() => { cambiarIdioma(); setMenuMovil(false); }}
-                className="rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink transition-colors hover:bg-canvas"
-              >
-                {idioma === "es" ? "Ver en inglés (EN)" : "Ver en español (ES)"}
-              </button>
             </div>
 
-            {/* Cambiar de perfil: en el celular también, para no perder la demo */}
-            <div className="mt-2 border-t border-line pt-3">
-              <p className="px-1 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">Cambiar de perfil</p>
-              <div className="grid gap-1">
-                {(Object.keys(USUARIOS_DEMO) as Rol[]).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => { elegirRol(r); setMenuMovil(false); }}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition-colors hover:bg-canvas ${rol === r ? "bg-primary-soft text-primary" : "text-ink"}`}
-                  >
-                    {USUARIOS_DEMO[r].etiqueta}
-                    {rol === r && <IconoCheck size={14} className="text-primary" />}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
         </nav>
       )}
@@ -451,7 +449,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
       </Modal>
 
       {/* Modal de registro (HU-001) */}
-      <Modal abierto={registroAbierto} alCerrar={() => { setRegistroAbierto(false); setRegError(""); setRegNombre(""); setRegCorreo(""); setRegContrasena(""); }}>
+      <Modal abierto={registroAbierto} alCerrar={() => { cerrarRegistro(); setRegError(""); setRegNombre(""); setRegCorreo(""); setRegContrasena(""); }}>
         <div className="p-6 sm:p-8">
           <div className="mb-6 text-center">
             <h2 className="font-display text-xl font-bold text-ink">Crear cuenta</h2>
@@ -523,7 +521,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
           <p className="mt-4 text-center text-xs text-muted">
             ¿Ya tenés cuenta?{" "}
-            <button onClick={() => { setRegistroAbierto(false); setLoginAbierto(true); }} className="font-bold text-primary hover:underline">
+            <button onClick={() => { cerrarRegistro(); setLoginAbierto(true); }} className="font-bold text-primary hover:underline">
               Iniciar sesión
             </button>
           </p>

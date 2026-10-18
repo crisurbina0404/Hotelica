@@ -28,7 +28,7 @@
 | 24 | HU-023 | Gestión Hotel | Registrar habitaciones | Alta | ✅ Terminada |
 | 25 | HU-024 | Gestión Hotel | Configurar precios | Alta | ✅ Terminada |
 | 26 | HU-025 | Gestión Hotel | Subir fotografías | Media | ✅ Terminada |
-| 27 | HU-026 | Gestión Hotel | Consultar reservas recibidas | Alta | ⬜ Escrita |
+| 27 | HU-026 | Gestión Hotel | Consultar reservas recibidas | Alta | ✅ Terminada |
 | 28 | HU-027 | Gestión Hotel | Confirmar o rechazar reservas | Alta | ⬜ Escrita |
 | 29 | HU-028 | Gestión Hotel | Registrar check-in | Media | ⬜ Escrita |
 | 30 | HU-029 | Gestión Hotel | Registrar check-out | Media | ⬜ Escrita |
@@ -38,3 +38,7 @@
 | 34 | HU-033 | Administración | Activar o desactivar usuarios | Media | ⬜ Escrita |
 | 35 | HU-034 | Administración | Consultar estadísticas globales | Media | ⬜ Escrita |
 | 36 | HU-035 | Administración | Gestionar notificaciones de reservas | Baja | ⬜ Escrita |
+| 37 | HU-036 | Diseño (oficio visual) | Composición editorial sin el patrón "N pasos" | Media | ✅ Terminada |
+| 38 | HU-037 | Búsqueda / Gestión Hotel | Mapa de ubicación exacta del hotel | Media | ✅ Terminada |
+| 39 | HU-038 | Diseño (portada) / Autenticación | Fotos reales, registro de hoteleros y reserva con cuenta | Media | ✅ Terminada |
+| 40 | HU-039 | Autenticación / Gestión Hotel / Diseño | Teléfonos válidos, un solo logo y móvil solo turista | Alta | ✅ Terminada |

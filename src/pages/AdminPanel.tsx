@@ -7,6 +7,7 @@ import type { Navegar } from "../rutas";
 import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha } from "../data";
 import type { Hotel, CuentaHotelero } from "../data";
 import { Reveal, BadgeHotel, Modal, TituloSeccion } from "../ui";
+import { MapaHotel } from "../mapa";
 import {
   IconoEscudo, IconoCheck, IconoX, IconoOjo, IconoHotel, IconoGrafica, IconoPin,
 } from "../icons";
@@ -304,6 +305,15 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
               <BadgeHotel estado={viendo.aprobado} />
             </div>
             <p className="mt-3.5 text-sm leading-relaxed text-muted">{viendo.descripcion}</p>
+            {/* Ubicación exacta marcada por el dueño (HU-037): el admin la ve antes de decidir */}
+            <div className="mt-4">
+              <MapaHotel
+                punto={viendo.ubicacion ?? MUNICIPIOS.find((m) => m.id === viendo.municipioId)?.centro ?? null}
+                nombre={viendo.nombre}
+                altura="h-48"
+                zoom={14}
+              />
+            </div>
             <div className="mt-4 rounded-xl bg-canvas p-4 text-sm">
               <p className="flex justify-between py-0.5"><span className="text-muted">Dueño</span><b className="text-ink">{viendo.dueno}</b></p>
               {viendo.contacto && (

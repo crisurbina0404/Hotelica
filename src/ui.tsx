@@ -2,6 +2,7 @@
 // Hotelica — Componentes de interfaz reutilizables
 // ============================================================
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import type { EstadoHabitacion, EstadoHotel, EstadoReserva } from "./data";
 import { ETIQUETA_ESTADO, ETIQUETA_HABITACION } from "./data";
@@ -44,11 +45,11 @@ export function Reveal({
 
 // Rutas centralizadas de todos los logos del proyecto (un solo lugar para cambiarlos)
 export const LOGOS = {
-  // Logo completo (ícono + HOTELICA + guiones): navbar, splash y modal de reserva
+  // Logo completo (ícono + HOTELICA + guiones): navbar, splash y modal de reserva.
+  // Es el único logo de la marca en la barra: sobre el hero se le agrega un
+  // contorno claro en vez de cambiar a la versión blanca (HU-039)
   completo: "/Logo.svg",
-  completoClaro: "/Logo-blanco.svg",
   // Solo texto con guiones: pensado para el footer
-  texto: "/text-subtext.svg",
   textoClaro: "/text-subtext-white.svg",
   // Marca del volcán sola: favicon y usos chicos
   sello: "/favicon.svg",
@@ -62,7 +63,7 @@ export function Marca({
   clara = false,
   className = "",
 }: {
-  tam?: "chica" | "md" | "grande" | "enorme" | "navbar";
+  tam?: "chica" | "md" | "grande" | "enorme" | "splash" | "navbar";
   centrada?: boolean;
   conIcono?: boolean;
   clara?: boolean;
@@ -75,6 +76,8 @@ export function Marca({
     md: "h-60 w-auto",
     grande: "h-60 w-auto",
     enorme: "h-72 w-auto",
+    // Splash: en celular más chico para que el logo no se salga de la pantalla
+    splash: "h-60 w-auto sm:h-72",
     // La barra superior: más chica en celular, para que entren la marca y los botones
     navbar: "h-36 w-auto lg:h-60",
   };
@@ -89,30 +92,19 @@ export function Marca({
   };
 
   return (
-    // Las dos versiones se apilan para cruzarlas con una transición suave al hacer scroll
+    // Un solo logo: el de la marca. Sobre la fotografía del hero se le suma un
+    // contorno claro fino (borde blando) para que se lea sin cambiar de versión
     <span className={`relative inline-block ${cls}`}>
-      {/* Logo normal (teal): visible cuando la barra está sobre fondo blanco */}
       <img
         src={LOGOS.completo}
         alt="Hotelica - Tu destino en Nicaragua"
         className={cls}
         style={{
           ...estiloLogo,
-          opacity: clara ? 0 : 1,
-          transition: "opacity 300ms ease",
-        }}
-      />
-      {/* Logo claro (crema): aparece cuando la barra se funde con la imagen del hero */}
-      <img
-        src={LOGOS.completoClaro}
-        alt=""
-        aria-hidden="true"
-        className={`absolute inset-0 ${cls}`}
-        style={{
-          ...estiloLogo,
-          opacity: clara ? 1 : 0,
-          transition: "opacity 300ms ease, filter 300ms ease",
-          filter: clara ? "drop-shadow(0 2px 6px rgba(5, 27, 33, 0.55))" : undefined,
+          filter: clara
+            ? "drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 4px rgba(255,255,255,0.6)) drop-shadow(0 1px 5px rgba(5,27,33,0.35))"
+            : undefined,
+          transition: "filter 300ms ease",
         }}
       />
     </span>
@@ -273,7 +265,9 @@ export function Modal({
   }, [abierto, alCerrar]);
 
   if (!visible) return null;
-  return (
+  // Portal al body: el header usa backdrop-blur, y eso convertiría al header en
+  // el contenedor de los elementos fixed, recortando la ventana flotante (HU-038)
+  return createPortal(
     <div className={`fixed inset-0 z-[100] flex items-end justify-center p-0 transition-opacity duration-200 sm:items-center sm:p-6 ${cerrando ? "opacity-0" : "opacity-100"}`} role="dialog" aria-modal="true">
       <button className="absolute inset-0 bg-primary-ink/70 backdrop-blur-[3px]" onClick={alCerrar} aria-label="Cerrar" />
       <div className={`relative w-full ${ancho} max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white shadow-lift sm:rounded-2xl ${cerrando ? "scale-95 transition-transform duration-200" : "anim-pop"}`}>
@@ -286,7 +280,8 @@ export function Modal({
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

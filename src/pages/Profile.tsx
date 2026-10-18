@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import { Reveal, TituloSeccion } from "../ui";
+import { errorTelefonoNicaragua, soloDigitosTelefono } from "../data";
 import { IconoFlechaAtras, IconoUsuario, IconoCheck } from "../icons";
 
 // Tipo para los errores de validación del formulario
@@ -27,8 +28,10 @@ function validarCampos(nombre: string, telefono: string, direccion: string): Err
 
   if (!telefono.trim()) {
     errores.telefono = "El teléfono es obligatorio.";
-  } else if (!/^[\d\-\+\(\)\s]{7,}$/.test(telefono.trim())) {
-    errores.telefono = "Ingresa un número de teléfono válido.";
+  } else {
+    // Misma regla que el resto de la plataforma: 8 dígitos y empieza por 2, 5, 7 u 8
+    const errorTelefono = errorTelefonoNicaragua(telefono);
+    if (errorTelefono) errores.telefono = errorTelefono;
   }
 
   if (!direccion.trim()) {
@@ -253,11 +256,14 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                   type="tel"
                   value={telefono}
                   onChange={(e) => {
-                    setTelefono(e.target.value);
+                    setTelefono(soloDigitosTelefono(e.target.value));
                     if (errores.telefono) setErrores((prev) => ({ ...prev, telefono: undefined }));
                   }}
                   disabled={!editando}
-                  placeholder="8888-8888"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={8}
+                  placeholder="88881234"
                   className={editando ? (errores.telefono ? claseCampoError : claseCampoNormal) : claseCampoBloqueado}
                 />
                 {errores.telefono && (

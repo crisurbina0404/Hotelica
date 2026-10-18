@@ -13,6 +13,7 @@ import {
 } from "../data";
 import type { Habitacion, Hotel } from "../data";
 import { CalendarioDisponibilidad } from "./CalendarioDisponibilidad";
+import { MapaHotel } from "../mapa";
 import { Reveal, Estrellas, BadgeHabitacion, TituloSeccion } from "../ui";
 import { ModalReserva } from "./BookingModal";
 import {
@@ -30,7 +31,10 @@ function IconoAmenidad({ a }: { a: string }) {
 }
 
 export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) {
-  const { hoteles, habitaciones, resenas, favoritos, alternarFavorito, disponiblesDe, avisar } = useApp();
+  const {
+    hoteles, habitaciones, resenas, favoritos, alternarFavorito, disponiblesDe, avisar,
+    usuario, abrirRegistro,
+  } = useApp();
   const hotel = hoteles.find((h) => h.id === id);
 
   // Fechas y huéspedes que controlan la disponibilidad mostrada
@@ -295,7 +299,15 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                     </p>
                     <button
                       disabled={!sePuede}
-                      onClick={() => setHabitacion(r)}
+                      // Sin sesión no se puede reservar: primero se abre el registro (HU-038)
+                      onClick={() => {
+                        if (!usuario) {
+                          avisar("Crea tu cuenta o inicia sesión para reservar tu habitación.", "info");
+                          abrirRegistro();
+                          return;
+                        }
+                        setHabitacion(r);
+                      }}
                       className={`rounded-lg px-6 py-2.5 text-sm font-bold transition-all ${
                         sePuede
                           ? "bg-accent text-white shadow-md hover:bg-accent-dark active:scale-95"
@@ -372,26 +384,19 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
         </section>
       )}
 
-      {/* ===== Ubicación ===== */}
+      {/* ===== Ubicación: mapa real de OpenStreetMap (HU-037) ===== */}
       <section className="mt-16 grid gap-6 lg:grid-cols-[1fr_1.2fr]">
         <Reveal>
-          <div className="relative flex h-64 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-primary-soft via-white to-accent-light">
-            {/* Mapa estilizado dibujado con SVG */}
-            <svg className="absolute inset-0 h-full w-full text-primary/15" aria-hidden="true">
-              <defs>
-                <pattern id="malla" width="34" height="34" patternUnits="userSpaceOnUse">
-                  <path d="M34 0H0v34" fill="none" stroke="currentColor" strokeWidth="1" />
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#malla)" />
-              <path d="M-20 190 C 120 140, 240 230, 420 170 S 700 120, 900 180" fill="none" stroke="#0B3540" strokeOpacity="0.35" strokeWidth="10" strokeLinecap="round" />
-              <path d="M60 40 C 180 90, 300 20, 460 70 S 720 60, 860 30" fill="none" stroke="#F7A81B" strokeOpacity="0.4" strokeWidth="5" strokeDasharray="2 10" strokeLinecap="round" />
-            </svg>
-            <span className="anim-floaty relative flex flex-col items-center text-primary">
-              <IconoPin size={44} />
-              <span className="mt-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-primary-dark shadow-md">{muni?.nombre}, {depto?.nombre}</span>
-            </span>
-          </div>
+          {/*
+            Si el hotel no tiene coordenadas guardadas (datos de antes de la
+            HU-037), el mapa abre centrado en el municipio y nada se rompe.
+          */}
+          <MapaHotel
+            punto={hotel.ubicacion ?? muni?.centro ?? null}
+            nombre={hotel.nombre}
+            altura="h-64 sm:h-72"
+            zoom={15}
+          />
         </Reveal>
         <Reveal delay={120}>
           <div className="flex h-full flex-col justify-center rounded-xl border border-line bg-white p-7 shadow-card">
@@ -406,6 +411,23 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
               <span className="rounded-full bg-canvas px-3 py-1.5">Transporte bajo pedido</span>
               <span className="rounded-full bg-canvas px-3 py-1.5">Parqueo gratuito</span>
             </div>
+            {/* Abrir la misma ubicación en OpenStreetMap, con las coordenadas reales */}
+            {(() => {
+              const punto = hotel.ubicacion ?? muni?.centro;
+              if (!punto) return null;
+              const osm = `https://www.openstreetmap.org/?mlat=${punto.lat}&mlon=${punto.lng}#map=16/${punto.lat}/${punto.lng}`;
+              return (
+                <a
+                  href={osm}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg border-2 border-primary px-4 py-2.5 text-sm font-bold text-primary transition-colors hover:bg-primary-soft"
+                >
+                  <IconoPin size={15} />
+                  Abrir en OpenStreetMap
+                </a>
+              );
+            })()}
           </div>
         </Reveal>
       </section>

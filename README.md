@@ -99,7 +99,7 @@ Hotelica/
 ├── CHANGELOG.md                # Bitácora de versiones (v0.1.0+)
 │
 ├── historias-usuario/          # Product Backlog con criterios BDD
-│   ├── Orden de Historias de Usuarios.md   # Índice oficial (36 HUs)
+│   ├── Orden de Historias de Usuarios.md   # Índice oficial (HU-000 a HU-039)
 │   ├── HU-000-base-datos.md
 │   ├── HU-001-registrarse.md
 │   ├── HU-002-iniciar-sesion.md
@@ -110,10 +110,10 @@ Hotelica/
 │
 ├── public/                     # Marca e imágenes
 │   ├── Logo.svg                # Logo completo (teal + dorado)
-│   ├── Logo-blanco.svg         # Variante clara (hero / fondos oscuros)
-│   ├── text-subtext.svg        # Texto + guiones (footer claro)
-│   ├── text-subtext-white.svg  # Texto + guiones claro
-│   └── favicon.svg             # Sello del volcán
+│   ├── text-subtext-white.svg  # Texto + guiones claro (footer)
+│   ├── favicon.svg             # Sello del volcán
+│   ├── logo-email.png          # Cabecera de los correos que manda Supabase
+│   └── destinos/               # Fotos de uso libre por departamento (+ CREDITOS.md)
 │
 └── src/
     ├── App.tsx                 # Componente raíz y enrutamiento
@@ -126,7 +126,6 @@ Hotelica/
     ├── ui.tsx                  # Componentes base (Marca, Modales, Estrellas, LOGOS)
     ├── tarjeta.tsx             # Tarjeta de hotel
     ├── icons.tsx               # Iconos SVG inline
-    ├── siluetas.tsx            # Siluetas SVG de departamentos
     ├── index.css               # Tokens de la guía de estilo + Tailwind
     ├── lib/
     │   └── supabase.ts         # Cliente de Supabase (variables VITE_)
@@ -196,7 +195,7 @@ VITE_SUPABASE_ANON_KEY=TU_CLAVE_ANONIMA
 
 El proyecto se despliega en Vercel como SPA:
 
-- `vite.config.js` compila con base relativa (`base: './'`) para evitar rutas absolutas.
+- `vite.config.js` es la configuración activa (React + Tailwind en el puerto 3000). Vite resuelve esa configuración antes que cualquier otra: no existe un segundo archivo de configuración.
 - `vercel.json` reescribe todas las rutas (excepto `assets/`) hacia `index.html`, para que la navegación por estado funcione al recargar.
 
 ---

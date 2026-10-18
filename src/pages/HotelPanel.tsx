@@ -8,9 +8,10 @@ import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
   DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_HABITACION, MAXIMO_FOTOS, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
-  calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida, validarImagenHotel,
+  calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
+import { MapaHotel } from "../mapa";
 import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
 import {
@@ -90,6 +91,7 @@ export function PanelHotel() {
       departamentoId: hotel.departamentoId,
       municipioId: hotel.municipioId,
       direccion: hotel.direccion,
+      ubicacion: hotel.ubicacion ?? null, // punto exacto en el mapa (HU-037)
       descripcion: hotel.descripcion,
       telefono: hotel.contacto ?? "",
       imagen: hotel.imagen,
@@ -105,10 +107,17 @@ export function PanelHotel() {
     setErroresEdicion((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
   };
 
-  // Al cambiar el departamento volvemos a elegir el municipio
+  // Al cambiar el departamento volvemos a elegir el municipio (y su pin)
   const cambiarDepartamentoEdicion = (id: string) => {
-    setFormEdicion((f) => (f ? { ...f, departamentoId: id, municipioId: "" } : f));
-    setErroresEdicion((e) => ({ ...e, departamentoId: undefined, municipioId: undefined }));
+    setFormEdicion((f) => (f ? { ...f, departamentoId: id, municipioId: "", ubicacion: null } : f));
+    setErroresEdicion((e) => ({ ...e, departamentoId: undefined, municipioId: undefined, ubicacion: undefined }));
+  };
+
+  // Al cambiar el municipio el pin pasa al centro de ese municipio (HU-037)
+  const cambiarMunicipioEdicion = (id: string) => {
+    const centro = MUNICIPIOS.find((m) => m.id === id)?.centro ?? null;
+    setFormEdicion((f) => (f ? { ...f, municipioId: id, ubicacion: centro } : f));
+    setErroresEdicion((e) => ({ ...e, municipioId: undefined, ubicacion: undefined }));
   };
 
   // Guarda los cambios solo si todas las reglas pasan
@@ -578,7 +587,7 @@ export function PanelHotel() {
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Municipio</span>
                 <select
                   value={formEdicion.municipioId}
-                  onChange={(e) => cambiarCampoEdicion("municipioId", e.target.value)}
+                  onChange={(e) => cambiarMunicipioEdicion(e.target.value)}
                   disabled={!formEdicion.departamentoId}
                   className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 disabled:cursor-not-allowed disabled:bg-canvas disabled:text-muted ${
                     erroresEdicion.municipioId ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
@@ -612,18 +621,55 @@ export function PanelHotel() {
                 )}
               </label>
 
+              {/* Ubicación exacta en el mapa (HU-037): misma lógica que la inscripción */}
+              <div className="block sm:col-span-2">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Ubicación exacta</span>
+                <p className="mb-2 text-[11px] text-muted">
+                  Hacé clic en el mapa para dejar el pin en la entrada de tu hotel (o arrastralo para afinarlo).
+                </p>
+                <div className={erroresEdicion.ubicacion ? "rounded-xl border border-[#FCA5A5]" : ""}>
+                  <MapaHotel
+                    variante="selector"
+                    nombre={hotel.nombre}
+                    punto={formEdicion.ubicacion}
+                    centro={MUNICIPIOS.find((m) => m.id === formEdicion.municipioId)?.centro ?? null}
+                    zoom={13}
+                    altura="h-72"
+                    alCambiar={(p) => {
+                      setFormEdicion((f) => (f ? { ...f, ubicacion: p } : f));
+                      setErroresEdicion((e) => ({ ...e, ubicacion: undefined }));
+                    }}
+                  />
+                </div>
+                <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-semibold text-muted">
+                  {formEdicion.ubicacion ? (
+                    <span className="tabular-nums">
+                      Latitud {formEdicion.ubicacion.lat.toFixed(4)} · Longitud {formEdicion.ubicacion.lng.toFixed(4)}
+                    </span>
+                  ) : (
+                    "Sin marcar: elegí un municipio para empezar."
+                  )}
+                </p>
+                {erroresEdicion.ubicacion && (
+                  <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.ubicacion}</p>
+                )}
+              </div>
+
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Teléfono (opcional)</span>
                 <input
                   type="tel"
                   value={formEdicion.telefono}
-                  onChange={(e) => cambiarCampoEdicion("telefono", e.target.value)}
-                  maxLength={20}
-                  placeholder="Ej: 8888-8888"
+                  onChange={(e) => cambiarCampoEdicion("telefono", soloDigitosTelefono(e.target.value))}
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  maxLength={8}
+                  placeholder="Ej: 88881234"
                   className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${
                     erroresEdicion.telefono ? "border-[#FCA5A5] focus:border-[#EF4444] focus:ring-[#EF4444]/25" : "border-line focus:border-primary focus:ring-primary/25"
                   }`}
                 />
+                <p className="mt-1 text-[11px] text-muted">8 dígitos, empezando por 2, 5, 7 u 8.</p>
                 {erroresEdicion.telefono && (
                   <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresEdicion.telefono}</p>
                 )}

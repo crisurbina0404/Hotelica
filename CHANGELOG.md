@@ -6,6 +6,105 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.55.0] — 2026-10-18 · HU-026: consultar reservas recibidas (documentación)
+
+### Agregado
+- **`historias-usuario/HU-026-consultar-reservas-recibidas.md`**: historia de usuario del módulo Gestión Hotel, con 7 reglas de negocio, 6 escenarios BDD y las subtareas HOTELICA-259 a 264. Como pasó con la HU-025, la tabla del backlog la daba por escrita y el archivo no existía: se redacta siguiendo el comportamiento ya implementado en `src/pages/HotelPanel.tsx` (listado filtrado por el hotel propio y ordenado por llegada, tablero de cuatro contadores, ingresos sin canceladas, barra de ocupación con la fórmula oficial, tabla de escritorio y vista de tarjetas de respaldo; la historia deja constancia de que, por la HU-039, el panel solo se consulta en escritorio).
+
+### Cambiado
+- **`historias-usuario/Orden de Historias de Usuarios.md`**: HU-026 pasa de "⬜ Escrita" a "✅ Terminada".
+
+### Verificado
+La historia se redactó contra el código que ya corre en el proyecto y su comportamiento está comprobado en el navegador desde entregas anteriores (panel del hotel con sus reservas, contadores y ocupación); esta versión solo toca documentación, sin cambios de código, por lo que no se repiten `typecheck` y `build`.
+
+---
+
+## [v0.54.0] — 2026-10-18 · HU-039: teléfonos válidos, un solo logo y móvil solo turista
+
+### Agregado
+- **`historias-usuario/HU-039-validaciones-logo-y-experiencia-movil.md`**: historia de usuario con las cuatro correcciones de la revisión, 7 escenarios BDD y las subtareas HOTELICA-252 a 258.
+- **`src/data.ts`**: `errorTelefonoNicaragua()` devuelve el motivo exacto del rechazo y `soloDigitosTelefono()` deja el campo en dígitos, con tope de 8. La regla es la de Nicaragua: **8 dígitos que empiezan por 2, 5, 7 u 8** (se admiten espacios, guiones y un `505` opcional delante).
+
+### Cambiado
+- **Validación de teléfono en los tres formularios** — inscripción del hotel (`src/pages/InscribeHotel.tsx`), edición de la información del hotel (`src/pages/HotelPanel.tsx`) y perfil del usuario (`src/pages/Profile.tsx`) usan la misma regla. Los campos filtran letras y símbolos al escribir, usan teclado numérico, se detienen en 8 dígitos y muestran una ayuda con la regla; los mensajes dicen qué corregir (“debe empezar por 2, 5, 7 u 8” o “debe tener exactamente 8 dígitos”). Se retira la expresión regular genérica del perfil.
+- **`src/ui.tsx` — un solo logo:** `Marca` deja de apilar la versión blanca y muestra siempre el logo principal (`Logo.svg`). Sobre el hero se le suma un **contorno claro blando y fino** con `drop-shadow` en capas, que desaparece al quedar la barra blanca. Se elimina `LOGOS.completoClaro` (la navbar ya no usa `Logo-blanco.svg`).
+- **`src/App.tsx` — móvil solo turista:** nuevo `usePantallaMovil()` sobre `(max-width: 1023px)`; por debajo de ese ancho el rol visible es siempre `turista` y las rutas `panel` y `admin` se resuelven al inicio, aunque el demo haya quedado en otro perfil.
+- **`src/layout.tsx` — menú móvil:** se quitan del menú el selector de perfil y los accesos al panel del hotel y a la consola del admin. Con el menú abierto el body se fija (`position: fixed` con el desplazamiento guardado) y **el contenido de atrás deja de moverse**; al cerrarlo el scroll vuelve al mismo punto (salvo que se navegue, que arranca arriba). El menú tiene alto máximo con scroll propio y cierra con Escape.
+- **`src/App.tsx` — splash móvil reparado:** el logo se corre un 26 % de su propio ancho (antes 144 px fijos) y usa el tamaño `splash` (`h-60` en celular, `h-72` en escritorio) con `max-w-none`, así queda centrado y completo en pantallas angostas, sin desborde ni scroll horizontal.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. En el navegador (servidor de desarrollo): el teléfono probado en el formulario de inscripción se comporta así: escribir `88a88-12x34` deja `88881234`; con `12345678` el envío se bloquea con “El teléfono debe empezar por 2, 5, 7 u 8”; con `888812` se bloquea con “El teléfono debe tener exactamente 8 dígitos”; con `88881234` la solicitud se envía y aparece el aviso de revisión (la prueba usó un estado temporal que se restauró después). En el celular (390 px) el splash muestra la marca completa y centrada, el menú desplegado no mueve la página (body fijado en `-2201px`, `scrollY` en 0) y al cerrarlo vuelve al mismo punto (`scrollY` 2201), sin selector de perfil ni accesos de admin u hotelero. Con el demo en rol admin en escritorio, al angostar a 390 px la consola administrativa deja de mostrarse y aparece el inicio.
+
+### Limitación
+La restricción del celular es total: un hotelero con cuenta real que entre desde su teléfono no puede abrir su panel en esta maqueta, porque en móvil solo se ofrece el módulo turista. El repositorio sigue sin pruebas automatizadas (`npm test` responde “No test files found”), así que la evidencia es la revisión manual más `typecheck` y `build`.
+
+---
+
+## [v0.53.0] — 2026-10-18 · HU-038: la portada le habla a los hoteleros
+
+### Agregado
+- **`historias-usuario/HU-038-portada-hoteleros-traduccion-y-reserva.md`**: historia de usuario con los seis hallazgos de la revisión visual-funcional de la portada, escenarios BDD y subtareas. Recoge el rediseño de la franja de destinos, la tarjeta de hoteleros, las cifras del hero, la reserva con cuenta y la traducción por navegador.
+- **`public/destinos/` (nuevo)**: **ocho fotografías reales de Wikimedia Commons**, una por departamento del catálogo (`granada.jpg`, `leon.jpg`, `rivas.jpg`, `managua.jpg`, `masaya.jpg`, `esteli.jpg`, `matagalpa.jpg`, `caribe.jpg`), redimensionadas a 1280 px. Catedral de Granada, Catedral de León, volcán Concepción en Ometepe, Antigua Catedral de Managua, Parque Central de Masaya, skyline de Estelí desde Tisey, vista de Matagalpa y Otto Beach en Little Corn Island.
+- **`public/destinos/CREDITOS.md`**: tabla con la foto original, autoría, licencia (CC BY 2.0, CC BY-SA 2.0 y CC BY-SA 4.0) y enlace a Wikimedia Commons de cada imagen, para cumplir la atribución que exigen esas licencias.
+- **`index.html`**: **Google Traductor automático** — el elemento `translate` con `pageLanguage: "es"` detecta el idioma del navegador, y si no es español (en, fr, de, pt, it) se escribe la cookie `googtrans=/es/<idioma>` antes de cargar el script, de modo que la página se traduce sola al abrir. Reemplaza al selector propio de idioma; el contenedor del widget va oculto para no ensuciar el layout.
+
+### Cambiado
+- **`src/pages/Home.tsx`** — las tarjetas de "Destinos que enamoran" dejan de ser un degradado con silueta y pasan a mostrar **la fotografía real del departamento** (con velo oscuro para que el nombre y el conteo de hoteles se lean sobre cualquier imagen). La franja de hoteleros se reduce a **una sola tarjeta, arriba**, titulada "Registra tu hotel ahora", con **silueta de hotel** (`IconoHotel`) anclada en la esquina inferior derecha en lugar de la palmera, y un botón **"Registrar mi hotel"** que abre el formulario en una **ventana flotante**; la tarjeta duplicada del pie de la portada se elimina. Las cifras del hero ya no están escritas a mano: salen de los datos (`6` hoteles aprobados, `23` municipios del catálogo, `10` reseñas).
+- **`src/pages/InscribeHotel.tsx`** — acepta `enVentana` para renderizarse dentro de la modal sin su propio marco de página, y el aviso de éxito explica el resultado al dueño: "Tu solicitud está en revisión. El resultado te aparecerá en tu correo electrónico (correo)", con la cuenta de hotelero incluida cuando lo aprueben.
+- **`src/pages/HotelDetail.tsx`** — **"Reservar" sin sesión abre la pantalla de registro** en vez del formulario de reserva: avisa "Crea tu cuenta o inicia sesión para reservar tu habitación" y abre la modal de registro. Con sesión, el flujo sigue igual.
+- **`src/store.tsx`** — se elimina `cambiarIdioma` y la persistencia de idioma en `localStorage` (el español es el idioma de origen; la traducción la hace el navegador). El estado de la modal de registro pasa al store (`registroAbierto`, `abrirRegistro`, `cerrarRegistro`) para que cualquier pantalla pueda abrirla.
+- **`src/layout.tsx`** — se quita el selector ES/EN del escritorio y la opción "Ver en inglés" del menú móvil; los botones "Registrarse" y el flujo de la modal usan el estado compartido del store.
+- **`src/ui.tsx`** — el `Modal` se renderiza en un **portal al `body`**. El header tiene `backdrop-blur`, y eso lo convertía en el contenedor de los elementos `fixed`: la ventana flotante quedaba recortada a la altura de la barra (64 px) y se veía cortada por arriba. Afectaba a las modales de login y registro.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores (se mantiene el aviso de tamaño de chunk, ya conocido). Revisión en el navegador con el servidor de desarrollo: en escritorio (1440 px) y en celular (390 px) las ocho tarjetas de destinos muestran su fotografía real y la barra lateral de filtros no se rompe; el hero muestra 6 / 23 / 10 tomados de los datos; la tarjeta de hoteleros aparece una sola vez, "Registrar mi hotel" abre el formulario completo en ventana flotante y la silueta de hotel queda detrás del CTA; en la navbar ya no hay selector de idioma, ni en escritorio ni en el menú móvil (el widget de Google va con `display: none`, así que tampoco aparece "Seleccionar idioma" para lectores de pantalla); con la cookie `googtrans=/es/en` la portada se tradujo al inglés ("Find your next destination…") y volvió al español al limpiarla; en la ficha de un hotel, **con la sesión cerrada, "Reservar" muestra el aviso y abre "Crear cuenta"** centrada y completa. El formulario de la modal se completó de punta a punta: al pulsar "Finalizar solicitud" aparece **"Tu solicitud está en revisión. El resultado te aparecerá en tu correo electrónico (…)"** con la pastilla "Pendiente" (la prueba se hizo con un estado temporal, restaurado después).
+
+### Limitación
+El repositorio no tiene pruebas automatizadas (`npm test` termina con "No test files found"; no existen `src/__tests__/` ni `tests/`), así que la evidencia es la revisión manual en el navegador más `typecheck` y `build`. Google Traductor necesita internet y su banner se dibuja sobre la página: si el visitante ya navega en español, el banner no aparece.
+
+---
+
+## [v0.52.0] — 2026-10-17 · HU-037: mapa de ubicación exacta del hotel
+
+### Agregado
+- **`historias-usuario/HU-037-mapa-de-ubicacion-exacta.md`**: historia de usuario de los módulos Búsqueda / Gestión Hotel, con 7 escenarios BDD y las subtareas HOTELICA-236 a 242. Hasta ahora la "ubicación" era texto y un SVG decorativo (la HU-009 contemplaba "mapa estático"); con esto el hotel tiene coordenadas reales y un mapa de verdad.
+- **Dependencias:** `leaflet` + `react-leaflet` v4 (React 18) y `@types/leaflet`. **Mapa de código abierto: Leaflet con tiles de OpenStreetMap, sin API keys ni servicios de pago.** La atribución de OpenStreetMap queda visible (obligatoria por su licencia).
+- **`src/mapa.tsx` (nuevo):** componente `MapaHotel` con dos variantes: **"vista"** (solo lectura, con popup y enlace) y **"selector"** (clic en el mapa o arrastre del pin marcan la ubicación exacta). El marcador es un `divIcon` con el **SVG propio del proyecto** en los colores de marca (pin dorado con contorno teal), no las imágenes por defecto de Leaflet. `scrollWheelZoom` desactivado para no atrapar el scroll de la página y animaciones de encuadre apagadas con `prefers-reduced-motion`.
+- **`src/data.ts`**: `Municipio` gana `centro` (el centro de cada uno de los 23 municipios del catálogo) y `Hotel` gana `ubicacion?: Punto`; los 9 hoteles de la semilla reciben coordenadas reales (La Calzada en Granada, el malecón de San Juan del Sur, el camino a la cascada San Ramón, etc.). Nuevos: tipo `Punto`, `LIMITES_NICARAGUA`, `RADIO_MUNICIPIO_KM` (30 km), `distanciaKm()` (haversine) y `validarUbicacionExacta()`, que se suma a `validarRegistroHotel()`: la ubicación es obligatoria, tiene que caer dentro de Nicaragua y a menos de 30 km del municipio declarado.
+- **`src/index.css`**: estilos del mapa con los tokens de la marca (contenedor, popup crema redondeado, atribución legible y controles de zoom en los colores del sitio).
+
+### Cambiado
+- **`src/pages/HotelDetail.tsx`** — la sección "Cómo llegar" reemplaza el SVG decorativo (malla dibujada y pin flotante) por el **mapa real de OpenStreetMap** con el pin del hotel y un nuevo enlace **"Abrir en OpenStreetMap"** que lleva a la misma coordenada. Un hotel sin coordenadas (datos guardados antes de esta versión) abre el mapa centrado en su municipio: nada se rompe.
+- **`src/pages/InscribeHotel.tsx`** — el formulario suma el campo **"Ubicación exacta"**: al elegir municipio el mapa reencuadra sobre él con el pin en el centro, y el dueño lo mueve con un clic o arrastrándolo; las coordenadas se muestran con `tabular-nums`. Cambiar de departamento o municipio recoloca el pin donde corresponde.
+- **`src/pages/HotelPanel.tsx`** — "Editar información" incluye el mismo selector de ubicación, con el punto actual ya cargado.
+- **`src/pages/AdminPanel.tsx`** — la modal "Ver" de una solicitud muestra el mapa con la ubicación exacta que marcó el dueño, para que el admin decida viendo dónde queda el hotel.
+- **`src/store.tsx`**: `registrarHotel()` y `actualizarHotel()` guardan la `ubicacion` del formulario en el hotel.
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Prueba automatizada temporal con Playwright (16 chequeos, todos en verde) sobre el servidor de desarrollo: en el detalle el contenedor Leaflet se ve, cargan los tiles de OpenStreetMap, el pin SVG se dibuja, está la atribución y el enlace, y **la rueda del mouse scrollea la página sin quedar atrapada en el mapa**; en la inscripción el mapa reencuadra al municipio (tile `/13/`, no el país entero), muestra las coordenadas y **el clic en el mapa las cambia**; en la consola del admin la modal de revisión muestra el mapa con su pin; y en celular (390 px) el mapa se ve sin desborde horizontal. Escenario 3 de punta a punta: un formulario completo con el pin a ~42 km de Granada **no se envía** y aparece "El punto está a 42 km de Granada: mové el pin dentro de tu municipio"; al recolocar el pin en el municipio, la solicitud se envía. Escenario 4 con el flujo real de una cuenta (11 chequeos): se inscribe un hotel con ubicación, el admin lo aprueba y crea la cuenta, el dueño **entra con esas credenciales**, abre "Editar información", el editor carga la ubicación que marcó al inscribirse, un clic mueve el pin, "Guardar cambios" confirma y **la ubicación corregida persiste tras recargar**.
+
+### Limitación
+Los tiles de OpenStreetMap se cargan desde internet: sin conexión el mapa queda vacío (la dirección escrita de al lado sigue visible). La guía de uso de OSM pide no hacer peticiones masivas desde client-side intensivo; para producción con mucho tráfico conviene un proxy de tiles propio o un proveedor con plan gratuito (en la maqueta esto no aplica).
+
+---
+
+## [v0.51.0] — 2026-10-16 · HU-036: composición editorial sin el patrón "N pasos"
+
+### Agregado
+- **`historias-usuario/HU-036-composicion-editorial-sin-pasos.md`**: historia de usuario del módulo Diseño (oficio visual), con 7 escenarios BDD y las subtareas HOTELICA-232 a 235. Surge del estudio `Estudio-diseno-generico-IA.md` (§1.2): el patrón "N pasos" que la guía de diseño prohíbe (§10.1) estaba implementado en dos pantallas.
+
+### Cambiado
+- **`src/pages/Home.tsx`** — la sección "De la búsqueda a la hamaca" deja de ser cuatro columnas iguales con los números `01`–`04`, puntos y línea conectora. Pasa a **bloque editorial asimétrico**: mancheta a la izquierda (ceja, titular grande, narración y CTA "Empezar por la búsqueda" que lleva a los resultados) e índice a la derecha, con los cuatro momentos del recorrido (Buscás / Comparás / Reservás / Disfrutás) como lista separada por filetes y sangrías alternadas, no como cajitas idénticas. Se eliminó `TituloSeccionCentro()`, que quedó sin uso.
+- **`src/pages/InscribeHotel.tsx`** — las tres tarjetas numeradas del pie del formulario ("Envías la solicitud / El admin la revisa / Recibís tu cuenta") se reemplazan por una frase de prosa junto al botón "Enviar solicitud", que es donde el dueño necesita saber qué pasa después. Se limpiaron los import sin uso (`IconoPin`, `IconoOjo`, `IconoLlave`, `TituloSeccion`).
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Revisión en el navegador: en escritorio (1440 px) el bloque nuevo muestra las columnas de distinto ancho con las sangrías alternadas del índice y el CTA lleva a "Hoteles en toda Nicaragua"; los textos viejos ("Busca tu destino", "El admin la revisa", etc.) ya no existen en el DOM; el pie del formulario muestra la frase al lado del botón sin tarjetas numeradas; y en celular (390 px) las columnas se apilan en un solo orden de lectura sin desbordes.
+
+### Limitación
+Sigue sin haber pruebas automatizadas en el proyecto; la evidencia es la prueba manual en el navegador más `typecheck` y `build`.
+
+---
+
 ## [v0.50.0] — 2026-10-16 · HU-025: el hotelero sube las fotografías de su hotel
 
 ### Agregado
