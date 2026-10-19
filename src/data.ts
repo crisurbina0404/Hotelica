@@ -89,6 +89,8 @@ export type Reserva = {
   motivoRechazo?: string;
   // Fecha y hora en que el hotel registró la entrada (HU-028)
   checkinEn?: string;
+  // Fecha y hora en que el hotel registró la salida (HU-029)
+  checkoutEn?: string;
 };
 
 export type Resena = {

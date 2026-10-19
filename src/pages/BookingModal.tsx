@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import type { Habitacion, Hotel, Reserva, DatosPago, Pago } from "../data";
-import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, hoyISO, sugerirFechasAlternativas, TASA_IVA as TASA_IVA_PCT, validarPago } from "../data";
+import { calcularNoches, calcularTotales, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, sugerirFechasAlternativas, TASA_IVA as TASA_IVA_PCT, validarPago } from "../data";
 import { Modal, Spinner, Marca } from "../ui";
 // Copia interna del logo para incrustarlo en el comprobante descargable
 import logoBlanco from "../assets/Logo-blanco.svg?raw";
@@ -41,8 +41,10 @@ function referenciaDe(metodo: Reserva["pago"], datos: DatosPago): string {
   return "Pago en recepción";
 }
 
-// Arma el comprobante en HTML con la marca de Hotelica y lo descarga (HU-018)
-function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: string, pago?: Pago | null) {
+// Arma el documento en HTML con la marca de Hotelica y lo descarga
+// El comprobante es el de la reserva (HU-018) y la factura cierra la estadía (HU-029)
+function descargarDocumento(r: Reserva, hotelNombre: string, habitacionTipo: string, pago: Pago | null | undefined, tipo: "comprobante" | "factura") {
+  const esFactura = tipo === "factura";
   // Paleta oficial: mismos colores de badge que en la aplicación
   const CHIP: Record<string, [string, string]> = {
     pendiente: ["#FEF3C7", "#92400E"],
@@ -67,7 +69,7 @@ function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: s
 
   const comprobante = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Comprobante ${r.folio} — Hotelica</title>
+<title>${esFactura ? `Factura ${r.folio}` : `Comprobante ${r.folio}`} — Hotelica</title>
 <style>
   body { font-family: 'Outfit', 'Segoe UI', Arial, sans-serif; background: #F8F6F0; color: #1C2B30; margin: 0; padding: 40px 16px; }
   .caja { max-width: 600px; margin: auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 18px rgba(11,53,64,.14); }
@@ -104,13 +106,13 @@ function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: s
   </div>
 
   <div class="contenido">
-    <p class="ceja">Comprobante de reserva y pago</p>
-    <h1 class="titulo">Reserva ${r.folio}</h1>
+    <p class="ceja">${esFactura ? "Factura de la estadía" : "Comprobante de reserva y pago"}</p>
+    <h1 class="titulo">${esFactura ? `Estadía ${r.folio}` : `Reserva ${r.folio}`}</h1>
 
     <div class="folio">
-      <p class="folio-ceja">Tu folio</p>
+      <p class="folio-ceja">${esFactura ? "Factura del folio" : "Tu folio"}</p>
       <p class="folio-numero">${r.folio}</p>
-      <p class="folio-nota">Guárdalo para el check-in</p>
+      <p class="folio-nota">${esFactura ? "Cierra la estadía con orden" : "Guárdalo para el check-in"}</p>
     </div>
 
     <div class="bloque">
@@ -124,6 +126,8 @@ function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: s
         ${fila("Salida", fmtFecha(r.salida))}
         ${fila("Noches", String(r.noches))}
         ${fila("Huéspedes", String(r.huespedes))}
+        ${esFactura && r.checkinEn ? fila("Entrada", fmtFechaHora(r.checkinEn)) : ""}
+        ${esFactura && r.checkoutEn ? fila("Salida", fmtFechaHora(r.checkoutEn)) : ""}
         ${fila("Estado de la reserva", chip(r.estado))}
       </table>
     </div>
@@ -139,7 +143,7 @@ function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: s
     </div>
 
     <div class="bloque">
-      <p class="bloque-titulo">Resumen del pago</p>
+      <p class="bloque-titulo">${esFactura ? "Resumen de la estadía" : "Resumen del pago"}</p>
       <table>
         ${fila("Subtotal", fmtDinero(r.subtotal))}
         ${fila(`IVA (${TASA_IVA_PCT * 100}%)`, fmtDinero(r.iva))}
@@ -147,12 +151,16 @@ function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: s
     </div>
 
     <div class="total">
-      <p class="total-etiqueta">Total pagado (IVA incluido)</p>
+      <p class="total-etiqueta">${esFactura ? "Total de la estadía (IVA incluido)" : "Total pagado (IVA incluido)"}</p>
       <p class="total-monto">${fmtDinero(r.total)}</p>
       ${pago ? chip(pago.estado) : ""}
     </div>
 
-    <p class="nota">Presenta este comprobante en recepción junto con tu identificación para completar el check-in. Emitido el ${fmtFecha(r.creada)}.</p>
+    <p class="nota">${
+      esFactura
+        ? `Factura generada automáticamente al registrar el check-out el ${r.checkoutEn ? fmtFechaHora(r.checkoutEn) : fmtFecha(r.salida)}. El IVA del 15 % ya está incluido en el total.`
+        : `Presenta este comprobante en recepción junto con tu identificación para completar el check-in. Emitido el ${fmtFecha(r.creada)}.`
+    }</p>
   </div>
 
   <div class="pie">
@@ -165,9 +173,19 @@ function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: s
   const url = URL.createObjectURL(blob);
   const enlace = document.createElement("a");
   enlace.href = url;
-  enlace.download = `comprobante-${r.folio}.html`;
+  enlace.download = esFactura ? `factura-${r.folio}.html` : `comprobante-${r.folio}.html`;
   enlace.click();
   URL.revokeObjectURL(url);
+}
+
+// Comprobante de la reserva y el pago, que el turista descarga al reservar (HU-018)
+export function descargarComprobante(r: Reserva, hotelNombre: string, habitacionTipo: string, pago?: Pago | null) {
+  descargarDocumento(r, hotelNombre, habitacionTipo, pago, "comprobante");
+}
+
+// Factura de la estadía, que se genera sola al registrar el check-out (HU-029)
+export function descargarFactura(r: Reserva, hotelNombre: string, habitacionTipo: string, pago?: Pago | null) {
+  descargarDocumento(r, hotelNombre, habitacionTipo, pago, "factura");
 }
 
 export function ModalReserva({

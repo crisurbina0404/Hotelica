@@ -146,6 +146,7 @@ type AppCtx = {
   enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva, motivoRechazo?: string) => void;
   registrarCheckin: (folio: string) => string;
+  registrarCheckout: (folio: string) => string;
   avisarHotel: (hotelId: string, folio: string, texto: string) => void;
   marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
@@ -408,6 +409,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       reservas: d.reservas.map((r) => {
         if (r.folio !== folio) return r;
         return { ...r, estado: "checkin" as EstadoReserva, checkinEn: marca };
+      }),
+    }));
+    return marca;
+  };
+
+  // Cierra la estadía: estado Completada con la hora de salida de este momento (HU-029)
+  // Devuelve la marca para que el panel avise con la hora exacta y descargue la factura
+  const registrarCheckout = (folio: string) => {
+    const marca = ahoraISO();
+    setDatos((d) => ({
+      ...d,
+      reservas: d.reservas.map((r) => {
+        if (r.folio !== folio) return r;
+        return { ...r, estado: "completada" as EstadoReserva, checkoutEn: marca };
       }),
     }));
     return marca;
@@ -978,6 +993,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       enviarCorreoReserva,
       cambiarEstadoReserva,
       registrarCheckin,
+      registrarCheckout,
       avisarHotel,
       marcarNotificacionesLeidas,
       calificar,

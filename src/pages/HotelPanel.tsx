@@ -11,16 +11,17 @@ import {
   calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
+import { descargarFactura } from "./BookingModal";
 import { MapaHotel } from "../mapa";
 import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion, Modal } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica, IconoBillete, IconoFoto,
-  IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella,
+  IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella, IconoDescargar,
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, habitaciones: todasLasHabitaciones, reservas, cambiarEstadoReserva, registrarCheckin, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
+  const { hoteles, habitaciones: todasLasHabitaciones, reservas, pagos, cambiarEstadoReserva, registrarCheckin, registrarCheckout, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -223,7 +224,10 @@ export function PanelHotel() {
       {r.estado === "checkin" && (
         <Accion onClick={() => checkOut(r)} clase="bg-success text-white hover:bg-[#15803D]" icono={<IconoSalida size={13} />} texto="Check-out" />
       )}
-      {(r.estado === "completada" || r.estado === "cancelada") && (
+      {r.estado === "completada" && (
+        <Accion onClick={() => descargarFacturaDe(r)} clase="border border-primary/40 text-primary hover:bg-primary-soft" icono={<IconoDescargar size={13} />} texto="Factura" />
+      )}
+      {r.estado === "cancelada" && (
         <span className="text-[11px] font-semibold text-muted">—</span>
       )}
     </>
@@ -451,9 +455,32 @@ export function PanelHotel() {
     const entrada = registrarCheckin(r.folio);
     avisar(`Check-in registrado para ${r.turista} (${r.folio}) · entrada ${fmtFechaHora(entrada)}.`, "ok");
   };
+  // El check-out solo se registra sobre un huésped que está en estadía (HU-029)
+  const sePuedeCheckOut = (r: Reserva) => {
+    if (r.hotelId !== HOTEL_ID) {
+      avisar("Esa reserva no pertenece a tu hotel.", "error");
+      return false;
+    }
+    if (r.estado !== "checkin") {
+      avisar(`La reserva ${r.folio} no está en estadía: su estado es ${ETIQUETA_ESTADO[r.estado]}.`, "error");
+      return false;
+    }
+    return true;
+  };
+
+  // Descarga la factura de una estadía cerrada, con su pago si lo hay
+  const descargarFacturaDe = (r: Reserva) => {
+    const hab = habitaciones.find((h) => h.id === r.habitacionId);
+    const pago = pagos.find((p) => p.folio === r.folio);
+    descargarFactura(r, hotel.nombre, hab?.tipo ?? "", pago);
+  };
+
   const checkOut = (r: Reserva) => {
-    cambiarEstadoReserva(r.folio, "completada");
-    avisar(`Check-out listo: ${r.turista} puede calificar su estadía.`, "ok");
+    if (!sePuedeCheckOut(r)) return;
+    const salida = registrarCheckout(r.folio);
+    // La factura se arma con la reserva ya cerrada para que figure como Completada
+    descargarFacturaDe({ ...r, estado: "completada", checkoutEn: salida });
+    avisar(`Check-out registrado para ${r.turista} (${r.folio}) · salida ${fmtFechaHora(salida)}. Se descargó la factura.`, "ok");
   };
 
   const stats = [
@@ -895,6 +922,10 @@ export function PanelHotel() {
                         {r.checkinEn && (
                           <span className="mt-1 block text-[11px] font-semibold text-muted">Entrada {fmtFechaHora(r.checkinEn)}</span>
                         )}
+                        {/* Sello con la hora de la salida registrada (HU-029) */}
+                        {r.checkoutEn && (
+                          <span className="mt-0.5 block text-[11px] font-semibold text-muted">Salida {fmtFechaHora(r.checkoutEn)}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex justify-end gap-1.5">{accionesDe(r)}</div>
@@ -947,6 +978,13 @@ export function PanelHotel() {
                       <div className="col-span-2">
                         <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Entrada</dt>
                         <dd className="mt-0.5 text-sm font-semibold text-ink">{fmtFechaHora(r.checkinEn)}</dd>
+                      </div>
+                    )}
+                    {/* La hora de la salida, si la estadía ya se cerró (HU-029) */}
+                    {r.checkoutEn && (
+                      <div className="col-span-2">
+                        <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Salida</dt>
+                        <dd className="mt-0.5 text-sm font-semibold text-ink">{fmtFechaHora(r.checkoutEn)}</dd>
                       </div>
                     )}
                   </dl>

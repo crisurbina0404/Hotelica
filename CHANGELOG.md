@@ -6,6 +6,26 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.58.0] — 2026-10-19 · HU-029: registrar check-out y factura de la estadía
+
+### Agregado
+- **`historias-usuario/HU-029-registrar-check-out.md`**: historia de usuario del módulo Gestión Hotel, con 7 reglas de negocio, 6 escenarios BDD y las subtareas HOTELICA-248 a 253.
+- **`src/data.ts`** — `Reserva.checkoutEn?: string` con la fecha y hora de la salida, escrita con `ahoraISO()` y mostrada con `fmtFechaHora()` (misma mecánica que `checkinEn` de la HU-028).
+- **`src/store.tsx`** — `registrarCheckout(folio)` pasa la reserva a *Completada* y guarda `checkoutEn` en el mismo movimiento, devolviendo la marca de hora.
+- **Factura de la estadía** (`src/pages/BookingModal.tsx`) — el HTML del comprobante de la HU-018 se unificó en `descargarDocumento()` con un tipo "comprobante" o "factura": la factura cambia título, agrega las horas de entrada y salida, resume la estadía y aclara que el IVA del 15 % ya está incluido. Quedan exportadas `descargarComprobante()` y `descargarFactura()`.
+
+### Cambiado
+- **Botón "Check-out"** (`src/pages/HotelPanel.tsx`) — ahora pasa por `sePuedeCheckOut()`: reserva del hotel propio y estado *Check-in*; si algo falla, toast con el motivo y sin cambios (HOTELICA-250). La salida anticipada está permitida: no se exige que haya llegado la fecha de salida.
+- **Aviso con hora de salida** (HOTELICA-249) — "Check-out registrado para María López (H-0012) · salida 20 oct 2026, 11:05 a.m. Se descargó la factura".
+- **Sello de salida** (HOTELICA-249) — la hora aparece debajo de la de entrada en la fila de la tabla, en la tarjeta del celular y junto al estado.
+- **Factura automática** (HOTELICA-253) — se descarga sola al cerrar la estadía, armada con la reserva ya en estado *Completada*; las filas completadas conservan un botón "Factura" para volver a descargarla. Las canceladas no tienen factura.
+- **Liberación de la habitación** (HOTELICA-251) — sin código nuevo: `disponiblesDe()` ya no cuenta las reservas *Completadas*, así que al check-out baja la ocupación, baja "Check-outs de hoy" y la unidad vuelve a las búsquedas en el acto.
+
+### Verificado
+`npm run typecheck` y `npm run build` en verde. Los 6 escenarios BDD se repasaron contra el código: botón solo en reservas en estadía, marca `checkoutEn` visible, validación con toast, liberación inmediata de la unidad y de los contadores, estado Completada con calificación habilitada (HU-019) y factura con subtotal, IVA y total correctos.
+
+---
+
 ## [v0.57.0] — 2026-10-19 · HU-028: registrar check-in
 
 ### Agregado
