@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
-import { Reveal, TituloSeccion } from "../ui";
+import { Reveal, TituloSeccion, ChecklistContrasena } from "../ui";
 import { errorTelefonoNicaragua, soloDigitosTelefono } from "../data";
 import { IconoFlechaAtras, IconoUsuario, IconoCheck } from "../icons";
 
@@ -74,19 +74,21 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
     : undefined;
 
   // Formulario para cambiar la contraseña (solo hotelero)
+  const [actualPass, setActualPass] = useState("");
   const [nuevaPass, setNuevaPass] = useState("");
   const [confirmaPass, setConfirmaPass] = useState("");
   const [errorPass, setErrorPass] = useState("");
 
-  // Guarda la nueva contraseña del hotelero
+  // Guarda la nueva contraseña del hotelero; pide la actual por seguridad (HU-040)
   const guardarPassword = (e: React.FormEvent) => {
     e.preventDefault();
-    const resultado = cambiarContrasenaHotelero(nuevaPass, confirmaPass);
+    const resultado = cambiarContrasenaHotelero(nuevaPass, confirmaPass, actualPass);
     if (resultado.error) {
       setErrorPass(resultado.error);
       return;
     }
     setErrorPass("");
+    setActualPass("");
     setNuevaPass("");
     setConfirmaPass("");
     avisar("Contraseña actualizada correctamente.", "ok");
@@ -341,7 +343,7 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                 <h2 className="font-display text-lg font-bold text-ink">Contraseña de acceso</h2>
                 <p className="text-xs text-muted">
                   {cuentaMia?.contrasenaTemporal
-                    ? "Aún usás la contraseña temporal: cambiala ya (vence en 24 horas)."
+                    ? "Aún usás la contraseña temporal: cambiala ya (vence en 48 horas)."
                     : "Podés cambiarla cuando quieras."}
                 </p>
               </div>
@@ -349,14 +351,25 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
 
             <form onSubmit={guardarPassword} className="mt-5 grid gap-5 sm:grid-cols-2">
               <label className="block">
+                <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Contraseña actual</span>
+                <input
+                  type="password"
+                  value={actualPass}
+                  onChange={(e) => setActualPass(e.target.value)}
+                  maxLength={40}
+                  placeholder="Tu contraseña de ahora"
+                  className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                />
+              </label>
+              <label className="block">
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Nueva contraseña</span>
                 <input
                   type="password"
                   value={nuevaPass}
                   onChange={(e) => setNuevaPass(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   maxLength={40}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
               </label>
@@ -366,12 +379,13 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                   type="password"
                   value={confirmaPass}
                   onChange={(e) => setConfirmaPass(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   maxLength={40}
                   placeholder="Repetí la contraseña"
                   className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
               </label>
+              <ChecklistContrasena clave={nuevaPass} />
               {errorPass && (
                 <p role="alert" className="anim-pop text-xs font-semibold text-[#B91C1C] sm:col-span-2">{errorPass}</p>
               )}

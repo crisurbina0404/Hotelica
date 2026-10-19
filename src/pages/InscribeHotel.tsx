@@ -495,7 +495,7 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
                   <p className="mt-2 text-xs text-[#166534]/80">
                     Tus credenciales de acceso se enviaron <b>solo</b> al correo que dejaste al inscribirte
                     ({resultadoConsulta.cuenta.correo}). Por seguridad no se muestran acá: revisá tu bandeja de entrada
-                    y cambiá tu contraseña temporal en las primeras 24 horas.
+                    y cambiá tu contraseña temporal en las primeras 48 horas.
                   </p>
                 </div>
               )}

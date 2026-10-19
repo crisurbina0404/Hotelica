@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import type { EstadoHabitacion, EstadoHotel, EstadoReserva } from "./data";
-import { ETIQUETA_ESTADO, ETIQUETA_HABITACION } from "./data";
-import { IconoEstrella, IconoMaleta, IconoX } from "./icons";
+import { ETIQUETA_ESTADO, ETIQUETA_HABITACION, criteriosDeContrasena } from "./data";
+import { IconoEstrella, IconoMaleta, IconoX, IconoCheck } from "./icons";
 
 // ----- Aparición suave al hacer scroll (firma visual del sitio) -----
 export function Reveal({
@@ -320,5 +320,31 @@ export function TituloSeccion({ ceja, titulo, centro = false }: { ceja: string; 
       </p>
       <h2 className="font-display text-2xl font-bold text-ink sm:text-[1.9rem] sm:leading-tight">{titulo}</h2>
     </div>
+  );
+}
+
+// ----- Palomitas de los criterios de contraseña segura (HU-040) -----
+export function ChecklistContrasena({ clave, oscuro = false }: { clave: string; oscuro?: boolean }) {
+  const c = criteriosDeContrasena(clave);
+  const items = [
+    { ok: c.largo, texto: "Al menos 8 caracteres" },
+    { ok: c.minuscula, texto: "Una letra minúscula" },
+    { ok: c.numero, texto: "Un número" },
+    { ok: c.simbolo, texto: "Un símbolo (por ejemplo: @ # ! ?)" },
+  ];
+  return (
+    <ul className="mt-2 grid gap-1">
+      {items.map((item) => (
+        <li
+          key={item.texto}
+          className={`flex items-center gap-1.5 text-xs font-medium transition-colors ${
+            item.ok ? "text-[#15803D]" : oscuro ? "text-[#92400E]/60" : "text-muted"
+          }`}
+        >
+          {item.ok ? <IconoCheck size={13} /> : <IconoX size={13} />}
+          {item.texto}
+        </li>
+      ))}
+    </ul>
   );
 }

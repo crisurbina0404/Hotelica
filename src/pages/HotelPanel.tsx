@@ -14,7 +14,7 @@ import { optimizarFoto, pesoDeFoto } from "../imagen";
 import { descargarFactura } from "./BookingModal";
 import { MapaHotel } from "../mapa";
 import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Reserva } from "../data";
-import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion, Modal } from "../ui";
+import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion, Modal, ChecklistContrasena } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica, IconoBillete, IconoFoto,
   IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella, IconoDescargar,
@@ -31,7 +31,7 @@ export function PanelHotel() {
   const hotel = mio ?? hoteles.find((h) => h.id === "h-sanjuan")!;
   const HOTEL_ID = hotel.id;
 
-  // Contraseña temporal: el hotelero debe cambiarla en 24 horas (seguridad HU-021)
+  // Contraseña temporal: el hotelero debe cambiarla en 48 horas (seguridad HU-040)
   const cuentaMia = usuario?.correo
     ? cuentasHotelero.find((c) => c.correo === usuario.correo.trim().toLowerCase())
     : undefined;
@@ -529,7 +529,7 @@ export function PanelHotel() {
         </div>
       </Reveal>
 
-      {/* Aviso obligatorio: cambiar la contraseña temporal en 24 horas */}
+      {/* Aviso obligatorio: cambiar la contraseña temporal en 48 horas (HU-040) */}
       {passwordTemporal && (
         <Reveal delay={20}>
           <div className={`mt-5 rounded-xl border-2 p-5 shadow-card ${passwordVencida ? "border-[#FCA5A5] bg-[#FEF2F2]" : "border-[#FCD34D] bg-[#FEF3C7]"}`}>
@@ -537,12 +537,12 @@ export function PanelHotel() {
               <div className="max-w-xl">
                 <p className={`text-sm font-bold ${passwordVencida ? "text-[#B91C1C]" : "text-[#92400E]"}`}>
                   {passwordVencida
-                    ? "Tu contraseña temporal ya venció (24 horas)."
-                    : "Cambiá tu contraseña temporal: tienes 24 horas."}
+                    ? "Tu contraseña temporal ya venció (48 horas)."
+                    : "Cambiá tu contraseña temporal: tienes 48 horas."}
                 </p>
                 <p className={`mt-1 text-xs leading-relaxed ${passwordVencida ? "text-[#B91C1C]/80" : "text-[#92400E]/80"}`}>
-                  La contraseña que te dio el administrador es débil y solo dura 24 horas por seguridad.
-                  Creá la tuya propia (mínimo 6 caracteres) para seguir usando el panel y tus reservas.
+                  La contraseña que te dio el administrador es débil y solo dura 48 horas por seguridad.
+                  Creá la tuya propia: al menos 8 caracteres, una minúscula, un número y un símbolo.
                 </p>
               </div>
             </div>
@@ -553,9 +553,9 @@ export function PanelHotel() {
                   type="password"
                   value={nuevaPass}
                   onChange={(e) => setNuevaPass(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   maxLength={40}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
               </label>
@@ -565,12 +565,13 @@ export function PanelHotel() {
                   type="password"
                   value={confirmaPass}
                   onChange={(e) => setConfirmaPass(e.target.value)}
-                  minLength={6}
+                  minLength={8}
                   maxLength={40}
                   placeholder="Repetí la contraseña"
                   className="w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
               </label>
+              <ChecklistContrasena clave={nuevaPass} oscuro />
               {errorPass && (
                 <p role="alert" className="anim-pop text-xs font-semibold text-[#B91C1C] sm:col-span-2">{errorPass}</p>
               )}

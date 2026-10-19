@@ -6,6 +6,24 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.60.0] — 2026-10-19 · Contraseña segura del hotelero (HU-040)
+
+### Cambiado
+- **`src/data.ts`** — la contraseña temporal del hotelero ahora dura **48 horas** (`VIDA_TEMPORAL_MS`, antes 24). Nuevas funciones `criteriosDeContrasena()`, `esContrasenaSegura()` y `errorCriteriosContrasena()`: la contraseña propia del hotelero debe tener al menos 8 caracteres, una minúscula, un número y un símbolo.
+- **`src/store.tsx`** — `cambiarContrasenaHotelero(nueva, confirmar, actual?)` valida los cuatro criterios y, cuando el formulario envía la contraseña actual (cambio desde el perfil), verifica que coincida con la guardada. El mensaje de login por temporal vencida dice 48 horas.
+- **`src/pages/HotelPanel.tsx`** — el banner "Cambiá tu contraseña temporal" habla de 48 horas, pide mínimo 8 caracteres y muestra las palomitas de criterios en vivo.
+- **`src/pages/Profile.tsx`** — la sección "Contraseña de acceso" ahora tiene tres campos: contraseña actual, nueva y confirmar; el texto de temporal vencida dice 48 horas.
+- **`src/pages/InscribeHotel.tsx`** — el aviso de aprobación recuerda cambiar la temporal en las primeras 48 horas.
+
+### Agregado
+- **`src/ui.tsx`** — componente `ChecklistContrasena`: lista reutilizable con ✓ o ✗ para los cuatro criterios, con un tono ámbar para el fondo del banner del panel.
+- **`historias-usuario/HU-040-contrasena-segura-del-hotelero.md`** — historia nueva que cubre la temporal de 48 horas, los criterios con palomitas y el pedido de la contraseña actual en el perfil (lo anterior se había construido en v0.45.0/v0.46.0 sin HU).
+
+### Nota
+El registro de turista y la recuperación de contraseña (HU-001 y HU-004) **no cambian**: siguen con su mínimo de 6 caracteres, como se acordó con el usuario.
+
+---
+
 ## [v0.59.0] — 2026-10-19 · Fase 2: hoteles y habitaciones guardados en la base de datos
 
 ### Agregado

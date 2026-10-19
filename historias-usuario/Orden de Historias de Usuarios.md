@@ -42,3 +42,4 @@
 | 38 | HU-037 | Búsqueda / Gestión Hotel | Mapa de ubicación exacta del hotel | Media | ✅ Terminada |
 | 39 | HU-038 | Diseño (portada) / Autenticación | Fotos reales, registro de hoteleros y reserva con cuenta | Media | ✅ Terminada |
 | 40 | HU-039 | Autenticación / Gestión Hotel / Diseño | Teléfonos válidos, un solo logo y móvil solo turista | Alta | ✅ Terminada |
+| 41 | HU-040 | Autenticación / Gestión Hotel | Contraseña segura del hotelero (48h y criterios) | Alta | ✅ Terminada |

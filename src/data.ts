@@ -525,10 +525,10 @@ export type CuentaHotelero = {
   contrasenaTemporal: boolean; // true mientras no cambie la contraseña que dio el admin
 };
 
-// La contraseña temporal que regala el admin solo dura 24 horas (seguridad HU-021)
-export const VIDA_TEMPORAL_MS = 24 * 60 * 60 * 1000;
+// La contraseña temporal que regala el admin solo dura 48 horas (seguridad HU-040)
+export const VIDA_TEMPORAL_MS = 48 * 60 * 60 * 1000;
 
-// ¿Pasaron ya las 24 horas sin que el hotelero haya cambiado su contraseña?
+// ¿Pasaron ya las 48 horas sin que el hotelero haya cambiado su contraseña?
 export function contrasenaTemporalVencida(cuenta: CuentaHotelero, ahora = Date.now()): boolean {
   if (!cuenta.contrasenaTemporal) return false;
   return ahora - new Date(cuenta.creadaEn).getTime() > VIDA_TEMPORAL_MS;
@@ -537,6 +537,42 @@ export function contrasenaTemporalVencida(cuenta: CuentaHotelero, ahora = Date.n
 // Contraseña temporal que recibe el hotelero junto con su cuenta
 export function generarContrasenaHotelero(): string {
   return `hotel${Math.floor(1000 + Math.random() * 9000)}`;
+}
+
+// ----- Criterios de contraseña segura del hotelero (HU-040) -----
+
+// Estado de cada criterio; sirve para las palomitas de la interfaz y para validar
+export type CriteriosContrasena = {
+  largo: boolean; // al menos 8 caracteres
+  minuscula: boolean; // al menos una letra minúscula
+  numero: boolean; // al menos un número
+  simbolo: boolean; // al menos un símbolo (@ # ! ? etc.)
+};
+
+// Revisa los cuatro criterios de una contraseña nueva
+export function criteriosDeContrasena(clave: string): CriteriosContrasena {
+  return {
+    largo: clave.length >= 8,
+    minuscula: /[a-záéíóúñ]/.test(clave),
+    numero: /[0-9]/.test(clave),
+    simbolo: /[^A-Za-z0-9áéíóúñÁÉÍÓÚÑ]/.test(clave),
+  };
+}
+
+// ¿La contraseña cumple los cuatro criterios?
+export function esContrasenaSegura(clave: string): boolean {
+  const c = criteriosDeContrasena(clave);
+  return c.largo && c.minuscula && c.numero && c.simbolo;
+}
+
+// Mensaje del primer criterio que falte (vacío si la contraseña está bien)
+export function errorCriteriosContrasena(clave: string): string {
+  const c = criteriosDeContrasena(clave);
+  if (!c.largo) return "La contraseña debe tener al menos 8 caracteres.";
+  if (!c.minuscula) return "La contraseña debe incluir al menos una letra minúscula.";
+  if (!c.numero) return "La contraseña debe incluir al menos un número.";
+  if (!c.simbolo) return "La contraseña debe incluir al menos un símbolo (por ejemplo: @ # ! ?).";
+  return "";
 }
 
 // ----- Ubicación exacta del hotel en el mapa (HU-037) -----

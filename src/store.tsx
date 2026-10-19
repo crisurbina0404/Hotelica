@@ -11,6 +11,7 @@ import {
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
   errorDePrecio, errorDeAjuste, ajustarPrecio,
   cupoDeFotos, errorDeGaleria, conPortada,
+  errorCriteriosContrasena,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
 import type { Idioma } from "./i18n";
@@ -162,7 +163,7 @@ type AppCtx = {
   agregarFotosHotel: (hotelId: string, fotos: string[]) => { error?: string; cantidad?: number };
   ponerPortadaHotel: (hotelId: string, indice: number) => { error?: string };
   quitarFotoHotel: (hotelId: string, indice: number) => { error?: string };
-  cambiarContrasenaHotelero: (nueva: string, confirmar: string) => { error?: string };
+  cambiarContrasenaHotelero: (nueva: string, confirmar: string, actual?: string) => { error?: string };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
 
@@ -546,7 +547,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             nombre: hotel.dueno,
             hotelId,
             creadaEn: new Date().toISOString(),
-            contrasenaTemporal: true, // el dueño debe cambiarla en 24 horas
+            contrasenaTemporal: true, // el dueño debe cambiarla en 48 horas
           }
         : null;
 
@@ -802,23 +803,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return {};
   };
 
-  // El hotelero cambia la contraseña temporal que le dio el admin (debe hacerlo en 24h)
-  const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = (nueva, confirmar) => {
+  // El hotelero cambia la contraseña temporal que le dio el admin (debe hacerlo en 48h, HU-040)
+  const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = (nueva, confirmar, actual) => {
     if (!usuario?.correo) return { error: "No hay sesión de hotelero activa" };
 
     const limpia = nueva.trim();
-    if (limpia.length < 6) return { error: "La nueva contraseña debe tener al menos 6 caracteres." };
+    // Criterios de seguridad: 8 caracteres, minúscula, número y símbolo (HU-040)
+    const errorCriterios = errorCriteriosContrasena(limpia);
+    if (errorCriterios) return { error: errorCriterios };
     if (limpia !== confirmar.trim()) return { error: "Las contraseñas no coinciden. Escribí la misma en los dos campos." };
 
+    // Si viene la contraseña actual (cambio desde el perfil), tiene que coincidir con la guardada
     let encontrada = false;
+    let actualIncorrecta = false;
     setDatos((d) => ({
       ...d,
       cuentasHotelero: d.cuentasHotelero.map((c) => {
         if (c.correo !== usuario.correo.trim().toLowerCase()) return c;
         encontrada = true;
+        // Solo exige la actual cuando el formulario la envía
+        if (actual !== undefined && c.contrasena !== actual.trim()) {
+          actualIncorrecta = true;
+          return c;
+        }
         return { ...c, contrasena: limpia, contrasenaTemporal: false };
       }),
     }));
+    if (actualIncorrecta) return { error: "La contraseña actual no es correcta." };
     if (!encontrada) return { error: "No encontramos tu cuenta de hotelero." };
     return {};
   };
@@ -849,9 +860,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       (c) => c.correo === correo.trim().toLowerCase() && c.contrasena === contrasena.trim()
     );
     if (cuenta) {
-      // Si la contraseña temporal ya venció (24h), no dejamos entrar
+      // Si la contraseña temporal ya venció (48h), no dejamos entrar
       if (contrasenaTemporalVencida(cuenta)) {
-        return { error: "Tu contraseña temporal venció (24 horas). Pedile al administrador una nueva contraseña." };
+        return { error: "Tu contraseña temporal venció (48 horas). Pedile al administrador una nueva contraseña." };
       }
       setUsuario({ nombre: cuenta.nombre, rol: "Hotel", correo: cuenta.correo, telefono: "", direccion: "" });
       setRol("hotel"); // el panel del hotel queda visible en el menú
