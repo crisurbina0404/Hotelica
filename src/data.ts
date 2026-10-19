@@ -46,6 +46,7 @@ export type Habitacion = {
   unidades: number;
   estado: EstadoHabitacion;
   detalle: string;
+  galeria: string[]; // fotos del tipo de habitación; la primera es la portada (HU-041)
 };
 
 // Los tres estados posibles de una habitación, en el orden en que se ofrecen
@@ -59,6 +60,7 @@ export type DatosHabitacion = {
   unidades: number;
   estado: EstadoHabitacion;
   detalle: string;
+  galeria: string[]; // fotos elegidas al registrar (HU-041)
 };
 
 // Errores campo por campo del formulario de habitación; sin errores, se puede registrar
@@ -338,29 +340,29 @@ export const HOTELES_SEED: Hotel[] = [
 
 export const HABITACIONES_SEED: Habitacion[] = [
   // Casa Colonial Los Patios
-  { id: "g1", hotelId: "h-granada", tipo: "Estándar Doble", capacidad: 2, precio: 1200, unidades: 5, estado: "disponible", detalle: "Cama doble, baño privado y vista al patio de las buganvilias." },
-  { id: "g2", hotelId: "h-granada", tipo: "Superior Colonial", capacidad: 3, precio: 1500, unidades: 4, estado: "disponible", detalle: "Cama queen + sofá cama, pisos originales de barro cocido." },
-  { id: "g3", hotelId: "h-granada", tipo: "Suite del Mombacho", capacidad: 4, precio: 2400, unidades: 2, estado: "disponible", detalle: "Suite con terraza privada y vista al volcán Mombacho." },
-  { id: "g4", hotelId: "h-granada", tipo: "Familiar Los Patios", capacidad: 6, precio: 2900, unidades: 2, estado: "mantenimiento", detalle: "Dos ambientes conectados, ideal para familias grandes." },
+  { id: "g1", hotelId: "h-granada", tipo: "Estándar Doble", capacidad: 2, precio: 1200, unidades: 5, estado: "disponible", galeria: [], detalle: "Cama doble, baño privado y vista al patio de las buganvilias." },
+  { id: "g2", hotelId: "h-granada", tipo: "Superior Colonial", capacidad: 3, precio: 1500, unidades: 4, estado: "disponible", galeria: [], detalle: "Cama queen + sofá cama, pisos originales de barro cocido." },
+  { id: "g3", hotelId: "h-granada", tipo: "Suite del Mombacho", capacidad: 4, precio: 2400, unidades: 2, estado: "disponible", galeria: [], detalle: "Suite con terraza privada y vista al volcán Mombacho." },
+  { id: "g4", hotelId: "h-granada", tipo: "Familiar Los Patios", capacidad: 6, precio: 2900, unidades: 2, estado: "mantenimiento", galeria: [], detalle: "Dos ambientes conectados, ideal para familias grandes." },
   // Brisas del Pacífico
-  { id: "s1", hotelId: "h-sanjuan", tipo: "Estándar Mar", capacidad: 2, precio: 1400, unidades: 6, estado: "disponible", detalle: "Cama queen y balcón con brisa directa del Pacífico." },
-  { id: "s2", hotelId: "h-sanjuan", tipo: "Superior Bahía", capacidad: 3, precio: 1900, unidades: 4, estado: "disponible", detalle: "Vista frontal a la bahía, hamaca privada en el balcón." },
-  { id: "s3", hotelId: "h-sanjuan", tipo: "Suite Surfista", capacidad: 4, precio: 2600, unidades: 2, estado: "disponible", detalle: "Ducha exterior, rack para tablas y mini refrigerador." },
+  { id: "s1", hotelId: "h-sanjuan", tipo: "Estándar Mar", capacidad: 2, precio: 1400, unidades: 6, estado: "disponible", galeria: [], detalle: "Cama queen y balcón con brisa directa del Pacífico." },
+  { id: "s2", hotelId: "h-sanjuan", tipo: "Superior Bahía", capacidad: 3, precio: 1900, unidades: 4, estado: "disponible", galeria: [], detalle: "Vista frontal a la bahía, hamaca privada en el balcón." },
+  { id: "s3", hotelId: "h-sanjuan", tipo: "Suite Surfista", capacidad: 4, precio: 2600, unidades: 2, estado: "disponible", galeria: [], detalle: "Ducha exterior, rack para tablas y mini refrigerador." },
   // Eco Lodge Ometepe Verde
-  { id: "o1", hotelId: "h-ometepe", tipo: "Cabaña Bosque", capacidad: 2, precio: 1100, unidades: 6, estado: "disponible", detalle: "Cabaña de madera entre plataneras, baño con agua caliente solar." },
-  { id: "o2", hotelId: "h-ometepe", tipo: "Cabaña Volcán", capacidad: 3, precio: 1600, unidades: 4, estado: "disponible", detalle: "Vista directa al Concepción desde la cama." },
-  { id: "o3", hotelId: "h-ometepe", tipo: "Cabaña Familiar Ceiba", capacidad: 5, precio: 2200, unidades: 2, estado: "disponible", detalle: "Altillo para niños y corredor con mecedoras." },
+  { id: "o1", hotelId: "h-ometepe", tipo: "Cabaña Bosque", capacidad: 2, precio: 1100, unidades: 6, estado: "disponible", galeria: [], detalle: "Cabaña de madera entre plataneras, baño con agua caliente solar." },
+  { id: "o2", hotelId: "h-ometepe", tipo: "Cabaña Volcán", capacidad: 3, precio: 1600, unidades: 4, estado: "disponible", galeria: [], detalle: "Vista directa al Concepción desde la cama." },
+  { id: "o3", hotelId: "h-ometepe", tipo: "Cabaña Familiar Ceiba", capacidad: 5, precio: 2200, unidades: 2, estado: "disponible", galeria: [], detalle: "Altillo para niños y corredor con mecedoras." },
   // La Casona del Sol
-  { id: "l1", hotelId: "h-leon", tipo: "Estándar Colonial", capacidad: 2, precio: 950, unidades: 6, estado: "disponible", detalle: "Cama doble alrededor del patio de la casona." },
-  { id: "l2", hotelId: "h-leon", tipo: "Superior Catedral", capacidad: 3, precio: 1350, unidades: 3, estado: "disponible", detalle: "Balcón con vista a los domos de la catedral." },
-  { id: "l3", hotelId: "h-leon", tipo: "Suite Darío", capacidad: 2, precio: 1900, unidades: 2, estado: "no_disponible", detalle: "Suite homenaje con biblioteca de poesía incluida." },
+  { id: "l1", hotelId: "h-leon", tipo: "Estándar Colonial", capacidad: 2, precio: 950, unidades: 6, estado: "disponible", galeria: [], detalle: "Cama doble alrededor del patio de la casona." },
+  { id: "l2", hotelId: "h-leon", tipo: "Superior Catedral", capacidad: 3, precio: 1350, unidades: 3, estado: "disponible", galeria: [], detalle: "Balcón con vista a los domos de la catedral." },
+  { id: "l3", hotelId: "h-leon", tipo: "Suite Darío", capacidad: 2, precio: 1900, unidades: 2, estado: "no_disponible", galeria: [], detalle: "Suite homenaje con biblioteca de poesía incluida." },
   // Finca Café & Montaña
-  { id: "c1", hotelId: "h-matagalpa", tipo: "Cabaña Pino", capacidad: 2, precio: 1050, unidades: 5, estado: "disponible", detalle: "Cabaña de pino con chimenea y olor a café recién tostado." },
-  { id: "c2", hotelId: "h-matagalpa", tipo: "Cabaña Niebla", capacidad: 4, precio: 1650, unidades: 3, estado: "disponible", detalle: "Dos cuartos, perfecta para familias de montaña." },
+  { id: "c1", hotelId: "h-matagalpa", tipo: "Cabaña Pino", capacidad: 2, precio: 1050, unidades: 5, estado: "disponible", galeria: [], detalle: "Cabaña de pino con chimenea y olor a café recién tostado." },
+  { id: "c2", hotelId: "h-matagalpa", tipo: "Cabaña Niebla", capacidad: 4, precio: 1650, unidades: 3, estado: "disponible", galeria: [], detalle: "Dos cuartos, perfecta para familias de montaña." },
   // Coco Loco Bungalows
-  { id: "k1", hotelId: "h-corn", tipo: "Bungalow Playa", capacidad: 2, precio: 1800, unidades: 5, estado: "disponible", detalle: "A tres metros del mar, techo de palma y ducha caribeña." },
-  { id: "k2", hotelId: "h-corn", tipo: "Bungalow Coco", capacidad: 3, precio: 2300, unidades: 3, estado: "disponible", detalle: "Bajo los cocoteros, con hamaca doble y vista turquesa." },
-  { id: "k3", hotelId: "h-corn", tipo: "Familiar Marea", capacidad: 6, precio: 3400, unidades: 1, estado: "disponible", detalle: "El más grande, con cocina básica y mesa frente al mar." },
+  { id: "k1", hotelId: "h-corn", tipo: "Bungalow Playa", capacidad: 2, precio: 1800, unidades: 5, estado: "disponible", galeria: [], detalle: "A tres metros del mar, techo de palma y ducha caribeña." },
+  { id: "k2", hotelId: "h-corn", tipo: "Bungalow Coco", capacidad: 3, precio: 2300, unidades: 3, estado: "disponible", galeria: [], detalle: "Bajo los cocoteros, con hamaca doble y vista turquesa." },
+  { id: "k3", hotelId: "h-corn", tipo: "Familiar Marea", capacidad: 6, precio: 3400, unidades: 1, estado: "disponible", galeria: [], detalle: "El más grande, con cocina básica y mesa frente al mar." },
 ];
 
 // ----- Utilidades de fechas y dinero -----
@@ -850,6 +852,22 @@ export function conPortada(galeria: string[], indice: number): string[] {
   if (indice <= 0 || indice >= galeria.length) return galeria;
   const elegida = galeria[indice];
   return [elegida, ...galeria.filter((_, i) => i !== indice)];
+}
+
+// ----- Fotos de las habitaciones (HU-041) -----
+
+// Tope de fotos por tipo de habitación (menos que el hotel: es el mismo cuarto)
+export const MAXIMO_FOTOS_HABITACION = 4;
+
+// Cuántas fotos más entran en la galería de una habitación (HU-041)
+export function cupoDeFotosHabitacion(cantidadActual: number): number {
+  return Math.max(0, MAXIMO_FOTOS_HABITACION - cantidadActual);
+}
+
+// Revisa si la galería de la habitación aún admite fotos; devuelve el motivo o "" (HU-041)
+export function errorDeGaleriaHabitacion(cantidadActual: number): string {
+  if (cupoDeFotosHabitacion(cantidadActual) > 0) return "";
+  return `Ya tenés ${MAXIMO_FOTOS_HABITACION} fotos, el máximo por habitación. Quitá una para subir otra.`;
 }
 
 // Correo con formato usuario@dominio.algo

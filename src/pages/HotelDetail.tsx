@@ -45,6 +45,8 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
   const [vistaComparativa, setVistaComparativa] = useState(false);
   const [fotoActiva, setFotoActiva] = useState(0);
+  // Qué foto de cada habitación se está viendo en su tarjeta (HU-041)
+  const [fotoHabitacion, setFotoHabitacion] = useState<Record<string, number>>({});
 
   // Cálculo de noches para sugerencias
   const noches = calcularNoches(llegada, salida);
@@ -266,13 +268,36 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
             const disponibles = disponiblesDe(r.id, llegada, salida);
             const sirveCapacidad = r.capacidad >= huespedes;
             const sePuede = r.estado === "disponible" && disponibles > 0 && sirveCapacidad && salida > llegada;
+            // Fotos de la habitación: la portada es la primera; sin fotos se ve el ícono de siempre (HU-041)
+            const galeriaHab = r.galeria ?? [];
+            const indiceHab = Math.min(fotoHabitacion[r.id] ?? 0, Math.max(0, galeriaHab.length - 1));
             return (
               <Reveal key={r.id} delay={i * 80}>
                 <div className={`flex flex-col gap-4 rounded-xl border bg-white p-5 transition-all hover:shadow-card ${vistaComparativa ? "flex-col" : "sm:flex-row sm:items-center"} ${sePuede ? "border-line hover:border-primary/35" : "border-line opacity-80"}`}>
-                  {/* Miniatura ilustrada del tipo de habitación */}
-                  <div className={`flex shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-primary-soft to-primary-light text-primary ${vistaComparativa ? "h-32" : "h-24 w-full sm:w-32"}`}>
-                    <IconoCama size={vistaComparativa ? 44 : 38} />
+                  {/* Foto del tipo de habitación, o el ícono de cama si no tiene fotos */}
+                  <div className={`flex shrink-0 flex-col items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-primary-soft to-primary-light text-primary ${vistaComparativa ? "h-32" : "h-24 w-full sm:w-32"}`}>
+                    {galeriaHab.length > 0 ? (
+                      <img src={galeriaHab[indiceHab]} alt={`Foto de ${r.tipo}`} className="h-full w-full rounded-lg object-cover" />
+                    ) : (
+                      <IconoCama size={vistaComparativa ? 44 : 38} />
+                    )}
                   </div>
+
+                  {/* Miniaturas: si hay varias fotos, el turista cambia desde acá (HU-041) */}
+                  {galeriaHab.length > 1 && (
+                    <div className="flex shrink-0 gap-1.5 sm:flex-col">
+                      {galeriaHab.map((f, fi) => (
+                        <button
+                          key={fi}
+                          onClick={() => setFotoHabitacion((prev) => ({ ...prev, [r.id]: fi }))}
+                          aria-label={`Ver la foto ${fi + 1} de ${r.tipo}`}
+                          className={`h-10 w-10 shrink-0 overflow-hidden rounded-md border-2 transition-all ${fi === indiceHab ? "border-primary" : "border-transparent opacity-70 hover:opacity-100"}`}
+                        >
+                          <img src={f} alt="" className="h-full w-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">

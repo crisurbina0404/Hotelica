@@ -11,12 +11,13 @@ import {
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
   errorDePrecio, errorDeAjuste, ajustarPrecio,
   cupoDeFotos, errorDeGaleria, conPortada,
+  errorDeGaleriaHabitacion,
   errorCriteriosContrasena,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
-import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarPorId, subirHabitacion, subirHabitaciones, subirHotel } from "./sync";
+import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarHabitaciones, subirHabitacion, subirHabitaciones, subirHotel } from "./sync";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = {
@@ -163,6 +164,9 @@ type AppCtx = {
   agregarFotosHotel: (hotelId: string, fotos: string[]) => { error?: string; cantidad?: number };
   ponerPortadaHotel: (hotelId: string, indice: number) => { error?: string };
   quitarFotoHotel: (hotelId: string, indice: number) => { error?: string };
+  agregarFotosHabitacion: (habitacionId: string, fotos: string[]) => { error?: string; cantidad?: number };
+  ponerPortadaHabitacion: (habitacionId: string, indice: number) => { error?: string };
+  quitarFotoHabitacion: (habitacionId: string, indice: number) => { error?: string };
   cambiarContrasenaHotelero: (nueva: string, confirmar: string, actual?: string) => { error?: string };
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
@@ -215,7 +219,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setDatos((d) => ({
         ...d,
         hoteles: fusionarHoteles(d.hoteles, hotelesBD ?? []),
-        habitaciones: fusionarPorId(d.habitaciones, habitacionesBD ?? []),
+        habitaciones: fusionarHabitaciones(d.habitaciones, habitacionesBD ?? []),
       }));
     })();
     return () => {
@@ -686,6 +690,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       unidades: Number(registro.unidades),
       estado: registro.estado,
       detalle: registro.detalle.trim(),
+      galeria: registro.galeria ?? [], // fotos elegidas al registrar (HU-041)
     };
 
     setDatos((d) => ({ ...d, habitaciones: [...d.habitaciones, nueva] }));
@@ -800,6 +805,59 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (galeria.length <= 1) return { error: "El hotel necesita al menos una foto: subí otra antes de quitar esta." };
 
     guardarGaleria(hotelId, galeria.filter((_, i) => i !== indice));
+    return {};
+  };
+
+  // Guarda la galería de una habitación en el estado y la sube a la BD (HU-041)
+  const guardarGaleriaHabitacion = (habitacionId: string, galeria: string[]) => {
+    setDatos((d) => ({
+      ...d,
+      habitaciones: d.habitaciones.map((h) => (h.id === habitacionId ? { ...h, galeria } : h)),
+    }));
+
+    // La galería de la habitación sube junto con ella (Fase 2)
+    const laHabitacion = datos.habitaciones.find((h) => h.id === habitacionId);
+    if (laHabitacion) subirHabitacionConAviso({ ...laHabitacion, galeria });
+  };
+
+  // Suma fotos optimizadas a la galería de una habitación, respetando el tope (HU-041)
+  const agregarFotosHabitacion: AppCtx["agregarFotosHabitacion"] = (habitacionId, fotos) => {
+    const hab = datos.habitaciones.find((h) => h.id === habitacionId);
+    if (!hab) return { error: "No encontramos esa habitación." };
+
+    const galeria = hab.galeria ?? [];
+    const nuevas = fotos.filter((f) => !!f);
+    if (nuevas.length === 0) return { error: "No se pudo leer ninguna de las fotos elegidas." };
+
+    // El tope se mide sobre todo lo que se está subiendo junto
+    const error = errorDeGaleriaHabitacion(galeria.length + nuevas.length - 1);
+    if (error) return { error };
+
+    guardarGaleriaHabitacion(habitacionId, [...galeria, ...nuevas]);
+    return { cantidad: nuevas.length };
+  };
+
+  // Mueve una foto de la habitación al primer lugar: esa pasa a ser la portada (HU-041)
+  const ponerPortadaHabitacion: AppCtx["ponerPortadaHabitacion"] = (habitacionId, indice) => {
+    const hab = datos.habitaciones.find((h) => h.id === habitacionId);
+    if (!hab) return { error: "No encontramos esa habitación." };
+
+    const galeria = hab.galeria ?? [];
+    if (indice <= 0 || indice >= galeria.length) return { error: "Elegí una de las fotos de la galería." };
+
+    guardarGaleriaHabitacion(habitacionId, conPortada(galeria, indice));
+    return {};
+  };
+
+  // Quita una foto de la habitación; acá sí se puede quitar la última porque las fotos son opcionales (HU-041)
+  const quitarFotoHabitacion: AppCtx["quitarFotoHabitacion"] = (habitacionId, indice) => {
+    const hab = datos.habitaciones.find((h) => h.id === habitacionId);
+    if (!hab) return { error: "No encontramos esa habitación." };
+
+    const galeria = hab.galeria ?? [];
+    if (indice < 0 || indice >= galeria.length) return { error: "Esa foto ya no está en la galería." };
+
+    guardarGaleriaHabitacion(habitacionId, galeria.filter((_, i) => i !== indice));
     return {};
   };
 
@@ -1086,6 +1144,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       agregarFotosHotel,
       ponerPortadaHotel,
       quitarFotoHotel,
+      agregarFotosHabitacion,
+      ponerPortadaHabitacion,
+      quitarFotoHabitacion,
       cambiarContrasenaHotelero,
       disponiblesDe,
     }),

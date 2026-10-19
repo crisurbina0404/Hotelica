@@ -38,6 +38,7 @@ type HabitacionFila = {
   unidades: number;
   estado: EstadoHabitacion;
   detalle: string;
+  galeria: string[] | null; // fotos del tipo de habitación (HU-041)
 };
 
 // ----- De la app hacia la base -----
@@ -75,6 +76,7 @@ function aFilaHabitacion(h: Habitacion): HabitacionFila {
     unidades: h.unidades,
     estado: h.estado,
     detalle: h.detalle,
+    galeria: h.galeria ?? [],
   };
 }
 
@@ -113,6 +115,7 @@ function deFilaHabitacion(f: HabitacionFila): Habitacion {
     unidades: f.unidades,
     estado: f.estado,
     detalle: f.detalle,
+    galeria: f.galeria ?? [],
   };
 }
 
@@ -205,6 +208,24 @@ export function fusionarHoteles(local: Hotel[], base: Hotel[]): Hotel[] {
   base.forEach((b) => {
     const anterior = porId.get(b.id);
     porId.set(b.id, anterior ? completarHotelDesdeLocal(b, anterior) : b);
+  });
+  return [...porId.values()];
+}
+
+// Lo mismo para habitaciones: si la BD aún no tiene la columna galeria
+// (o viene vacía), no borramos las fotos que estaban en el navegador (HU-041)
+function completarHabitacionDesdeLocal(bd: Habitacion, local: Habitacion): Habitacion {
+  return {
+    ...bd,
+    galeria: bd.galeria?.length ? bd.galeria : local.galeria ?? [],
+  };
+}
+
+export function fusionarHabitaciones(local: Habitacion[], base: Habitacion[]): Habitacion[] {
+  const porId = new Map(local.map((h) => [h.id, h]));
+  base.forEach((b) => {
+    const anterior = porId.get(b.id);
+    porId.set(b.id, anterior ? completarHabitacionDesdeLocal(b, anterior) : b);
   });
   return [...porId.values()];
 }

@@ -7,8 +7,8 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
-  calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
+  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MAXIMO_FOTOS_HABITACION, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
+  calcularTotales, cupoDeFotos, cupoDeFotosHabitacion, errorDeGaleria, errorDeGaleriaHabitacion, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
 import { descargarFactura } from "./BookingModal";
@@ -21,7 +21,7 @@ import {
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, habitaciones: todasLasHabitaciones, reservas, pagos, cambiarEstadoReserva, registrarCheckin, registrarCheckout, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
+  const { hoteles, habitaciones: todasLasHabitaciones, reservas, pagos, cambiarEstadoReserva, registrarCheckin, registrarCheckout, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, agregarFotosHabitacion, ponerPortadaHabitacion, quitarFotoHabitacion, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -327,6 +327,88 @@ export function PanelHotel() {
       return;
     }
     avisar("Foto quitada de la galería.", "info");
+  };
+
+  // ----- Fotos de cada tipo de habitación (HU-041) -----
+
+  const [fotosDeHabitacion, setFotosDeHabitacion] = useState<string | null>(null); // id de la habitación abierta
+  const [subiendoHab, setSubiendoHab] = useState(false);
+  const [errorFotoHab, setErrorFotoHab] = useState("");
+
+  const habitacionConFotos = fotosDeHabitacion
+    ? habitaciones.find((h) => h.id === fotosDeHabitacion)
+    : undefined;
+  const galeriaHab = habitacionConFotos?.galeria ?? [];
+
+  // Sube fotos a una habitación: mismas reglas de validación y optimización que el hotel (HU-041)
+  const elegirFotosHabitacion = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!habitacionConFotos) return;
+    const elegidos = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (elegidos.length === 0) return;
+
+    setErrorFotoHab("");
+
+    // Tope de la galería de la habitación
+    const cupo = cupoDeFotosHabitacion(galeriaHab.length);
+    if (cupo === 0) {
+      setErrorFotoHab(errorDeGaleriaHabitacion(galeriaHab.length));
+      return;
+    }
+
+    setSubiendoHab(true);
+    const paraSubir = elegidos.slice(0, cupo);
+    const optimizadas: string[] = [];
+    let motivo = "";
+
+    for (const archivo of paraSubir) {
+      const errorArchivo = validarImagenHotel(archivo);
+      if (errorArchivo) {
+        motivo = errorArchivo;
+        continue;
+      }
+      const resultado = await optimizarFoto(archivo);
+      if (resultado.error || !resultado.foto) {
+        motivo = resultado.error ?? "No se pudo procesar la imagen.";
+        continue;
+      }
+      optimizadas.push(resultado.foto);
+    }
+
+    if (optimizadas.length > 0) {
+      const guardado = agregarFotosHabitacion(habitacionConFotos.id, optimizadas);
+      if (guardado.error) motivo = guardado.error;
+      else avisar(`Subimos ${optimizadas.length} ${optimizadas.length === 1 ? "foto" : "fotos"} a la habitación.`, "ok");
+    }
+
+    if (elegidos.length > cupo) {
+      motivo = motivo || `Solo entran ${cupo} fotos más: el máximo es ${MAXIMO_FOTOS_HABITACION} por habitación.`;
+    }
+
+    setErrorFotoHab(motivo);
+    setSubiendoHab(false);
+  };
+
+  // Mueve una foto al primer lugar de la habitación: esa pasa a ser la portada (HU-041)
+  const usarPortadaHabitacion = (indice: number) => {
+    if (!habitacionConFotos) return;
+    const resultado = ponerPortadaHabitacion(habitacionConFotos.id, indice);
+    if (resultado.error) {
+      avisar(resultado.error, "error");
+      return;
+    }
+    avisar("Listo: esa foto es ahora la portada de la habitación.", "ok");
+  };
+
+  // Quita una foto de la habitación (acá sí se puede quitar la última) (HU-041)
+  const quitarFotoDeHabitacion = (indice: number) => {
+    if (!habitacionConFotos) return;
+    const resultado = quitarFotoHabitacion(habitacionConFotos.id, indice);
+    if (resultado.error) {
+      avisar(resultado.error, "error");
+      return;
+    }
+    avisar("Foto quitada de la habitación.", "info");
   };
 
   // Guarda el precio escrito en la tarjeta de una habitación (HU-024)
@@ -1161,44 +1243,66 @@ export function PanelHotel() {
           {habitaciones.map((h, i) => {
             // Unidades ocupadas ahora mismo (reservas en estado Check-in)
             const ocupadas = reservas.filter((r) => r.habitacionId === h.id && r.estado === "checkin").length;
+            // Portada de la habitación: la primera foto, o el ícono de cama si no tiene fotos (HU-041)
+            const portadaHab = h.galeria?.[0];
             return (
               <Reveal key={h.id} delay={i * 80}>
-                <div className="rounded-xl border border-line bg-white p-5 shadow-card transition-transform hover:-translate-y-1">
-                  <div className="flex items-start justify-between">
-                    <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-hotel-soft text-hotel"><IconoCama size={20} /></span>
-                    <BadgeHabitacion estado={h.estado} />
-                  </div>
-                  <h3 className="mt-3 font-display text-base font-bold text-ink">{h.tipo}</h3>
-                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted"><IconoHuespedes size={12} /> Capacidad: {h.capacidad} · {h.unidades} unidades</p>
-                  <div className="mt-3.5">
-                    <div className="flex justify-between text-[11px] font-bold text-muted">
-                      <span>Ocupadas hoy</span><span className="text-hotel">{ocupadas}/{h.unidades}</span>
+                <div className="overflow-hidden rounded-xl border border-line bg-white shadow-card transition-transform hover:-translate-y-1">
+                  {portadaHab ? (
+                    <img src={portadaHab} alt={`Foto de ${h.tipo}`} className="h-28 w-full object-cover" />
+                  ) : (
+                    <div className="flex h-28 w-full items-center justify-center bg-hotel-soft">
+                      <IconoCama size={28} className="text-hotel" />
                     </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-canvas">
-                      <div className="anim-grow h-full rounded-full bg-hotel" style={{ width: `${(ocupadas / h.unidades) * 100}%` }} />
+                  )}
+                  <div className="p-5">
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-display text-base font-bold text-ink">{h.tipo}</h3>
+                      <BadgeHabitacion estado={h.estado} />
                     </div>
-                  </div>
-                  <p className="mt-3 text-sm font-bold text-primary">{fmtDinero(h.precio)} <span className="text-[11px] font-medium text-muted">/ noche</span></p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted">{h.detalle}</p>
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted"><IconoHuespedes size={12} /> Capacidad: {h.capacidad} · {h.unidades} unidades</p>
+                    <div className="mt-3.5">
+                      <div className="flex justify-between text-[11px] font-bold text-muted">
+                        <span>Ocupadas hoy</span><span className="text-hotel">{ocupadas}/{h.unidades}</span>
+                      </div>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-canvas">
+                        <div className="anim-grow h-full rounded-full bg-hotel" style={{ width: `${(ocupadas / h.unidades) * 100}%` }} />
+                      </div>
+                    </div>
+                    <p className="mt-3 text-sm font-bold text-primary">{fmtDinero(h.precio)} <span className="text-[11px] font-medium text-muted">/ noche</span></p>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted">{h.detalle}</p>
 
-                  {/* Cambiar la disponibilidad de un tipo de habitación (HU-023) */}
-                  <label className="mt-3.5 block">
-                    <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Cambiar estado</span>
-                    <select
-                      value={h.estado}
-                      disabled={edicionBloqueada}
-                      onChange={(e) => {
-                        const nuevo = e.target.value as EstadoHabitacion;
-                        cambiarEstadoHabitacion(h.id, nuevo);
-                        avisar(`${h.tipo}: ahora está "${ETIQUETA_HABITACION[nuevo]}".`, "info");
+                    {/* Fotos del tipo de habitación (HU-041) */}
+                    <button
+                      onClick={() => {
+                        setFotosDeHabitacion(h.id);
+                        setErrorFotoHab("");
                       }}
-                      className="w-full rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-ink outline-none transition-all focus:border-hotel focus:ring-2 focus:ring-hotel/25 disabled:cursor-not-allowed disabled:bg-canvas"
+                      className="mt-3.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-line bg-white px-3 py-2 text-xs font-bold text-hotel transition-colors hover:border-hotel/50 hover:bg-hotel-soft"
                     >
-                      {ESTADOS_HABITACION.map((es) => (
-                        <option key={es} value={es}>{ETIQUETA_HABITACION[es]}</option>
-                      ))}
-                    </select>
-                  </label>
+                      <IconoFoto size={13} />
+                      Fotos ({h.galeria?.length ?? 0}/{MAXIMO_FOTOS_HABITACION})
+                    </button>
+
+                    {/* Cambiar la disponibilidad de un tipo de habitación (HU-023) */}
+                    <label className="mt-2.5 block">
+                      <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Cambiar estado</span>
+                      <select
+                        value={h.estado}
+                        disabled={edicionBloqueada}
+                        onChange={(e) => {
+                          const nuevo = e.target.value as EstadoHabitacion;
+                          cambiarEstadoHabitacion(h.id, nuevo);
+                          avisar(`${h.tipo}: ahora está "${ETIQUETA_HABITACION[nuevo]}".`, "info");
+                        }}
+                        className="w-full rounded-lg border border-line bg-white px-3 py-2 text-xs font-semibold text-ink outline-none transition-all focus:border-hotel focus:ring-2 focus:ring-hotel/25 disabled:cursor-not-allowed disabled:bg-canvas"
+                      >
+                        {ESTADOS_HABITACION.map((es) => (
+                          <option key={es} value={es}>{ETIQUETA_HABITACION[es]}</option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
                 </div>
               </Reveal>
             );
@@ -1518,6 +1622,97 @@ export function PanelHotel() {
           </div>
         </div>
       </Modal>
+
+      {/* Modal de fotos de una habitación (HU-041): subir, portada y quitar */}
+      <Modal abierto={!!fotosDeHabitacion} alCerrar={() => setFotosDeHabitacion(null)} ancho="max-w-2xl">
+        <div className="p-6 sm:p-7">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="font-display text-xl font-bold text-ink">Fotos de {habitacionConFotos?.tipo}</h3>
+              <p className="mt-1 text-xs font-semibold text-muted tabular-nums">
+                {galeriaHab.length} de {MAXIMO_FOTOS_HABITACION} fotos · la primera es la portada que ve el turista
+              </p>
+            </div>
+            <button
+              onClick={() => setFotosDeHabitacion(null)}
+              className="rounded-lg border border-line px-4 py-2 text-xs font-bold text-muted transition-colors hover:border-ink/30 hover:text-ink"
+            >
+              Cerrar
+            </button>
+          </div>
+
+          {edicionBloqueada && (
+            <p className="mt-4 rounded-lg border border-[#FCD34D] bg-[#FEF3C7] px-4 py-3 text-xs font-semibold text-[#92400E]">
+              Tu hotel está en revisión: cuando el administrador lo apruebe vas a poder subir fotos a tus habitaciones.
+            </p>
+          )}
+
+          {/* Subida de fotos */}
+          <label className="mt-5 block">
+            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Subir fotos</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              disabled={edicionBloqueada || subiendoHab}
+              onChange={elegirFotosHabitacion}
+              className={`block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-hotel-soft file:px-4 file:py-2 file:text-xs file:font-bold file:text-hotel transition-colors hover:file:bg-hotel hover:file:text-white disabled:cursor-not-allowed disabled:opacity-60 ${errorFotoHab ? "rounded-lg border border-[#FCA5A5] p-2" : ""}`}
+            />
+          </label>
+          <p className="mt-1.5 text-[11px] font-semibold leading-relaxed text-muted">
+            JPG, PNG o WEBP de hasta 5 MB. Las fotos se achican antes de guardarse: entran hasta {MAXIMO_FOTOS_HABITACION} por habitación
+            {cupoDeFotosHabitacion(galeriaHab.length) > 0 && ` y te quedan ${cupoDeFotosHabitacion(galeriaHab.length)} lugares libres.`}
+          </p>
+          {subiendoHab && <p className="mt-2 text-xs font-semibold text-hotel">Optimizando las fotos…</p>}
+          {errorFotoHab && (
+            <p role="alert" className="mt-2 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-xs font-semibold text-[#B91C1C]">
+              {errorFotoHab}
+            </p>
+          )}
+
+          {/* Miniaturas: portada y quitar */}
+          {galeriaHab.length === 0 ? (
+            <p className="mt-5 rounded-xl border border-dashed border-line bg-canvas px-4 py-8 text-center text-xs font-semibold text-muted">
+              Esta habitación todavía no tiene fotos. Subí al menos una para que el turista vea cómo es.
+            </p>
+          ) : (
+            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {galeriaHab.map((f, i) => (
+                <div key={i} className="overflow-hidden rounded-xl border border-line bg-white shadow-card">
+                  <img src={f} alt={`Foto ${i + 1} de ${habitacionConFotos?.tipo}`} className="h-24 w-full object-cover" />
+                  <div className="p-2.5">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted tabular-nums">
+                      {i === 0 ? "Portada" : `Foto ${i + 1}`}
+                    </p>
+                    <div className="mt-2 flex flex-col gap-1.5">
+                      {i !== 0 && (
+                        <button
+                          onClick={() => usarPortadaHabitacion(i)}
+                          disabled={edicionBloqueada}
+                          className="rounded-md bg-hotel px-2.5 py-1.5 text-[11px] font-bold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:bg-line/60 disabled:text-muted"
+                        >
+                          Usar como portada
+                        </button>
+                      )}
+                      <button
+                        onClick={() => quitarFotoDeHabitacion(i)}
+                        disabled={edicionBloqueada}
+                        className="rounded-md border border-danger/35 px-2.5 py-1.5 text-[11px] font-bold text-danger transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-line disabled:text-muted"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-5 rounded-xl border border-line bg-canvas px-4 py-3 text-xs font-semibold text-muted">
+            A diferencia del hotel, acá sí podés quitar la última foto: las fotos de la habitación son opcionales.
+          </p>
+        </div>
+      </Modal>
     </main>
   );
 }
@@ -1537,6 +1732,7 @@ const HABITACION_VACIA: DatosHabitacion = {
   unidades: 1,
   estado: "disponible",
   detalle: "",
+  galeria: [],
 };
 
 // Botón pequeño de acción para la tabla de reservas

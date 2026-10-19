@@ -6,6 +6,20 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.61.0] — 2026-10-19 · Fotos de las habitaciones (HU-041)
+
+### Agregado
+- **`src/data.ts`** — `Habitacion` y `DatosHabitacion` ganan el campo `galeria: string[]` (la primera foto es la portada). Nuevo tope `MAXIMO_FOTOS_HABITACION = 4` con `cupoDeFotosHabitacion()` y `errorDeGaleriaHabitacion()`. Los 18 tipos de las semillas arrancan con galería vacía.
+- **`src/store.tsx`** — acciones `agregarFotosHabitacion()`, `ponerPortadaHabitacion()` y `quitarFotoHabitacion()`: validan el tope, guardan en el estado y suben la habitación a Supabase. A diferencia del hotel, en la habitación **sí se puede quitar la última foto** (las fotos son opcionales).
+- **`supabase/migrations/20261019_hu041_galeria_habitaciones.sql`** — script para el SQL Editor: agrega la columna `galeria` (jsonb, por defecto `[]`) a la tabla `habitaciones`.
+
+### Cambiado
+- **`src/sync.ts`** — `HabitacionFila` mapea la columna nueva; `fusionarHabitaciones()` completa la galería vacía de la BD con la local (mismo criterio que `fusionarHoteles()`), para no borrar fotos si el script todavía no se corrió.
+- **`src/pages/HotelPanel.tsx`** — cada tarjeta de habitación muestra su portada (o el ícono de cama si no tiene fotos) y el botón "Fotos (n/4)" que abre un modal para subir, elegir portada y quitar fotos, con la misma validación y optimización que la galería del hotel.
+- **`src/pages/HotelDetail.tsx`** — la tarjeta que ve el turista muestra la foto de la habitación y, si hay varias, una tira de miniaturas para cambiar de foto; sin fotos se mantiene el ícono de siempre.
+
+---
+
 ## [v0.60.0] — 2026-10-19 · Contraseña segura del hotelero (HU-040)
 
 ### Cambiado
