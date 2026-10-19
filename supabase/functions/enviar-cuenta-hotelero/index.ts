@@ -106,6 +106,44 @@ serve(async (req) => {
           .pie { padding: 24px; text-align: center; background: #07242C; }
           .pie-marca { margin: 0; font-family: 'Libre Baskerville', Georgia, serif; font-size: 15px; font-weight: 700; letter-spacing: 4px; color: #F8F6F0; }
           .pie-texto { margin: 10px 0 0; font-size: 12px; line-height: 1.7; color: #8FD3DE; }
+          .enlace { color: #177E8C; font-weight: 700; text-decoration: underline; }
+
+          /* Celular: las filas se apilan (etiqueta arriba, valor abajo) para que no se aplasten */
+          @media only screen and (max-width: 480px) {
+            body { padding: 10px 6px; }
+            .envoltura { border-radius: 12px; }
+            .cabecera { padding: 22px 12px 16px; }
+            .logo { width: 165px; height: auto; }
+            .lema { font-size: 11px; letter-spacing: 1.5px; }
+            .contenido { padding: 20px 16px 18px; }
+            .titulo { font-size: 23px; }
+            .saludo { font-size: 14px; }
+            .credenciales { padding: 16px 14px; }
+            .bloque { padding: 6px 14px 12px; }
+            .datos td, .credenciales-datos td {
+              display: block;
+              width: 100%;
+              text-align: left !important;
+              border-bottom: none !important;
+              padding: 3px 0;
+              word-break: break-word;
+            }
+            .datos tr, .credenciales-datos tr {
+              display: block;
+              padding: 9px 0;
+              border-bottom: 1px solid #E4DFD2;
+            }
+            .credenciales-datos tr { border-bottom: 1px dashed #E4DFD2; }
+            .datos tr:last-child, .credenciales-datos tr:last-child { border-bottom: none; }
+            .etiqueta, .credenciales-etiqueta {
+              font-size: 10px;
+              letter-spacing: 1.5px;
+              text-transform: uppercase;
+              padding-bottom: 1px;
+            }
+            .valor, .credenciales-valor { font-size: 15px; padding-top: 1px; }
+            .pie { padding: 18px 14px; }
+          }
         </style>
       </head>
       <body>
@@ -140,7 +178,7 @@ serve(async (req) => {
               <table class="datos" role="presentation">
                 <tr>
                   <td class="etiqueta" align="left">1. Ingresa a</td>
-                  <td class="valor" align="right">hotelica.com</td>
+                  <td class="valor" align="right"><a class="enlace" href="https://hotelica.vercel.app">hotelica.vercel.app</a></td>
                 </tr>
                 <tr>
                   <td class="etiqueta" align="left">2. Pulsa</td>

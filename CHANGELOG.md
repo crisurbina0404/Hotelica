@@ -6,6 +6,13 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.61.2] — 2026-10-19 · Correo de aprobación: enlace real y vista en celular (HU-021)
+
+### Cambiado
+- **`supabase/functions/enviar-cuenta-hotelero/index.ts`** — el paso "Ingresa a" del correo ahora es un enlace real a `https://hotelica.vercel.app` (antes decía "hotelica.com" sin enlace). Se agregó un `@media` para pantallas de hasta 480px: las filas de las tablas de credenciales e instrucciones se apilan (etiqueta arriba, valor abajo) y se reducen paddings y títulos, para que el correo se vea prolijo en el celular.
+
+---
+
 ## [v0.61.1] — 2026-10-19 · Selector de tipo de habitación (HU-023)
 
 ### Cambiado
