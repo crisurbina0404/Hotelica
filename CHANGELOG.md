@@ -11,7 +11,7 @@ del proyecto.
 ### Agregado
 - **`src/data.ts`** — `Habitacion` y `DatosHabitacion` ganan el campo `galeria: string[]` (la primera foto es la portada). Nuevo tope `MAXIMO_FOTOS_HABITACION = 4` con `cupoDeFotosHabitacion()` y `errorDeGaleriaHabitacion()`. Los 18 tipos de las semillas arrancan con galería vacía.
 - **`src/store.tsx`** — acciones `agregarFotosHabitacion()`, `ponerPortadaHabitacion()` y `quitarFotoHabitacion()`: validan el tope, guardan en el estado y suben la habitación a Supabase. A diferencia del hotel, en la habitación **sí se puede quitar la última foto** (las fotos son opcionales).
-- **`supabase/migrations/20261019_hu041_galeria_habitaciones.sql`** — script para el SQL Editor: agrega la columna `galeria` (jsonb, por defecto `[]`) a la tabla `habitaciones`.
+- **`supabase/migrations/20261019140000_hu041_galeria_habitaciones.sql`** — script para el SQL Editor: agrega la columna `galeria` (jsonb, por defecto `[]`) a la tabla `habitaciones`. El timestamp lleva hora para no chocar con la otra migración del mismo día en el conector Supabase Preview de GitHub.
 
 ### Cambiado
 - **`src/sync.ts`** — `HabitacionFila` mapea la columna nueva; `fusionarHabitaciones()` completa la galería vacía de la BD con la local (mismo criterio que `fusionarHoteles()`), para no borrar fotos si el script todavía no se corrió.
