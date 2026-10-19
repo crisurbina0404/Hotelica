@@ -52,6 +52,21 @@ export type Habitacion = {
 // Los tres estados posibles de una habitación, en el orden en que se ofrecen
 export const ESTADOS_HABITACION: EstadoHabitacion[] = ["disponible", "mantenimiento", "no_disponible"];
 
+// Tipos sugeridos que ofrece el selector del formulario de habitaciones (HU-023)
+export const TIPOS_HABITACION: string[] = [
+  "Estándar Individual",
+  "Estándar Doble",
+  "Twin",
+  "Triple",
+  "Familiar",
+  "Suite",
+  "Cabaña",
+  "Bungalow",
+];
+
+// Marca del selector para escribir un tipo propio (ej: "Suite del Mombacho")
+export const TIPO_LIBRE = "otro";
+
 // Lo que el hotelero completa al registrar una habitación (HU-023)
 export type DatosHabitacion = {
   tipo: string;

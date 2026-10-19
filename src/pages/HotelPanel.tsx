@@ -7,7 +7,7 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MAXIMO_FOTOS_HABITACION, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
+  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MAXIMO_FOTOS_HABITACION, MUNICIPIOS, TASA_IVA, TEMPORADAS, TIPOS_HABITACION, TIPO_LIBRE, ajustarPrecio,
   calcularTotales, cupoDeFotos, cupoDeFotosHabitacion, errorDeGaleria, errorDeGaleriaHabitacion, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
@@ -66,6 +66,8 @@ export function PanelHotel() {
   const [formHabitacion, setFormHabitacion] = useState<DatosHabitacion>(HABITACION_VACIA);
   const [erroresHabitacion, setErroresHabitacion] = useState<ErroresHabitacion>({});
   const [habitacionEnviada, setHabitacionEnviada] = useState(false);
+  // Qué se eligió en el selector de tipo: vacío, un tipo de la lista o "otro" para escribirlo a mano
+  const [tipoElegido, setTipoElegido] = useState("");
 
   // Configuración de precios de cada tipo de habitación (HU-024)
   const [borradores, setBorradores] = useState<Record<string, string>>({});
@@ -150,6 +152,16 @@ export function PanelHotel() {
     setErroresHabitacion((e) => (e[campo] ? { ...e, [campo]: undefined } : e));
   };
 
+  // Elige un tipo de la lista o "Otro" para escribirlo libre (HU-023)
+  const elegirTipoHabitacion = (valor: string) => {
+    setTipoElegido(valor);
+    if (valor === TIPO_LIBRE) {
+      cambiarCampoHabitacion("tipo", "");
+    } else {
+      cambiarCampoHabitacion("tipo", valor);
+    }
+  };
+
   // Borde coral del campo que quedó con error (mismo patrón que la edición del hotel)
   const bordeHabitacion = (campo: keyof DatosHabitacion) =>
     erroresHabitacion[campo]
@@ -171,6 +183,7 @@ export function PanelHotel() {
     // Dejamos el formulario limpio por si quiere registrar otra
     setRegistrando(false);
     setFormHabitacion(HABITACION_VACIA);
+    setTipoElegido("");
     setErroresHabitacion({});
     setHabitacionEnviada(false);
     avisar(`Habitación registrada: ${resultado.habitacion?.tipo}.`, "ok");
@@ -1117,14 +1130,28 @@ export function PanelHotel() {
 
               <label className="block sm:col-span-2">
                 <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Tipo de habitación</span>
-                <input
-                  type="text"
-                  value={formHabitacion.tipo}
-                  onChange={(e) => cambiarCampoHabitacion("tipo", e.target.value)}
-                  maxLength={40}
-                  placeholder="Estándar Doble"
+                <select
+                  value={tipoElegido}
+                  onChange={(e) => elegirTipoHabitacion(e.target.value)}
                   className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("tipo")}`}
-                />
+                >
+                  <option value="">Elegí un tipo de la lista...</option>
+                  {TIPOS_HABITACION.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                  <option value={TIPO_LIBRE}>Otro (escribir el nombre)</option>
+                </select>
+                {tipoElegido === TIPO_LIBRE && (
+                  <input
+                    type="text"
+                    value={formHabitacion.tipo}
+                    onChange={(e) => cambiarCampoHabitacion("tipo", e.target.value)}
+                    maxLength={40}
+                    placeholder="Suite del Mombacho"
+                    autoFocus
+                    className={`mt-2 w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${bordeHabitacion("tipo")}`}
+                  />
+                )}
                 {erroresHabitacion.tipo && (
                   <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{erroresHabitacion.tipo}</p>
                 )}
@@ -1221,6 +1248,7 @@ export function PanelHotel() {
                   onClick={() => {
                     setRegistrando(false);
                     setFormHabitacion(HABITACION_VACIA);
+                    setTipoElegido("");
                     setErroresHabitacion({});
                     setHabitacionEnviada(false);
                   }}

@@ -6,6 +6,14 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.61.1] — 2026-10-19 · Selector de tipo de habitación (HU-023)
+
+### Cambiado
+- **`src/data.ts`** — nueva lista `TIPOS_HABITACION` con los ocho tipos sugeridos (Estándar Individual, Estándar Doble, Twin, Triple, Familiar, Suite, Cabaña, Bungalow) y la constante `TIPO_LIBRE` que marca la opción "Otro" del selector.
+- **`src/pages/HotelPanel.tsx`** — el campo "Tipo de habitación" del formulario de registro pasó de texto libre a un selector con los tipos sugeridos y la opción "Otro (escribir el nombre)", que muestra un campo de texto para tipos a medida como "Suite del Mombacho". La validación no cambia: tipo vacío o repetido dentro del hotel sigue sin registrarse.
+
+---
+
 ## [v0.61.0] — 2026-10-19 · Fotos de las habitaciones (HU-041)
 
 ### Agregado
