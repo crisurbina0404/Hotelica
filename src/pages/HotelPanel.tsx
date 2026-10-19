@@ -7,13 +7,13 @@
 import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_HABITACION, MAXIMO_FOTOS, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
+  DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
   calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
 import { MapaHotel } from "../mapa";
 import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Reserva } from "../data";
-import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion } from "../ui";
+import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion, Modal } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica, IconoBillete, IconoFoto,
   IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella,
@@ -76,6 +76,11 @@ export function PanelHotel() {
   // Galería de fotografías del hotel (HU-025)
   const [errorFoto, setErrorFoto] = useState("");
   const [subiendo, setSubiendo] = useState(false);
+
+  // Rechazo de una reserva: primero pedimos el motivo en un modal (HU-027)
+  const [porRechazar, setPorRechazar] = useState<Reserva | null>(null);
+  const [motivoRechazo, setMotivoRechazo] = useState("");
+  const [errorMotivo, setErrorMotivo] = useState("");
 
   // Los municipios se filtran según el departamento elegido
   const municipiosDelDepto = formEdicion
@@ -200,7 +205,7 @@ export function PanelHotel() {
       {r.estado === "pendiente" && (
         <>
           <Accion onClick={() => confirmar(r)} clase="bg-primary text-white hover:bg-primary-dark" icono={<IconoCheck size={13} />} texto="Confirmar" />
-          <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
+          <Accion onClick={() => abrirRechazo(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Rechazar" />
         </>
       )}
       {r.estado === "confirmada" && (
@@ -374,10 +379,51 @@ export function PanelHotel() {
   const ingresos = delHotel.filter((r) => r.estado !== "cancelada").reduce((acc, r) => acc + r.total, 0);
 
   // Acciones con sus reglas de negocio
+  // Antes de actuar revisamos que la reserva siga pendiente y sea de este hotel (HU-027)
+  const sePuedeActuar = (r: Reserva) => {
+    if (r.hotelId !== HOTEL_ID) {
+      avisar("Esa reserva no pertenece a tu hotel.", "error");
+      return false;
+    }
+    if (r.estado !== "pendiente") {
+      avisar(`La reserva ${r.folio} ya no está pendiente: su estado es ${ETIQUETA_ESTADO[r.estado]}.`, "error");
+      return false;
+    }
+    return true;
+  };
+
   const confirmar = (r: Reserva) => {
+    if (!sePuedeActuar(r)) return;
     cambiarEstadoReserva(r.folio, "confirmada");
     avisar(`Reserva ${r.folio} confirmada. El turista ya puede verla como Confirmada.`, "ok");
   };
+
+  // Abre el modal donde el hotelero escribe por qué rechaza (HU-027)
+  const abrirRechazo = (r: Reserva) => {
+    if (!sePuedeActuar(r)) return;
+    setMotivoRechazo("");
+    setErrorMotivo("");
+    setPorRechazar(r);
+  };
+
+  // Aplica el rechazo con el motivo escrito: la reserva queda cancelada
+  const confirmarRechazo = () => {
+    if (!porRechazar) return;
+    const motivo = motivoRechazo.trim();
+    if (motivo.length < 3) {
+      setErrorMotivo("Escribí el motivo del rechazo: el turista lo va a leer.");
+      return;
+    }
+    if (!sePuedeActuar(porRechazar)) {
+      setPorRechazar(null);
+      return;
+    }
+    cambiarEstadoReserva(porRechazar.folio, "cancelada", motivo);
+    avisar(`Reserva ${porRechazar.folio} rechazada. El turista verá el motivo que escribiste.`, "error");
+    setPorRechazar(null);
+    setMotivoRechazo("");
+  };
+
   const cancelar = (r: Reserva) => {
     cambiarEstadoReserva(r.folio, "cancelada");
     avisar(`Reserva ${r.folio} cancelada por el hotel.`, "error");
@@ -1358,6 +1404,49 @@ export function PanelHotel() {
           Las fotos viajan dentro de los datos del navegador y se optimizan al subirlas. El hotel nunca se queda sin ninguna: la portada es la que lo representa en las búsquedas.
         </p>
       </section>
+
+      {/* Modal para rechazar una reserva: sin motivo no se envía (HU-027) */}
+      <Modal abierto={!!porRechazar} alCerrar={() => setPorRechazar(null)} ancho="max-w-md">
+        <div className="p-7">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE2E2] text-danger">
+            <IconoX size={26} />
+          </span>
+          <h3 className="mt-4 font-display text-xl font-bold text-ink">Rechazar la reserva {porRechazar?.folio}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            {porRechazar?.turista} pierde esta habitación en esas fechas. Escribí el motivo: el turista lo va a ver en su reserva.
+          </p>
+
+          <label className="mt-5 block">
+            <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Motivo del rechazo</span>
+            <textarea
+              value={motivoRechazo}
+              onChange={(e) => {
+                setMotivoRechazo(e.target.value);
+                if (errorMotivo) setErrorMotivo("");
+              }}
+              rows={3}
+              placeholder="Ej.: No quedan habitaciones libres para esas fechas."
+              className={`w-full resize-none rounded-lg border bg-white px-3.5 py-2.5 text-sm font-medium text-ink outline-none transition-all focus:ring-2 ${errorMotivo ? "border-[#FCA5A5] focus:ring-danger/30" : "border-line focus:ring-primary/30"}`}
+            />
+          </label>
+          {errorMotivo && <p role="alert" className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{errorMotivo}</p>}
+
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              onClick={() => setPorRechazar(null)}
+              className="rounded-lg border-2 border-line px-5 py-2.5 text-sm font-bold text-muted transition-colors hover:border-ink/30 hover:text-ink"
+            >
+              Volver
+            </button>
+            <button
+              onClick={confirmarRechazo}
+              className="rounded-lg bg-danger px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-[#B91C1C] active:scale-95"
+            >
+              Sí, rechazar
+            </button>
+          </div>
+        </div>
+      </Modal>
     </main>
   );
 }

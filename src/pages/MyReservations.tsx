@@ -67,7 +67,13 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
     const cambiadas = mias.filter((r) => vistos[r.folio] !== undefined && vistos[r.folio] !== r.estado);
     if (cambiadas.length > 0) {
       setCambiaron(cambiadas.map((r) => r.folio));
-      cambiadas.forEach((r) => avisar(`Tu reserva ${r.folio} pasó a ${ETIQUETA_ESTADO[r.estado]}`, "info"));
+      cambiadas.forEach((r) => {
+        // Si el hotel rechazó, el aviso dice quién lo hizo en vez de nombrar el estado
+        const aviso = r.motivoRechazo
+          ? `Tu reserva ${r.folio} fue rechazada por el hotel`
+          : `Tu reserva ${r.folio} pasó a ${ETIQUETA_ESTADO[r.estado]}`;
+        avisar(aviso, "info");
+      });
     }
     guardarEstadosVistos(mias);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -164,6 +170,12 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                     <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium text-muted">
                       <IconoCama size={14} className="text-primary" /> {hab?.tipo} · reserva del {fmtFecha(r.creada)}
                     </p>
+                    {/* El motivo que escribió el hotel al rechazar (HU-027) */}
+                    {r.motivoRechazo && (
+                      <p className="mt-2 rounded-lg border border-danger/25 bg-[#FEF2F2] px-3 py-2 text-xs font-semibold leading-relaxed text-[#B91C1C]">
+                        Motivo del hotel: {r.motivoRechazo}
+                      </p>
+                    )}
                     <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted">
                       <span className="flex items-center gap-1.5"><IconoCalendario size={14} className="text-primary" /> {fmtFecha(r.llegada)} → {fmtFecha(r.salida)}</span>
                       <span className="flex items-center gap-1.5"><IconoHuespedes size={14} className="text-primary" /> {r.huespedes} huésped{r.huespedes > 1 ? "es" : ""}</span>
@@ -307,6 +319,12 @@ function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
           <BadgeEstado estado={r.estado} />
         </div>
         <p className="mt-1.5 text-sm text-muted">{SIGNIFICADO[r.estado]}</p>
+        {/* El motivo del rechazo, si el hotel lo escribió (HU-027) */}
+        {r.motivoRechazo && (
+          <p className="mt-3 rounded-lg border border-danger/25 bg-[#FEF2F2] px-3 py-2 text-xs font-semibold leading-relaxed text-[#B91C1C]">
+            Motivo del hotel: {r.motivoRechazo}
+          </p>
+        )}
       </div>
 
       <LineaTiempo estado={r.estado} />

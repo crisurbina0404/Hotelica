@@ -144,7 +144,7 @@ type AppCtx = {
   crearReserva: (r: Omit<Reserva, "folio" | "creada" | "estado" | "calificada">) => Reserva;
   registrarPago: (pago: { folio: string; monto: number; metodo: Reserva["pago"]; referencia: string }) => Pago;
   enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
-  cambiarEstadoReserva: (folio: string, estado: EstadoReserva) => void;
+  cambiarEstadoReserva: (folio: string, estado: EstadoReserva, motivoRechazo?: string) => void;
   avisarHotel: (hotelId: string, folio: string, texto: string) => void;
   marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
@@ -385,10 +385,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Cambia el estado de una reserva (confirmar, check-in, check-out, cancelar)
-  const cambiarEstadoReserva = (folio: string, estado: EstadoReserva) => {
+  // El motivo solo se guarda cuando el hotel rechaza la reserva (HU-027)
+  const cambiarEstadoReserva = (folio: string, estado: EstadoReserva, motivoRechazo?: string) => {
     setDatos((d) => ({
       ...d,
-      reservas: d.reservas.map((r) => (r.folio === folio ? { ...r, estado } : r)),
+      reservas: d.reservas.map((r) => {
+        if (r.folio !== folio) return r;
+        const reserva = { ...r, estado };
+        // Solo escribimos el motivo si venía uno: así un confirmar no borra nada
+        return motivoRechazo ? { ...reserva, motivoRechazo } : reserva;
+      }),
     }));
   };
 

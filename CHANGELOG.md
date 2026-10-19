@@ -6,6 +6,25 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.56.0] — 2026-10-19 · HU-027: confirmar o rechazar reservas
+
+### Agregado
+- **`historias-usuario/HU-027-confirmar-o-rechazar-reservas.md`**: historia de usuario del módulo Gestión Hotel, con 8 reglas de negocio, 6 escenarios BDD y las subtareas HOTELICA-236 a 241. Como pasó con la HU-026, el backlog la daba por escrita y el archivo no existía.
+- **`src/data.ts`**: campo opcional `motivoRechazo` en `Reserva` para guardar por qué el hotel rechazó una solicitud. No se agrega un estado "Rechazada": el ENUM oficial de la guía de negocio es `Pendiente → Confirmada → Check-in → Completada / Cancelada`, así que el rechazo entra como Cancelada con su motivo.
+- **Modal de motivo en el panel del hotel** (`src/pages/HotelPanel.tsx`): al pulsar "Rechazar" se abre un modal con una textarea obligatoria (mínimo 3 caracteres); sin motivo no se envía el rechazo.
+
+### Cambiado
+- **Botones de la tabla de reservas** — en las reservas pendientes, el "Cancelar" pasó a llamarse **"Rechazar"** y abre el modal de motivo; "Confirmar" sigue como estaba (HOTELICA-236).
+- **Validación antes de actuar** (HOTELICA-237) — `confirmar`, `abrirRechazo` y el envío del rechazo revisan con `sePuedeActuar()` que la reserva siga pendiente y sea del hotel del panel; si no, muestran un toast con el estado real y no tocan nada.
+- **`src/store.tsx`** — `cambiarEstadoReserva()` acepta un tercer parámetro opcional con el motivo y solo lo escribe cuando viene uno, así un confirmar no borra nada. El cambio se persiste en el acto en localStorage (HOTELICA-238).
+- **Mensajes de la acción** (HOTELICA-239) — el hotelero ve "Reserva H-0012 confirmada" (tono ok) o "Reserva H-0012 rechazada…" (tono error) con el folio.
+- **`src/pages/MyReservations.tsx`** — el turista se entera del cambio (HOTELICA-240): si la reserva tiene `motivoRechazo`, el aviso dice "fue rechazada por el hotel" en vez de nombrar el estado, y el motivo aparece en la tarjeta y en el detalle de la reserva.
+
+### Verificado
+`npm run typecheck` y `npm run build` en verde. Los 6 escenarios BDD de la historia se repasaron contra el código: botones solo en pendientes, validación de estado con toast de error, cambio inmediato en tablero/ocupación/ingresos, mensaje con folio, aviso al turista con motivo y motivo obligatorio. No hay tests unitarios en el repo (se eliminaron en la actualización de `main` del 19/10).
+
+---
+
 ## [v0.55.0] — 2026-10-18 · HU-026: consultar reservas recibidas (documentación)
 
 ### Agregado

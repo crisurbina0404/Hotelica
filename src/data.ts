@@ -85,6 +85,8 @@ export type Reserva = {
   estado: EstadoReserva;
   creada: string;
   calificada: boolean;
+  // Por qué el hotel rechazó la solicitud (HU-027), vacío si no hubo rechazo
+  motivoRechazo?: string;
 };
 
 export type Resena = {
