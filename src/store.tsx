@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED, HABITACIONES_SEED,
-  nuevoPromedio, hoyISO, seTraslapan, sePuedeCalificar, validarCalificacion,
+  nuevoPromedio, hoyISO, ahoraISO, seTraslapan, sePuedeCalificar, validarCalificacion,
   claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel,
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
   errorDePrecio, errorDeAjuste, ajustarPrecio,
@@ -145,6 +145,7 @@ type AppCtx = {
   registrarPago: (pago: { folio: string; monto: number; metodo: Reserva["pago"]; referencia: string }) => Pago;
   enviarCorreoReserva: (reserva: Reserva, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   cambiarEstadoReserva: (folio: string, estado: EstadoReserva, motivoRechazo?: string) => void;
+  registrarCheckin: (folio: string) => string;
   avisarHotel: (hotelId: string, folio: string, texto: string) => void;
   marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
@@ -396,6 +397,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return motivoRechazo ? { ...reserva, motivoRechazo } : reserva;
       }),
     }));
+  };
+
+  // Registra la entrada del huésped: estado Check-in con la hora de este momento (HU-028)
+  // Devuelve la marca de fecha y hora para poder avisar con ella en el panel
+  const registrarCheckin = (folio: string) => {
+    const marca = ahoraISO();
+    setDatos((d) => ({
+      ...d,
+      reservas: d.reservas.map((r) => {
+        if (r.folio !== folio) return r;
+        return { ...r, estado: "checkin" as EstadoReserva, checkinEn: marca };
+      }),
+    }));
+    return marca;
   };
 
   // Deja un aviso en el panel del hotel (por ejemplo: "Reserva cancelada por el turista")
@@ -962,6 +977,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       registrarPago,
       enviarCorreoReserva,
       cambiarEstadoReserva,
+      registrarCheckin,
       avisarHotel,
       marcarNotificacionesLeidas,
       calificar,

@@ -6,6 +6,24 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.57.0] — 2026-10-19 · HU-028: registrar check-in
+
+### Agregado
+- **`historias-usuario/HU-028-registrar-check-in.md`**: historia de usuario del módulo Gestión Hotel, con 7 reglas de negocio, 6 escenarios BDD y las subtareas HOTELICA-242 a 247. Otra vez el backlog la daba por escrita y el archivo no existía.
+- **`src/data.ts`** — `ahoraISO()` devuelve la marca de fecha y hora de ahora (yyyy-mm-ddTHH:MM) y `fmtFechaHora()` la muestra en español ("19 oct 2026, 2:35 p.m."); `Reserva` gana el campo opcional `checkinEn` con esa marca de entrada.
+- **`src/store.tsx`** — `registrarCheckin(folio)` cambia el estado a Check-in y escribe `checkinEn` en el mismo movimiento, devolviendo la marca para que el panel avise con la hora exacta.
+
+### Cambiado
+- **Botón "Check-in"** (`src/pages/HotelPanel.tsx`) — ahora pasa por `sePuedeCheckin()`: reserva del hotel propio, estado *Confirmada* y llegada hoy o pasada; si algo falla muestra un toast con el motivo y no cambia nada (HOTELICA-244).
+- **Aviso de la acción** (HOTELICA-246) — el toast incluye huésped, folio y hora de la entrada: "Check-in registrado para María López (H-0012) · entrada 19 oct 2026, 2:35 p.m.".
+- **Constancia de la entrada** (HOTELICA-247) — la hora aparece en la fila de la reserva del panel (bajo la pastilla de estado), en la tarjeta de celular y en el detalle de Mis Reservas del turista con el ícono de llave.
+- **Tablero y ocupación** — al registrar la entrada, la unidad empieza a contar en la ocupación de la HU-026, baja "Check-ins por hacer" y se habilita el botón de check-out (HU-029), todo sin recargar.
+
+### Verificado
+`npm run typecheck` y `npm run build` en verde. Los 6 escenarios BDD se repasaron contra el código: botón solo en confirmadas con llegada cumplida, marca de fecha y hora guardada, validación de reserva activa y de hotel propio con toast de error, tablero actualizado en el acto, aviso con folio y hora, y constancia visible en panel y en Mis Reservas.
+
+---
+
 ## [v0.56.0] — 2026-10-19 · HU-027: confirmar o rechazar reservas
 
 ### Agregado

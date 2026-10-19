@@ -87,6 +87,8 @@ export type Reserva = {
   calificada: boolean;
   // Por qué el hotel rechazó la solicitud (HU-027), vacío si no hubo rechazo
   motivoRechazo?: string;
+  // Fecha y hora en que el hotel registró la entrada (HU-028)
+  checkinEn?: string;
 };
 
 export type Resena = {
@@ -373,6 +375,14 @@ export function aISO(d: Date): string {
   return `${d.getFullYear()}-${m}-${dia}`;
 }
 
+// Marca de ahora mismo con fecha y hora (yyyy-mm-ddTHH:MM), para el check-in (HU-028)
+export function ahoraISO(): string {
+  const d = new Date();
+  const hora = `${d.getHours()}`.padStart(2, "0");
+  const minuto = `${d.getMinutes()}`.padStart(2, "0");
+  return `${aISO(d)}T${hora}:${minuto}`;
+}
+
 // Suma días a una fecha y devuelve ISO
 export function sumarDias(iso: string, dias: number): string {
   const d = new Date(`${iso}T12:00:00`);
@@ -397,6 +407,17 @@ export function fmtFecha(iso: string): string {
     day: "2-digit",
     month: "short",
     year: "numeric",
+  });
+}
+
+// Formatea la marca de entrada con su hora: 12 ago 2026 · 2:35 p.m. (HU-028)
+export function fmtFechaHora(marca: string): string {
+  return new Date(marca).toLocaleString("es-NI", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
   });
 }
 

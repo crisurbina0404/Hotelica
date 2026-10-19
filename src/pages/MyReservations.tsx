@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import {
-  ETIQUETA_ESTADO, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, hoyISO,
+  ETIQUETA_ESTADO, TASA_IVA as TASA_IVA_PCT, fmtDinero, fmtFecha, fmtFechaHora, hoyISO,
   historialDeReservas, TURISTA_DEMO, sePuedeCancelar, FLUJO_RESERVA, pasoDeEstado,
   ETIQUETA_PAGO, sePuedeCalificar, validarCalificacion, calificacionDe,
 } from "../data";
@@ -319,6 +319,12 @@ function DetalleReserva({ r, alCerrar }: { r: Reserva; alCerrar: () => void }) {
           <BadgeEstado estado={r.estado} />
         </div>
         <p className="mt-1.5 text-sm text-muted">{SIGNIFICADO[r.estado]}</p>
+        {/* La hora exacta en que el hotel registró tu llegada (HU-028) */}
+        {r.checkinEn && (
+          <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-[#166534]">
+            <IconoLlave size={14} /> Entrada registrada el {fmtFechaHora(r.checkinEn)}
+          </p>
+        )}
         {/* El motivo del rechazo, si el hotel lo escribió (HU-027) */}
         {r.motivoRechazo && (
           <p className="mt-3 rounded-lg border border-danger/25 bg-[#FEF2F2] px-3 py-2 text-xs font-semibold leading-relaxed text-[#B91C1C]">

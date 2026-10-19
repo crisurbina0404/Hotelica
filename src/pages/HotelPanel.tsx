@@ -8,7 +8,7 @@ import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
   DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MUNICIPIOS, TASA_IVA, TEMPORADAS, ajustarPrecio,
-  calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
+  calcularTotales, cupoDeFotos, errorDeGaleria, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
 import { MapaHotel } from "../mapa";
@@ -20,7 +20,7 @@ import {
 } from "../icons";
 
 export function PanelHotel() {
-  const { hoteles, habitaciones: todasLasHabitaciones, reservas, cambiarEstadoReserva, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
+  const { hoteles, habitaciones: todasLasHabitaciones, reservas, cambiarEstadoReserva, registrarCheckin, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
   const hoy = hoyISO();
 
   // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
@@ -428,9 +428,28 @@ export function PanelHotel() {
     cambiarEstadoReserva(r.folio, "cancelada");
     avisar(`Reserva ${r.folio} cancelada por el hotel.`, "error");
   };
+  // El check-in solo se registra sobre una reserva activa: confirmada,
+  // de este hotel y con la llegada ya cumplida (HU-028)
+  const sePuedeCheckin = (r: Reserva) => {
+    if (r.hotelId !== HOTEL_ID) {
+      avisar("Esa reserva no pertenece a tu hotel.", "error");
+      return false;
+    }
+    if (r.estado !== "confirmada") {
+      avisar(`La reserva ${r.folio} no está confirmada: su estado es ${ETIQUETA_ESTADO[r.estado]}.`, "error");
+      return false;
+    }
+    if (r.llegada > hoy) {
+      avisar(`El check-in de ${r.folio} se habilita el ${fmtFecha(r.llegada)}.`, "error");
+      return false;
+    }
+    return true;
+  };
+
   const checkIn = (r: Reserva) => {
-    cambiarEstadoReserva(r.folio, "checkin");
-    avisar(`Check-in registrado para ${r.turista} (${r.folio}).`, "ok");
+    if (!sePuedeCheckin(r)) return;
+    const entrada = registrarCheckin(r.folio);
+    avisar(`Check-in registrado para ${r.turista} (${r.folio}) · entrada ${fmtFechaHora(entrada)}.`, "ok");
   };
   const checkOut = (r: Reserva) => {
     cambiarEstadoReserva(r.folio, "completada");
@@ -870,7 +889,13 @@ export function PanelHotel() {
                       <td className="px-4 py-3.5 text-muted">{fmtFecha(r.salida)}</td>
                       <td className="px-4 py-3.5 text-muted">{r.huespedes}</td>
                       <td className="px-4 py-3.5 font-semibold text-ink">{fmtDinero(r.total)}</td>
-                      <td className="px-4 py-3.5"><BadgeEstado estado={r.estado} /></td>
+                      <td className="px-4 py-3.5">
+                        <BadgeEstado estado={r.estado} />
+                        {/* Sello con la hora de la entrada registrada (HU-028) */}
+                        {r.checkinEn && (
+                          <span className="mt-1 block text-[11px] font-semibold text-muted">Entrada {fmtFechaHora(r.checkinEn)}</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3.5">
                         <div className="flex justify-end gap-1.5">{accionesDe(r)}</div>
                       </td>
@@ -917,6 +942,13 @@ export function PanelHotel() {
                       <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Total</dt>
                       <dd className="mt-0.5 text-sm font-bold text-ink">{fmtDinero(r.total)}</dd>
                     </div>
+                    {/* La hora de la entrada, si el hotel ya la registró (HU-028) */}
+                    {r.checkinEn && (
+                      <div className="col-span-2">
+                        <dt className="text-[11px] font-bold uppercase tracking-wider text-muted">Entrada</dt>
+                        <dd className="mt-0.5 text-sm font-semibold text-ink">{fmtFechaHora(r.checkinEn)}</dd>
+                      </div>
+                    )}
                   </dl>
                   <div className="mt-3.5 flex flex-wrap justify-end gap-1.5 border-t border-line pt-3">
                     {accionesDe(r)}
