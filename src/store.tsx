@@ -15,6 +15,7 @@ import {
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
+import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarPorId, subirHabitacion, subirHabitaciones, subirHotel } from "./sync";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = {
@@ -202,6 +203,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [datos]);
 
+  // Fase 2: al abrir la app traemos los hoteles y habitaciones de la base de datos.
+  // Si la BD no responde nos quedamos con lo local y la app sigue igual.
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const [hotelesBD, habitacionesBD] = await Promise.all([cargarHoteles(), cargarHabitaciones()]);
+      if (!vivo) return;
+      if (!hotelesBD && !habitacionesBD) return;
+      setDatos((d) => ({
+        ...d,
+        hoteles: fusionarHoteles(d.hoteles, hotelesBD ?? []),
+        habitaciones: fusionarPorId(d.habitaciones, habitacionesBD ?? []),
+      }));
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
   // Si otra pestaña guarda cambios, copiamos su estado para no pisarnos (bug sobreventa)
   useEffect(() => {
     const alCambiarEnOtraPestana = (e: StorageEvent) => {
@@ -261,6 +281,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, texto, tono }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+  };
+
+  // Fase 2: sube un hotel a la base de datos sin frenar la app;
+  // si no se pudo, avisamos y el hotel queda igual en el navegador
+  const subirHotelConAviso = (hotel: Hotel) => {
+    subirHotel(hotel).then((r) => {
+      if (r.error) avisar(`"${hotel.nombre}" quedó guardado solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+    });
+  };
+
+  // Igual que arriba pero para una habitación (HU-023 y HU-024)
+  const subirHabitacionConAviso = (habitacion: Habitacion) => {
+    subirHabitacion(habitacion).then((r) => {
+      if (r.error) avisar(`La habitación quedó guardada solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+    });
   };
 
   // Marca o desmarca un hotel como favorito de la cuenta actual (HU-020)
@@ -521,6 +556,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cuentasHotelero: cuentaCreada ? [...d.cuentasHotelero, cuentaCreada] : d.cuentasHotelero,
     }));
 
+    // La decisión del admin también queda registrada en la base de datos (Fase 2)
+    if (hotel) subirHotelConAviso({ ...hotel, aprobado: decision });
+
     return cuentaCreada;
   };
 
@@ -592,6 +630,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     setDatos((d) => ({ ...d, hoteles: [...d.hoteles, nuevo] }));
+    // El hotel se guarda también en la base de datos para que se vea desde cualquier computadora (Fase 2)
+    subirHotelConAviso(nuevo);
     return { hotel: nuevo };
   };
 
@@ -602,25 +642,30 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const errores = validarRegistroHotel(registro, otrosHoteles);
     if (Object.keys(errores).length > 0) return { errores };
 
+    // Armamos el hotel actualizado una sola vez: lo usamos acá y para subirlo a la BD
+    const existente = datos.hoteles.find((h) => h.id === hotelId);
+    const actualizado = existente
+      ? {
+          ...existente,
+          nombre: registro.nombre.trim(),
+          dueno: registro.dueno.trim(),
+          correoDueno: registro.correo.trim().toLowerCase(),
+          departamentoId: registro.departamentoId,
+          municipioId: registro.municipioId,
+          direccion: registro.direccion.trim(),
+          ubicacion: registro.ubicacion ?? undefined, // punto exacto en el mapa (HU-037)
+          descripcion: registro.descripcion.trim(),
+          contacto: registro.telefono.trim() || undefined,
+        }
+      : null;
+
     setDatos((d) => ({
       ...d,
-      hoteles: d.hoteles.map((h) =>
-        h.id === hotelId
-          ? {
-              ...h,
-              nombre: registro.nombre.trim(),
-              dueno: registro.dueno.trim(),
-              correoDueno: registro.correo.trim().toLowerCase(),
-              departamentoId: registro.departamentoId,
-              municipioId: registro.municipioId,
-              direccion: registro.direccion.trim(),
-              ubicacion: registro.ubicacion ?? undefined,
-              descripcion: registro.descripcion.trim(),
-              contacto: registro.telefono.trim() || undefined,
-            }
-          : h
-      ),
+      hoteles: d.hoteles.map((h) => (h.id === hotelId && actualizado ? actualizado : h)),
     }));
+
+    // Los cambios del formulario también viajan a la base de datos (Fase 2)
+    if (actualizado) subirHotelConAviso(actualizado);
     return {};
   };
 
@@ -643,6 +688,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
 
     setDatos((d) => ({ ...d, habitaciones: [...d.habitaciones, nueva] }));
+    // La habitación nueva se sube a la base de datos (Fase 2)
+    subirHabitacionConAviso(nueva);
     return { habitacion: nueva };
   };
 
@@ -652,6 +699,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...d,
       habitaciones: d.habitaciones.map((h) => (h.id === habitacionId ? { ...h, estado } : h)),
     }));
+
+    // El cambio de estado se refleja en la base de datos (Fase 2)
+    const laQueCambio = datos.habitaciones.find((h) => h.id === habitacionId);
+    if (laQueCambio) subirHabitacionConAviso({ ...laQueCambio, estado });
   };
 
   // Corrige el precio por noche de una habitación ya registrada (HU-024)
@@ -665,6 +716,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...d,
       habitaciones: d.habitaciones.map((h) => (h.id === habitacionId ? { ...h, precio: limpio } : h)),
     }));
+
+    // El precio nuevo también se guarda en la base de datos (Fase 2)
+    const laQueCambio = datos.habitaciones.find((h) => h.id === habitacionId);
+    if (laQueCambio) subirHabitacionConAviso({ ...laQueCambio, precio: limpio });
     return {};
   };
 
@@ -674,24 +729,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (error) return { error };
 
     const delHotel = datos.habitaciones.filter((h) => h.hotelId === hotelId);
+    // Calculamos las tarifas nuevas una vez: para el estado local y para la base de datos
+    const ajustadas = delHotel.map((h) => ({ ...h, precio: ajustarPrecio(h.precio, porcentaje) }));
     setDatos((d) => ({
       ...d,
       habitaciones: d.habitaciones.map((h) =>
         h.hotelId === hotelId ? { ...h, precio: ajustarPrecio(h.precio, porcentaje) } : h
       ),
     }));
+
+    // Subimos todas las tarifas de una sola vez (Fase 2)
+    subirHabitaciones(ajustadas).then((r) => {
+      if (r.error) avisar(`Las tarifas quedaron guardadas solo en este navegador: no se pudieron subir a la base de datos (${r.error}).`, "error");
+    });
     return { cantidad: delHotel.length };
   };
 
   // Deja la galería del hotel con la portada también en `imagen`, que es el campo
   // que leen las tarjetas de los resultados y la cabecera del panel (HU-025)
-  const guardarGaleria = (hotelId: string, galeria: string[]) =>
+  const guardarGaleria = (hotelId: string, galeria: string[]) => {
     setDatos((d) => ({
       ...d,
       hoteles: d.hoteles.map((h) =>
         h.id === hotelId ? { ...h, galeria, imagen: galeria[0] ?? h.imagen } : h
       ),
     }));
+
+    // La galería sube junto con el hotel (Fase 2)
+    const elHotel = datos.hoteles.find((h) => h.id === hotelId);
+    if (elHotel) subirHotelConAviso({ ...elHotel, galeria, imagen: galeria[0] ?? elHotel.imagen });
+  };
 
   // Suma fotos optimizadas a la galería del hotel, respetando el tope (HU-025)
   const agregarFotosHotel: AppCtx["agregarFotosHotel"] = (hotelId, fotos) => {

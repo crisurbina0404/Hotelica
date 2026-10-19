@@ -6,6 +6,23 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.59.0] — 2026-10-19 · Fase 2: hoteles y habitaciones guardados en la base de datos
+
+### Agregado
+- **`supabase/migrations/20261019_fase2_hoteles_habitaciones.sql`** — script para el SQL Editor del Dashboard: agrega a `hoteles` las columnas que faltaban (`correo_dueno`, `contacto`, `ubicacion` jsonb) y crea políticas de escritura sobre `hoteles` y `habitaciones` para `anon` y `authenticated`, dejando RLS activada. Sin esto la app solo podía leer (error `42501` en el INSERT).
+- **`src/sync.ts`** — módulo de sincronización: mapea las columnas snake_case ↔ tipos camelCase (`aFilaHotel`/`deFilaHotel`, `aFilaHabitacion`/`deFilaHabitacion`), trae todo con `cargarHoteles()` y `cargarHabitaciones()`, sube con `subirHotel()` y `subirHabitaciones()` (upsert por id) y traduce los errores de Supabase a mensajes legibles.
+- **Fusión de datos** — `fusionarHoteles()` une lo local con lo de la BD: lo de la BD manda por id, lo local que no existe en la BD se conserva y los campos que vienen vacíos de la BD (fotos, ubicación, correo del dueño) se completan con los locales para no borrar nada.
+
+### Cambiado
+- **`src/store.tsx`** — al abrir la app se traen hoteles y habitaciones de Supabase y se fusionan con el estado local. Toda alta o cambio se sube a la BD además de guardarse en el navegador: `registrarHotel`, `actualizarHotel`, `decidirHotel` (aprobación del admin), `guardarGaleria` (HU-025), `agregarHabitacion` (HU-023), `cambiarEstadoHabitacion`, `cambiarPrecioHabitacion` y `ajustarPreciosDelHotel` (HU-024).
+- **Respaldos** — si la BD no responde o falta aplicar el script, la app no se rompe: los cambios quedan en `localStorage` como antes y aparece un aviso explicando qué falló ("falta aplicar el script SQL").
+- **`historias-usuario/HU-000-base-datos.md`, `HU-022` y `HU-023`** — las notas que decían "en Fase 2 será un INSERT/UPDATE en Supabase" quedan marcadas como cumplidas.
+
+### Verificado
+`npm run typecheck` y `npm run build` en verde. Se comprobó contra la BD real (solo lectura): existen las tablas `hoteles` (9 filas con los mismos 9 ids de las semillas), `habitaciones` (18), `resenas`, `usuarios`, `calificaciones` y `favoritos`, mientras que `reservas` y `pagos` están en 0; el INSERT de prueba fue rechazado por RLS, que es lo que resuelve el script SQL.
+
+---
+
 ## [v0.58.0] — 2026-10-19 · HU-029: registrar check-out y factura de la estadía
 
 ### Agregado

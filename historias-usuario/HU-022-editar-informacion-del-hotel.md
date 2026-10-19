@@ -62,6 +62,6 @@ El formulario de edición se carga con los datos actuales del hotel (precargados
 - **Sección en el panel:** `src/pages/HotelPanel.tsx` — se agrega un botón "Editar información" y un formulario expandible con los datos del hotel (subtarea HOTELICA-205).
 - **Datos precargados:** al abrir el formulario, los campos se llenan con los valores actuales del hotel logueado (subtarea HOTELICA-206).
 - **Validación:** se reutiliza `validarRegistroHotel()` de `src/data.ts` (misma regla que la inscripción) para los campos editables (subtarea HOTELICA-207).
-- **Guardado:** nueva función `actualizarHotel()` en `src/store.tsx` que actualiza el hotel en el estado global (subtarea HOTELICA-208). En Fase 2 será un `UPDATE` en Supabase.
+- **Guardado:** nueva función `actualizarHotel()` en `src/store.tsx` que actualiza el hotel en el estado global (subtarea HOTELICA-208). En Fase 2 se cumplió: el hotel actualizado también se sube con `subirHotel()` a la tabla `hoteles` de Supabase (`src/sync.ts`).
 - **Confirmación:** toast de éxito "Cambios guardados" al actualizar (subtarea HOTELICA-209).
 - **Restricción:** el botón de edición se muestra deshabilitado con aviso si `aprobado === "pendiente"` (subtarea HOTELICA-210).
