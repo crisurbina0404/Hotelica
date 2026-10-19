@@ -41,7 +41,7 @@ El registro de turista y la recuperación de contraseña (HU-001 y HU-004) **no 
 ## [v0.59.0] — 2026-10-19 · Fase 2: hoteles y habitaciones guardados en la base de datos
 
 ### Agregado
-- **`supabase/migrations/20261019_fase2_hoteles_habitaciones.sql`** — script para el SQL Editor del Dashboard: agrega a `hoteles` las columnas que faltaban (`correo_dueno`, `contacto`, `ubicacion` jsonb) y crea políticas de escritura sobre `hoteles` y `habitaciones` para `anon` y `authenticated`, dejando RLS activada. Sin esto la app solo podía leer (error `42501` en el INSERT).
+- **`supabase/migrations/20261019120000_fase2_hoteles_habitaciones.sql`** — script para el SQL Editor del Dashboard: agrega a `hoteles` las columnas que faltaban (`correo_dueno`, `contacto`, `ubicacion` jsonb) y crea políticas de escritura sobre `hoteles` y `habitaciones` para `anon` y `authenticated`, dejando RLS activada. Sin esto la app solo podía leer (error `42501` en el INSERT). El timestamp lleva los 14 dígitos completos para no chocar con la otra migración del mismo día en el conector Supabase Preview de GitHub.
 - **`src/sync.ts`** — módulo de sincronización: mapea las columnas snake_case ↔ tipos camelCase (`aFilaHotel`/`deFilaHotel`, `aFilaHabitacion`/`deFilaHabitacion`), trae todo con `cargarHoteles()` y `cargarHabitaciones()`, sube con `subirHotel()` y `subirHabitaciones()` (upsert por id) y traduce los errores de Supabase a mensajes legibles.
 - **Fusión de datos** — `fusionarHoteles()` une lo local con lo de la BD: lo de la BD manda por id, lo local que no existe en la BD se conserva y los campos que vienen vacíos de la BD (fotos, ubicación, correo del dueño) se completan con los locales para no borrar nada.
 
