@@ -4,12 +4,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "./store";
 import type { Ruta, Navegar } from "./rutas";
-import { DEPARTAMENTOS, USUARIOS_DEMO } from "./data";
-import type { Rol } from "./data";
+import { DEPARTAMENTOS } from "./data";
 import { t } from "./i18n";
 import {
-  BanderaNI, IconoCorazon, IconoChevronAbajo, IconoMenu, IconoX,
-  IconoEscudo, IconoHotel, IconoHuespedes, IconoCheck,
+  BanderaNI, IconoCorazon, IconoMenu, IconoX,
+  IconoEscudo, IconoCheck,
   LogoGoogle,
 } from "./icons";
 import { IconoBuscar, IconoUsuario } from "./icons";
@@ -18,7 +17,6 @@ import { Marca, Modal, MarcaFooter } from "./ui";
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   const { favoritos, rol, usuario, idioma, cambiarRol, login, registrar, loginSocial, logout, registroAbierto, abrirRegistro, cerrarRegistro, avisar } = useApp();
   const [scrolled, setScrolled] = useState(false);
-  const [menuRol, setMenuRol] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
   // Modal de login
   const [loginAbierto, setLoginAbierto] = useState(false);
@@ -83,7 +81,6 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
   // Sobre el hero del inicio la barra es transparente con letras claras
   const clara = ruta.nombre === "inicio" && !scrolled && !menuMovil;
-  const usuarioDemo = USUARIOS_DEMO[rol];
 
   // Manejador del formulario de login (HU-002)
   const manejarLogin = async (e: React.FormEvent) => {
@@ -103,6 +100,8 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
     setLoginAbierto(false);
     setCorreo("");
     setContrasena("");
+    // La cuenta de hotelero entra directo a su panel (HU-021)
+    if (resultado.rol === "Hotel") navegar({ nombre: "panel" });
   };
 
   // Manejador del formulario de registro (HU-001)
@@ -133,13 +132,20 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
     setRegContrasena("");
   };
 
-  // Cambia el rol de demostración y lleva a la pantalla que le corresponde
-  const elegirRol = (r: Rol) => {
-    cambiarRol(r);
-    setMenuRol(false);
-    if (r === "hotel") navegar({ nombre: "panel" });
-    else if (r === "admin") navegar({ nombre: "admin" });
-    avisar(`Sesión iniciada como ${USUARIOS_DEMO[r].etiqueta}`, "info");
+  // La consola de administración sigue en modo demostración porque el módulo
+  // todavía no está implementado. El panel del hotel ya no tiene demo: se entra
+  // únicamente con la cuenta que crea el admin al aprobar la inscripción (HU-021).
+  const entrarAlAdmin = () => {
+    cambiarRol("admin");
+    navegar({ nombre: "admin" });
+    avisar("Consola de administración en modo demostración", "info");
+  };
+
+  const salirDelAdmin = () => {
+    const esHotelero = usuario?.rol === "Hotel";
+    cambiarRol(esHotelero ? "hotel" : "turista");
+    navegar({ nombre: esHotelero ? "panel" : "inicio" });
+    avisar(esHotelero ? "Volviste a tu panel del hotel" : "Volviste al sitio", "info");
   };
 
   // Enlace de navegación con estado activo
@@ -174,7 +180,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               {favoritos.length}
             </span>
           </button>
-          {rol === "hotel" && <Enlace a={{ nombre: "panel" }} texto={t(idioma, "panelHotel")} activo={ruta.nombre === "panel"} />}
+          {usuario?.rol === "Hotel" && <Enlace a={{ nombre: "panel" }} texto={t(idioma, "panelHotel")} activo={ruta.nombre === "panel"} />}
           {rol === "admin" && <Enlace a={{ nombre: "admin" }} texto={t(idioma, "consolaAdmin")} activo={ruta.nombre === "admin"} />}
         </nav>
 
@@ -229,63 +235,25 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               </button>
             </div>
           )}
-          {/* Selector de rol de demostración */}
+          {/* Acceso de demostración a la consola de administración: es el único
+              módulo que todavía no se usa con una cuenta real */}
           <div className="relative hidden lg:block">
             <button
-              onClick={() => setMenuRol((v) => !v)}
+              onClick={() => (rol === "admin" ? salirDelAdmin() : entrarAlAdmin())}
               className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-sm font-semibold transition-all ${
                 clara
                   ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
                   : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
               }`}
-              aria-haspopup="menu"
-              aria-expanded={menuRol}
+              title={rol === "admin" ? "Volver al sitio" : "Abrir la consola de administración (demostración)"}
             >
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold ${
-                rol === "turista" ? "bg-primary text-white" : rol === "hotel" ? "bg-hotel text-white" : "bg-admin text-white"
+              <span className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                rol === "admin" ? "bg-admin text-white" : "bg-admin-soft text-admin"
               }`}>
-                {usuarioDemo.nombre.charAt(0)}
+                <IconoEscudo size={15} />
               </span>
-              <span className="hidden sm:block">{usuarioDemo.etiqueta}</span>
-              <IconoChevronAbajo size={14} className={`transition-transform ${menuRol ? "rotate-180" : ""}`} />
+              <span className="hidden sm:block">{rol === "admin" ? "Salir de admin" : "Demo admin"}</span>
             </button>
-
-            {menuRol && (
-              <>
-                <button className="fixed inset-0 z-10 cursor-default" onClick={() => setMenuRol(false)} aria-label="Cerrar menú" />
-                <div className="anim-pop absolute right-0 z-20 mt-2 w-72 rounded-xl border border-line bg-white p-2 shadow-lift">
-                  {/* Marca presente en el acceso de sesión de demostración */}
-                  <div className="mb-1.5 flex justify-center border-b border-line px-3 pb-3 pt-3.5">
-                    <Marca tam="chica" centrada />
-                  </div>
-                  <p className="px-3 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-muted">Cambiar de perfil</p>
-                  {(Object.keys(USUARIOS_DEMO) as Rol[]).map((r) => {
-                    const u = USUARIOS_DEMO[r];
-                    const Icono = r === "turista" ? IconoHuespedes : r === "hotel" ? IconoHotel : IconoEscudo;
-                    return (
-                      <button
-                        key={r}
-                        onClick={() => elegirRol(r)}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-canvas ${rol === r ? "bg-primary-soft" : ""}`}
-                      >
-                        <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-                          r === "turista" ? "bg-primary-light text-primary" : r === "hotel" ? "bg-hotel-soft text-hotel" : "bg-admin-soft text-admin"
-                        }`}>
-                          <Icono size={18} />
-                        </span>
-                        <span className="min-w-0">
-                          <span className="flex items-center gap-2 text-sm font-semibold text-ink">
-                            {u.etiqueta}
-                            {rol === r && <IconoCheck size={13} className="text-primary" />}
-                          </span>
-                          <span className="block truncate text-xs text-muted">{u.nombre} · {u.detalle}</span>
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
-            )}
           </div>
 
           {/* Botón hamburguesa (móvil) */}

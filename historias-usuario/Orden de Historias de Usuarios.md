@@ -32,7 +32,7 @@
 | 28 | HU-027 | Gestión Hotel | Confirmar o rechazar reservas | Alta | ✅ Terminada |
 | 29 | HU-028 | Gestión Hotel | Registrar check-in | Media | ✅ Terminada |
 | 30 | HU-029 | Gestión Hotel | Registrar check-out | Media | ✅ Terminada |
-| 31 | HU-030 | Gestión Hotel | Consultar reporte de ocupación | Media | ⬜ Escrita |
+| 31 | HU-030 | Gestión Hotel | Consultar reporte de ocupación | Media | ✅ Terminada |
 | 32 | HU-031 | Administración | Aprobar un hotel | Alta | ⬜ Escrita |
 | 33 | HU-032 | Administración | Rechazar un hotel | Alta | ⬜ Escrita |
 | 34 | HU-033 | Administración | Activar o desactivar usuarios | Media | ⬜ Escrita |

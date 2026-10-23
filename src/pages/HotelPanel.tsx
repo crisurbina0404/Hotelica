@@ -8,27 +8,108 @@ import { useMemo, useState } from "react";
 import { useApp } from "../store";
 import {
   DEPARTAMENTOS, ESTADOS_HABITACION, ETIQUETA_ESTADO, ETIQUETA_HABITACION, MAXIMO_FOTOS, MAXIMO_FOTOS_HABITACION, MUNICIPIOS, TASA_IVA, TEMPORADAS, TIPOS_HABITACION, TIPO_LIBRE, ajustarPrecio,
-  calcularTotales, cupoDeFotos, cupoDeFotosHabitacion, errorDeGaleria, errorDeGaleriaHabitacion, fmtDinero, fmtFecha, fmtFechaHora, hoyISO, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
+  calcularTotales, cupoDeFotos, cupoDeFotosHabitacion, diasDelMes, errorDeGaleria, errorDeGaleriaHabitacion, fmtDinero, fmtFecha, fmtFechaHora, fmtMes, hoyISO, nochesDentroDe, rangoDelMes, contrasenaTemporalVencida, validarImagenHotel, soloDigitosTelefono,
 } from "../data";
 import { optimizarFoto, pesoDeFoto } from "../imagen";
 import { descargarFactura } from "./BookingModal";
 import { MapaHotel } from "../mapa";
-import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Reserva } from "../data";
+import type { DatosHabitacion, DatosRegistroHotel, ErroresHabitacion, ErroresRegistroHotel, EstadoHabitacion, Habitacion, Hotel, Reserva } from "../data";
 import { Reveal, BadgeEstado, BadgeHabitacion, BadgeHotel, TituloSeccion, Modal, ChecklistContrasena } from "../ui";
 import {
   IconoCheck, IconoX, IconoEntrada, IconoSalida, IconoCama, IconoGrafica, IconoBillete, IconoFoto,
   IconoCalendario, IconoHotel, IconoHuespedes, IconoCampana, IconoLapiz, IconoEstrella, IconoDescargar,
 } from "../icons";
 
-export function PanelHotel() {
-  const { hoteles, habitaciones: todasLasHabitaciones, reservas, pagos, cambiarEstadoReserva, registrarCheckin, registrarCheckout, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, agregarFotosHabitacion, ponerPortadaHabitacion, quitarFotoHabitacion, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
-  const hoy = hoyISO();
+// Arma el reporte de ocupación de un mes con las reservas y habitaciones del hotel (HU-030)
+function armarReporte(reservasDelHotel: Reserva[], habitaciones: Habitacion[], mesElegido: string) {
+  const [anioTexto, mesTexto] = mesElegido.split("-");
+  const anio = Number(anioTexto);
+  const mes = Number(mesTexto);
+  const dias = diasDelMes(anio, mes);
+  const { desde, hasta } = rangoDelMes(anio, mes);
 
-  // El hotel del dueño logueado; si no hay sesión de hotelero, el de demostración
-  const mio = usuario?.correo
+  // Las canceladas no ocuparon ninguna noche, así que se quedan fuera
+  const reservasDelMes = reservasDelHotel
+    .filter((r) => r.estado !== "cancelada")
+    .map((r) => {
+      const noches = nochesDentroDe(r.llegada, r.salida, desde, hasta);
+      // Repartimos el total por noche para no contar dos veces una estadía que cruza de mes
+      const ingreso = r.noches > 0 ? Math.round((r.total * noches) / r.noches) : 0;
+      return { reserva: r, noches, ingreso };
+    })
+    .filter((fila) => fila.noches > 0);
+
+  const totalUnidades = habitaciones.reduce((acc, h) => acc + h.unidades, 0);
+  const nochesDisponibles = totalUnidades * dias;
+  const nochesVendidas = reservasDelMes.reduce((acc, f) => acc + f.noches, 0);
+  const ingresos = reservasDelMes.reduce((acc, f) => acc + f.ingreso, 0);
+
+  // % Ocupación del mes = (noches vendidas ÷ noches disponibles) × 100
+  const ocupacion = nochesDisponibles > 0 ? Math.round((nochesVendidas / nochesDisponibles) * 100) : 0;
+
+  // Cada tipo de habitación con sus propias noches, reservas e ingresos
+  const porTipo = habitaciones.map((h) => {
+    const filas = reservasDelMes.filter((f) => f.reserva.habitacionId === h.id);
+    const noches = filas.reduce((acc, f) => acc + f.noches, 0);
+    const disponibles = h.unidades * dias;
+    return {
+      habitacion: h,
+      noches,
+      disponibles,
+      reservas: filas.length,
+      ingresos: filas.reduce((acc, f) => acc + f.ingreso, 0),
+      ocupacion: disponibles > 0 ? Math.round((noches / disponibles) * 100) : 0,
+    };
+  });
+
+  const estanciaPromedio = reservasDelMes.length
+    ? Math.round((nochesVendidas / reservasDelMes.length) * 10) / 10
+    : 0;
+
+  return {
+    anio,
+    mes,
+    dias,
+    desde,
+    hasta,
+    totalUnidades,
+    nochesDisponibles,
+    nochesVendidas,
+    ingresos,
+    ocupacion,
+    reservas: reservasDelMes.length,
+    porTipo,
+    estanciaPromedio,
+  };
+}
+
+// El panel se abre solo con la cuenta que el admin creó al aprobar el hotel (HU-021):
+// ya no existe el acceso de demostración al hotel de Brisas del Pacífico.
+export function PanelHotel() {
+  const { hoteles, usuario } = useApp();
+  const hotel = usuario?.rol === "Hotel" && usuario.correo
     ? hoteles.find((h) => h.correoDueno?.toLowerCase() === usuario.correo.trim().toLowerCase())
     : undefined;
-  const hotel = mio ?? hoteles.find((h) => h.id === "h-sanjuan")!;
+
+  if (!hotel) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 pb-24 pt-28 sm:px-6">
+        <div className="rounded-xl border border-line bg-white p-8 text-center shadow-card">
+          <h1 className="font-display text-2xl font-bold text-ink">No encontramos tu hotel</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted">
+            Para entrar al panel usá la cuenta que te entregó el administrador cuando aprobó tu inscripción.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  return <ContenidoPanelHotel hotel={hotel} />;
+}
+
+function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
+  const { habitaciones: todasLasHabitaciones, reservas, pagos, cambiarEstadoReserva, registrarCheckin, registrarCheckout, avisar, notificaciones, marcarNotificacionesLeidas, usuario, actualizarHotel, agregarHabitacion, cambiarEstadoHabitacion, cambiarPrecioHabitacion, ajustarPreciosDelHotel, agregarFotosHotel, ponerPortadaHotel, quitarFotoHotel, agregarFotosHabitacion, ponerPortadaHabitacion, quitarFotoHabitacion, cuentasHotelero, cambiarContrasenaHotelero } = useApp();
+  const hoy = hoyISO();
   const HOTEL_ID = hotel.id;
 
   // Contraseña temporal: el hotelero debe cambiarla en 48 horas (seguridad HU-040)
@@ -79,6 +160,9 @@ export function PanelHotel() {
   // Galería de fotografías del hotel (HU-025)
   const [errorFoto, setErrorFoto] = useState("");
   const [subiendo, setSubiendo] = useState(false);
+
+  // Mes que se consulta en el reporte de ocupación (HU-030)
+  const [mesReporte, setMesReporte] = useState(hoy.slice(0, 7));
 
   // Rechazo de una reserva: primero pedimos el motivo en un modal (HU-027)
   const [porRechazar, setPorRechazar] = useState<Reserva | null>(null);
@@ -477,6 +561,9 @@ export function PanelHotel() {
   // Ingresos = suma de totales de reservas no canceladas
   const ingresos = delHotel.filter((r) => r.estado !== "cancelada").reduce((acc, r) => acc + r.total, 0);
 
+  // Reporte de ocupación del mes elegido (HU-030)
+  const reporte = armarReporte(delHotel, habitaciones, mesReporte);
+
   // Acciones con sus reglas de negocio
   // Antes de actuar revisamos que la reserva siga pendiente y sea de este hotel (HU-027)
   const sePuedeActuar = (r: Reserva) => {
@@ -576,6 +663,44 @@ export function PanelHotel() {
     // La factura se arma con la reserva ya cerrada para que figure como Completada
     descargarFacturaDe({ ...r, estado: "completada", checkoutEn: salida });
     avisar(`Check-out registrado para ${r.turista} (${r.folio}) · salida ${fmtFechaHora(salida)}. Se descargó la factura.`, "ok");
+  };
+
+  // Descarga el reporte del mes en CSV, con el desglose por tipo (HU-030)
+  const descargarReporte = () => {
+    const filas: string[][] = [
+      ["Hotel", hotel.nombre],
+      ["Mes", fmtMes(mesReporte)],
+      ["Ocupación %", String(reporte.ocupacion)],
+      ["Noches vendidas", String(reporte.nochesVendidas)],
+      ["Noches disponibles", String(reporte.nochesDisponibles)],
+      ["Ingresos (C$)", reporte.ingresos.toFixed(2)],
+      [],
+      ["Habitación", "Unidades", "Noches vendidas", "Noches disponibles", "Ocupación %", "Reservas", "Ingresos (C$)"],
+      ...reporte.porTipo.map((f) => [
+        f.habitacion.tipo,
+        String(f.habitacion.unidades),
+        String(f.noches),
+        String(f.disponibles),
+        String(f.ocupacion),
+        String(f.reservas),
+        f.ingresos.toFixed(2),
+      ]),
+    ];
+
+    // Las comillas se escapan para que Excel no parta las celdas
+    const texto = filas
+      .map((fila) => fila.map((celda) => `"${celda.replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+
+    // El BOM hace que Excel respete las tildes del archivo
+    const blob = new Blob(["\uFEFF" + texto], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement("a");
+    enlace.href = url;
+    enlace.download = `reporte-ocupacion-${mesReporte}.csv`;
+    enlace.click();
+    URL.revokeObjectURL(url);
+    avisar(`Reporte de ${fmtMes(mesReporte)} descargado en CSV.`, "ok");
   };
 
   const stats = [
@@ -1092,6 +1217,152 @@ export function PanelHotel() {
             );
           })}
         </div>
+      </section>
+
+      {/* ===== Reporte de ocupación del mes (HU-030) ===== */}
+      <section className="mt-12">
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <TituloSeccion ceja="Histórico mes a mes" titulo="Reporte de ocupación" />
+            <label className="block">
+              <span className="mb-1.5 block text-[11px] font-bold uppercase tracking-wider text-muted">Mes del reporte</span>
+              <input
+                type="month"
+                value={mesReporte}
+                max={hoy.slice(0, 7)}
+                onChange={(e) => setMesReporte(e.target.value || hoy.slice(0, 7))}
+                className="rounded-lg border border-line bg-white px-3.5 py-2 text-sm font-semibold text-ink outline-none transition-all focus:border-hotel focus:ring-2 focus:ring-hotel/25"
+              />
+            </label>
+          </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <div className="mt-6 rounded-xl border border-line bg-white p-5 shadow-card">
+            {/* La tarjeta que manda: el porcentaje del mes */}
+            <div className="grid gap-4 lg:grid-cols-[1.05fr_1.95fr]">
+              <div className="rounded-xl bg-[#FEF3C7] p-5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#92400E]">
+                  Ocupación de {fmtMes(mesReporte)}
+                </p>
+                <p className="mt-1 font-display text-4xl font-extrabold text-[#B45309] tabular-nums">{reporte.ocupacion}%</p>
+                <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/70">
+                  <div
+                    className="anim-grow h-full rounded-full bg-gradient-to-r from-hotel to-accent"
+                    style={{ width: `${Math.min(100, reporte.ocupacion)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs font-semibold text-[#92400E] tabular-nums">
+                  {reporte.nochesVendidas} de {reporte.nochesDisponibles} noches vendidas
+                </p>
+              </div>
+
+              {/* Tres indicadores de apoyo, con la cuenta a la vista */}
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-line bg-canvas/60 p-4">
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+                    <IconoCalendario size={13} /> Noches vendidas
+                  </span>
+                  <p className="mt-2 font-display text-2xl font-extrabold text-ink tabular-nums">{reporte.nochesVendidas}</p>
+                  <p className="mt-0.5 text-[11px] font-medium text-muted">
+                    en {reporte.reservas} {reporte.reservas === 1 ? "reserva" : "reservas"}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-line bg-canvas/60 p-4">
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+                    <IconoBillete size={13} /> Ingresos del mes
+                  </span>
+                  <p className="mt-2 font-display text-2xl font-extrabold text-ink tabular-nums">{fmtDinero(reporte.ingresos)}</p>
+                  <p className="mt-0.5 text-[11px] font-medium text-muted">sin reservas canceladas</p>
+                </div>
+                <div className="rounded-lg border border-line bg-canvas/60 p-4">
+                  <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted">
+                    <IconoGrafica size={13} /> Estadía promedio
+                  </span>
+                  <p className="mt-2 font-display text-2xl font-extrabold text-ink tabular-nums">{reporte.estanciaPromedio}</p>
+                  <p className="mt-0.5 text-[11px] font-medium text-muted">noches por reserva</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Desglose por tipo de habitación */}
+            {reporte.nochesVendidas === 0 ? (
+              <div className="mt-5 rounded-lg border border-dashed border-line bg-canvas/60 px-5 py-8 text-center">
+                <p className="text-sm font-bold text-ink">No hubo noches vendidas en {fmtMes(mesReporte)}.</p>
+                <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-muted">
+                  Probá con otro mes: acá vas a ver cómo se movió la ocupación de tu hotel.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-5 overflow-x-auto rounded-lg border border-line">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-line bg-[#FEF3C7] text-[11px] font-bold uppercase tracking-wider text-[#92400E]">
+                      <th className="px-4 py-3">Habitación</th>
+                      <th className="px-4 py-3 text-right">Unidades</th>
+                      <th className="px-4 py-3 text-right">Noches vendidas</th>
+                      <th className="px-4 py-3">Ocupación</th>
+                      <th className="px-4 py-3 text-right">Reservas</th>
+                      <th className="px-4 py-3 text-right">Ingresos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reporte.porTipo.map((f) => (
+                      <tr key={f.habitacion.id} className="border-b border-line/70 transition-colors last:border-0 hover:bg-canvas/60">
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-ink">{f.habitacion.tipo}</p>
+                          <p className="mt-0.5 text-[11px] text-muted">Hasta {f.habitacion.capacidad} huéspedes</p>
+                        </td>
+                        <td className="px-4 py-3 text-right font-semibold text-ink tabular-nums">{f.habitacion.unidades}</td>
+                        <td className="px-4 py-3 text-right text-muted tabular-nums">
+                          {f.noches} de {f.disponibles}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="h-2 w-24 overflow-hidden rounded-full bg-canvas">
+                              <div
+                                className="anim-grow h-full rounded-full bg-hotel"
+                                style={{ width: `${Math.min(100, f.ocupacion)}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-bold text-ink tabular-nums">{f.ocupacion}%</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right text-muted tabular-nums">{f.reservas}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-ink tabular-nums">{fmtDinero(f.ingresos)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="bg-canvas/70 font-bold text-ink">
+                      <td className="px-4 py-3.5">Total del hotel</td>
+                      <td className="px-4 py-3.5 text-right tabular-nums">{reporte.totalUnidades}</td>
+                      <td className="px-4 py-3.5 text-right tabular-nums">{reporte.nochesVendidas}</td>
+                      <td className="px-4 py-3.5 tabular-nums">{reporte.ocupacion}%</td>
+                      <td className="px-4 py-3.5 text-right tabular-nums">{reporte.reservas}</td>
+                      <td className="px-4 py-3.5 text-right tabular-nums">{fmtDinero(reporte.ingresos)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-xl text-[11px] leading-relaxed text-muted">
+                Las reservas canceladas no suman. Si una estadía cruza de mes, sus noches y sus ingresos se reparten
+                entre los dos meses.
+              </p>
+              <button
+                onClick={descargarReporte}
+                disabled={reporte.nochesVendidas === 0}
+                className="flex items-center gap-2 rounded-lg border-2 border-hotel px-4 py-2 text-xs font-bold text-hotel transition-colors hover:bg-[#FEF3C7] active:scale-[0.97] disabled:cursor-not-allowed disabled:border-line disabled:text-muted disabled:hover:bg-white"
+              >
+                <IconoDescargar size={14} />
+                Descargar CSV
+              </button>
+            </div>
+          </div>
+        </Reveal>
       </section>
 
       {/* ===== Habitaciones del hotel (HU-023) ===== */}

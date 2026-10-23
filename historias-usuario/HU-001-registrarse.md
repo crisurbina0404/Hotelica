@@ -36,6 +36,11 @@ Hotelica es una plataforma de reserva hotelera para Nicaragua. El visitante nece
 **Cuando** presiona el botón de Google, Facebook o Apple  
 **Entonces** se crea una cuenta vinculada al proveedor y se inicia sesión
 
+### Escenario 5: Cancelar el registro y seguir navegando
+**Dado** que el visitante abrió la ventana de registro (desde "Registrarse" o al intentar reservar sin sesión)  
+**Cuando** pulsa la X, la tecla Escape o toca fuera de la ventana  
+**Entonces** la ventana se cierra sin crear la cuenta y el visitante sigue en la misma pantalla, sin quedar obligado a registrarse
+
 ## MoSCoW
 
 - **Must Have:** Formulario con correo y contraseña, validación básica, creación de cuenta.
@@ -48,4 +53,5 @@ Hotelica es una plataforma de reserva hotelera para Nicaragua. El visitante nece
 - Componente de registro: modal o página dedicada en `src/pages/`.
 - Estado global en `src/store.tsx`: acción `registrar()`.
 - Validación de duplicados en el estado simulado.
-- Redirección automática a Home tras registro exitoso.
+- Al completar el registro, la ventana se cierra y el visitante sigue en la pantalla donde estaba, ya con sesión iniciada.
+- El modal de registro se puede cerrar con la X, Escape o el fondo; no bloquea la navegación (HU-038). El estado `registroAbierto` tiene que formar parte del valor del contexto para que el modal abra y cierre al instante.

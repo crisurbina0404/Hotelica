@@ -222,7 +222,9 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
               <p className="flex items-center gap-2"><IconoHuespedes size={15} className="text-primary" /> Grupos pequeños, trato personal</p>
             </div>
             <div className="mt-4 grid gap-2.5 border-t border-line pt-4 text-sm text-muted">
-              <p className="flex items-center gap-2"><IconoTelefono size={15} className="text-primary" /> +505 2222-3333</p>
+              {hotel.contacto && (
+                <p className="flex items-center gap-2"><IconoTelefono size={15} className="text-primary" /> {hotel.contacto}</p>
+              )}
               <p className="flex items-center gap-2"><IconoCorreo size={15} className="text-primary" /> contacto@{hotel.nombre.toLowerCase().replace(/\s+/g, "")}.com</p>
             </div>
             <a href="#habitaciones" className="mt-5 flex items-center justify-center rounded-lg bg-primary py-3 text-sm font-bold text-white transition-colors hover:bg-primary-dark">

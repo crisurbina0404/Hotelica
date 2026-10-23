@@ -6,6 +6,60 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.62.3] — 2026-10-21 · Registro: el botón abre la ventana y la X deja seguir navegando
+
+### Corregido
+- **`src/store.tsx`** — el `useMemo` que arma el contexto no incluía `registroAbierto`. El estado cambiaba por dentro, pero la barra seguía recibiendo el valor viejo: el botón "Registrarse" no abría nada y, cuando la ventana se abría desde "Reservar", la X no la cerraba (el turista quedaba obligado a registrarse). Se agregó `registroAbierto` a las dependencias.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. Prueba en el navegador (Playwright, sin Supabase): "Registrarse" abre la ventana; la X la cierra y se puede volver a abrir; Escape también la cierra; al pulsar "Reservar" sin sesión aparece el registro, la X lo cierra y el visitante sigue en la ficha del hotel con el botón "Reservar" disponible; el enlace "Iniciar sesión" dentro del registro cambia al formulario de login. Sin errores en la consola del navegador.
+
+---
+
+## [v0.62.2] — 2026-10-21 · El panel del hotel se abre solo con la cuenta; queda el demo de admin
+
+### Cambiado
+- **`src/layout.tsx`** — se quitó el selector "Cambiar de perfil" con las demos de Turista y Hotel. En la barra queda solo **"Demo admin"**, que abre la consola de administración (el único módulo que todavía no se usa con una cuenta real) y permite volver al sitio. El enlace "Panel del hotel" aparece únicamente con una cuenta de hotelero.
+- **`src/App.tsx`** — el panel exige una sesión con rol Hotel (la cuenta que se crea al aprobar la inscripción); la consola de admin sigue disponible en modo demostración. Un turista con sesión ya no puede abrir el panel.
+- **`src/pages/HotelPanel.tsx`** — se eliminó el hotel de respaldo `h-sanjuan`: el panel busca el hotel por el correo del hotelero logueado y, si no lo encuentra, muestra un aviso en vez de abrir otro hotel.
+- **`src/store.tsx`** — el login de hotelero devuelve su rol para que la app lo lleve directo al panel (HU-021); los logins y registros de turista fuerzan el rol Turista para no arrastrar el rol anterior.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. Prueba en el navegador (Playwright, 1440 px, sin Supabase): sin sesión no aparece el selector de perfiles ni el enlace al panel, solo "Demo admin"; desde la consola demo se aprobó un hotel de prueba y se creó su cuenta; al iniciar sesión con esas credenciales la app abrió directo el panel de ese hotel (no el de Brisas del Pacífico); al entrar y salir de la consola demo volvió a su panel, y al cerrar sesión desapareció el acceso. Sin errores en la consola del navegador.
+
+---
+
+## [v0.62.1] — 2026-10-21 · Editar hotel: el guardado ya no depende del correo del dueño (HU-022)
+
+### Corregido
+- **`src/data.ts`** — nueva `validarEdicionHotel()`: aplica las reglas de la inscripción solo a los campos que se editan en el panel (nombre, departamento, municipio, dirección, ubicación, descripción y teléfono). El dueño, el correo y la imagen quedan fuera porque el formulario de edición no los muestra.
+- **`src/store.tsx`** — `actualizarHotel()` usa esa validación y conserva el dueño, el correo y la imagen que ya tenía el hotel. Antes reutilizaba `validarRegistroHotel()`, que exigía un correo que el hotel de demostración no tiene: el formulario mostraba "Revisá los campos marcados" sin ningún campo visible en rojo y no guardaba nada.
+- **`src/pages/HotelDetail.tsx`** — la ficha del turista muestra el teléfono que cargó el hotelero. Antes aparecía siempre "+505 2222-3333" para todos los hoteles; ahora, si el hotel no tiene teléfono, simplemente no se muestra.
+
+### Verificado
+`npm run typecheck` sin errores. Prueba en el navegador (Playwright, 1440 px, sin Supabase): el hotel demo (sin correo de dueño) guarda la descripción, cierra el formulario y muestra el toast "Cambios guardados"; el detalle del turista en Rivas (12–14 de noviembre) ya muestra la descripción nueva y el teléfono editado, y deja de mostrar el número fijo. También se revisaron nombre vacío (error visible), cambio de departamento (limpia el municipio y lista solo los de León) y hotel pendiente (edición bloqueada). Con Supabase conectado, el cambio llegó a la fila `h-sanjuan` sin tocar el dueño ni el correo; la fila se dejó como estaba. Sin errores en la consola del navegador.
+
+---
+
+## [v0.62.0] — 2026-10-21 · HU-030: el hotelero consulta el reporte de ocupación del mes
+
+### Agregado
+- **`historias-usuario/HU-030-reporte-de-ocupacion.md`** — historia del módulo Gestión Hotel, con 7 escenarios BDD y las subtareas HOTELICA-267 a 273. La tabla del backlog la daba por escrita, pero el archivo no existía: se redactó completa antes de tocar el código, como se hizo con HU-024, HU-025 y HU-026.
+- **`src/data.ts`** — `nochesDentroDe()` recorta una estadía al rango consultado (así una reserva del 30 de octubre al 2 de noviembre suma dos noches a octubre y una a noviembre), `diasDelMes()` cuenta los días con febrero bisiesto, `rangoDelMes()` devuelve los límites del mes para filtrar y `fmtMes()` arma "octubre de 2026" para los títulos.
+- **`src/pages/HotelPanel.tsx`** — función `armarReporte()` y sección **"Reporte de ocupación"** después de la gestión de reservas: selector de mes (con el mes en curso por defecto y sin meses futuros), tarjeta principal con el porcentaje y la cuenta "50 de 372 noches vendidas", tres indicadores de apoyo (noches vendidas, ingresos y estadía promedio), tabla por tipo de habitación con barra de ocupación y fila de totales, y botón "Descargar CSV".
+
+### Cambiado
+- **`src/pages/HotelPanel.tsx`** — el reporte usa la misma fórmula de ocupación de la guía de negocio, pero sobre el mes: noches vendidas entre noches disponibles (unidades × días). Las reservas canceladas no suman noches ni ingresos; las pendientes, confirmadas, check-in y completadas sí cuentan porque bloquean o bloquearon unidades.
+- **`src/pages/HotelPanel.tsx`** — los ingresos se reparten por noche (`total × noches del mes ÷ noches de la estadía`), de modo que una estadía que cruza de mes no se cuenta entera dos veces, ni en el reporte ni en el CSV.
+
+### Verificado
+`typecheck` y `npm run build` sin errores. Prueba en el navegador (Playwright, 1440 px): octubre de 2026 muestra **50 de 372 noches (13 %)**, 17 reservas y **C$ 104,075.00**, con el desglose Estándar Mar 23/186 (12 %, C$ 37,030.00), Superior Bahía 17/124 (14 %, C$ 37,145.00) y Suite Surfista 10/62 (16 %, C$ 29,900.00); las filas suman exactamente el total. Septiembre y enero caen en el estado vacío ("No hubo noches vendidas…") con 0 % y el botón de descarga deshabilitado. El CSV descargado trae el nombre del hotel, el mes, los totales y el desglose, con BOM y tildes correctas (verificado byte por byte: `EF BB BF` y `í` como `U+00ED`). Sin errores en la consola del navegador.
+
+### Limitación
+Sigue sin haber pruebas automatizadas en el proyecto, así que la evidencia es la prueba manual en el navegador más `typecheck` y `build`. El panel se consulta desde el escritorio, según la restricción de la HU-039.
+
+---
+
 ## [v0.61.2] — 2026-10-19 · Correo de aprobación: enlace real y vista en celular (HU-021)
 
 ### Cambiado

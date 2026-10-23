@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 import {
   HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED, HABITACIONES_SEED,
   nuevoPromedio, hoyISO, ahoraISO, seTraslapan, sePuedeCalificar, validarCalificacion,
-  claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel,
+  claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel, validarEdicionHotel,
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
   errorDePrecio, errorDeAjuste, ajustarPrecio,
   cupoDeFotos, errorDeGaleria, conPortada,
@@ -133,7 +133,7 @@ type AppCtx = {
   toasts: Toast[];
   avisar: (texto: string, tono?: Toast["tono"]) => void;
   cambiarRol: (r: Rol) => void;
-  login: (correo: string, contrasena: string) => Promise<{ error?: string }>;
+  login: (correo: string, contrasena: string) => Promise<{ error?: string; rol?: "Hotel" | "Turista" }>;
   registrar: (correo: string, contrasena: string, nombre: string) => Promise<{ error?: string }>;
   loginSocial: (proveedor: string) => Promise<{ error?: string }>;
   logout: () => void;
@@ -642,19 +642,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Actualiza la información de un hotel ya inscrito (HU-022)
   const actualizarHotel: AppCtx["actualizarHotel"] = (hotelId, registro) => {
-    // Validamos dejando afuera el propio hotel, para que pueda conservar su nombre y correo
+    // Validamos dejando afuera el propio hotel, para que pueda conservar su nombre
     const otrosHoteles = datos.hoteles.filter((h) => h.id !== hotelId);
-    const errores = validarRegistroHotel(registro, otrosHoteles);
+    const errores = validarEdicionHotel(registro, otrosHoteles);
     if (Object.keys(errores).length > 0) return { errores };
 
-    // Armamos el hotel actualizado una sola vez: lo usamos acá y para subirlo a la BD
+    // Armamos el hotel actualizado una sola vez: lo usamos acá y para subirlo a la BD.
+    // El dueño, el correo y la imagen no se editan en esta pantalla (HU-022), así que
+    // conservamos los que ya tenía el hotel.
     const existente = datos.hoteles.find((h) => h.id === hotelId);
     const actualizado = existente
       ? {
           ...existente,
           nombre: registro.nombre.trim(),
-          dueno: registro.dueno.trim(),
-          correoDueno: registro.correo.trim().toLowerCase(),
           departamentoId: registro.departamentoId,
           municipioId: registro.municipioId,
           direccion: registro.direccion.trim(),
@@ -908,7 +908,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const cambiarRol = (r: Rol) => setRol(r);
 
   // Login con Supabase Auth (HU-002) o con una cuenta de hotelero creada por el admin (HU-021)
-  const login = async (correo: string, contrasena: string) => {
+  const login = async (correo: string, contrasena: string): Promise<{ error?: string; rol?: "Hotel" | "Turista" }> => {
     if (!correo.trim() || !contrasena.trim()) {
       return { error: "Correo y contraseña son obligatorios" };
     }
@@ -926,7 +926,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setRol("hotel"); // el panel del hotel queda visible en el menú
       const hotel = datos.hoteles.find((h) => h.id === cuenta.hotelId);
       avisar(`Bienvenido, ${cuenta.nombre}${hotel ? ` — ${hotel.nombre}` : ""}`, "ok");
-      return {};
+      return { rol: "Hotel" };
     }
 
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -950,10 +950,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const telefono = data.user.user_metadata?.telefono || "";
       const direccion = data.user.user_metadata?.direccion || "";
       setUsuario({ nombre, rol: "Turista", correo, telefono, direccion });
+      setRol("turista"); // un turista nunca debe quedar con el rol del demo anterior
       avisar(`Bienvenido, ${nombre}`, "ok");
     }
 
-    return {};
+    return { rol: "Turista" };
   };
 
   // Registro real con Supabase Auth (HU-001)
@@ -979,6 +980,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (data.user) {
       const nombreDisplay = nombre || correo.split("@")[0];
       setUsuario({ nombre: nombreDisplay, rol: "Turista", correo, telefono: "", direccion: "" });
+      setRol("turista");
       avisar(`Bienvenido, ${nombreDisplay}`, "ok");
     }
 
@@ -1150,7 +1152,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       cambiarContrasenaHotelero,
       disponiblesDe,
     }),
-    [datos, rol, usuario, idioma, toasts]
+    // registroAbierto también entra: sin él, el contexto se queda con el valor
+    // viejo y el modal de registro no abre (o no cierra) hasta que cambie otra cosa
+    [datos, rol, usuario, idioma, toasts, registroAbierto]
   );
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;

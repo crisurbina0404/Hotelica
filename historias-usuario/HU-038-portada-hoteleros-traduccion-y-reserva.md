@@ -58,6 +58,7 @@ Reglas de negocio de esta historia:
 **Dado** que un visitante sin sesión abre un hotel
 **Cuando** pulsa "Reservar" en una habitación disponible
 **Entonces** se abre la pantalla de registro (no la de reserva); si ya tiene sesión, "Reservar" abre la reserva normal
+**Y** puede cerrarla con la X, Escape o el fondo y seguir viendo la ficha del hotel sin registrarse
 
 ### Escenario 7: Ya no hay selector de idioma
 **Dado** que un visitante usa el navbar en escritorio o el menú en celular
@@ -82,7 +83,7 @@ Reglas de negocio de esta historia:
 - **Tarjetas de destino:** `GRADIENTES` y `SiluetaDepto` dejan de usarse en la portada; la tarjeta pasa a `<img>` con `object-cover` + velo `from-ink/…` y conserva badge de hoteles, nombre, municipios y "Explorar →" (subtarea HOTELICA-244).
 - **Tarjeta de hoteleros:** titular "Registra tu hotel ahora", botón "Registrar mi hotel" y `Modal` local en la portada con `<InscribeHotel enVentana />`; se elimina el `<InscribeHotel />` del pie (subtarea HOTELICA-245).
 - **InscribeHotel `enVentana`:** cuando está en la ventana flotante ajusta su contenedor (sin `pt-24` de sección, sin ancho de página) y renombra el botón a "Finalizar solicitud"; el aviso de éxito comunica revisión y correo (subtarea HOTELICA-246).
-- **Store:** se agrega el estado del modal de registro (`abrirRegistro` / `cerrarRegistro`) accesible desde cualquier pantalla; se retiran `cambiarIdioma` y la persistencia `hotelica-idioma`, forzando español (subtarea HOTELICA-247).
+- **Store:** se agrega el estado del modal de registro (`abrirRegistro` / `cerrarRegistro`) accesible desde cualquier pantalla; se retiran `cambiarIdioma` y la persistencia `hotelica-idioma`, forzando español (subtarea HOTELICA-247). `registroAbierto` debe estar en las dependencias del `useMemo` del contexto; si falta, el modal no abre desde "Registrarse" y la X no lo cierra.
 - **Navbar y detalle:** la navbar consume el estado del registro del store; el botón "Reservar" abre el registro cuando no hay sesión, con un aviso que explica por qué (subtarea HOTELICA-248).
 - **Traducción:** `index.html` carga el elemento de Google Traductor y, si `navigator.language` no es español, escribe la cookie `googtrans=/es/<idioma>` antes de cargarlo; el contenedor del widget va oculto, de modo que no queda ningún selector a la vista (subtarea HOTELICA-249).
 - **Modales:** `Modal` en `src/ui.tsx` se renderiza con `createPortal` al `body`. El header tiene `backdrop-blur`, y eso lo convertía en el contenedor de los elementos `fixed`: la ventana flotante quedaba recortada a los 64 px de la barra. Sin portal, el formulario de inscripción y el registro abiertos desde "Reservar" se veían cortados (subtarea HOTELICA-250).

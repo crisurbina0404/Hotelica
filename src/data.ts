@@ -415,6 +415,36 @@ export function calcularNoches(llegada: string, salida: string): number {
   return Math.round(ms / 86400000);
 }
 
+// Noches de una estadía que caen dentro del rango [desde, hasta) (HU-030)
+export function nochesDentroDe(llegada: string, salida: string, desde: string, hasta: string): number {
+  // Recortamos la estadía al rango que nos interesa
+  const inicio = llegada > desde ? llegada : desde;
+  const fin = salida < hasta ? salida : hasta;
+  const noches = calcularNoches(inicio, fin);
+  return noches > 0 ? noches : 0;
+}
+
+// Días que tiene un mes (mes de 1 a 12), contando febrero bisiesto (HU-030)
+export function diasDelMes(anio: number, mes: number): number {
+  return new Date(anio, mes, 0).getDate();
+}
+
+// Primer día del mes y primero del siguiente, para filtrar el reporte (HU-030)
+export function rangoDelMes(anio: number, mes: number): { desde: string; hasta: string } {
+  const desde = aISO(new Date(anio, mes - 1, 1));
+  // El primero del mes siguiente queda fuera del rango, así no hay que restar un día
+  const hasta = aISO(new Date(anio, mes, 1));
+  return { desde, hasta };
+}
+
+// Nombre del mes para los títulos del reporte: octubre de 2026 (HU-030)
+export function fmtMes(mesISO: string): string {
+  return new Date(`${mesISO}-01T12:00:00`).toLocaleDateString("es-NI", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 // Formatea dinero en córdobas: C$ 1,200.00
 export function fmtDinero(n: number): string {
   return `C$ ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -730,6 +760,20 @@ export function validarRegistroHotel(
     errores.ubicacion = errorUbicacion;
   }
 
+  return errores;
+}
+
+// Valida solo lo que se edita en el panel: nombre, departamento, municipio,
+// dirección, ubicación, descripción y teléfono (HU-022). El dueño, el correo
+// y la foto no se tocan en esta pantalla, así que no pueden bloquear el guardado.
+export function validarEdicionHotel(
+  datos: DatosRegistroHotel,
+  otrosHoteles: Hotel[] = []
+): ErroresRegistroHotel {
+  const errores = validarRegistroHotel(datos, otrosHoteles);
+  delete errores.dueno;
+  delete errores.correo;
+  delete errores.imagen;
   return errores;
 }
 

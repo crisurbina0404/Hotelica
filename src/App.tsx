@@ -4,6 +4,7 @@
 // ============================================================
 import { useEffect, useState } from "react";
 import { AppProvider, useApp } from "./store";
+import type { Usuario } from "./store";
 import { supabase } from "./lib/supabase";
 import type { Ruta } from "./rutas";
 import type { Rol } from "./data";
@@ -37,13 +38,13 @@ function usePantallaMovil(): boolean {
   return movil;
 }
 
-// ¿Puede verse esta pantalla? Con sesión siempre; sin sesión, el panel del hotel y la
-// consola de admin también se abren con el rol de demo que elige el selector
-function puedeVer(nombre: Ruta["nombre"], haySesion: boolean, rolActual: Rol): boolean {
-  if (haySesion) return true;
-  if (nombre === "panel") return rolActual === "hotel";
+// ¿Puede verse esta pantalla? El panel del hotel solo se abre con la cuenta
+// que el admin creó al aprobar el hotel; la consola de admin sigue en modo
+// demostración porque ese módulo todavía no está implementado.
+function puedeVer(nombre: Ruta["nombre"], usuario: Usuario | null, rolActual: Rol): boolean {
+  if (nombre === "panel") return usuario?.rol === "Hotel";
   if (nombre === "admin") return rolActual === "admin";
-  return !RUTAS_PROTEGIDAS.includes(nombre); // reservas y perfil sí piden sesión
+  return !RUTAS_PROTEGIDAS.includes(nombre) || !!usuario;
 }
 
 function AppInner() {
@@ -58,10 +59,10 @@ function AppInner() {
   const rutaSoloTurista = movil && (ruta.nombre === "panel" || ruta.nombre === "admin");
 
   // Pantalla que de verdad se muestra: si el rol actual no tiene permiso, es el inicio.
-  // El chequeo va al renderizar y no en navegar() porque el selector de demo cambia
-  // el rol y la ruta en el mismo clic, y el rol todavía no se había actualizado
+  // El chequeo va al renderizar y no en navegar() porque el acceso de demo al admin
+  // cambia el rol y la ruta en el mismo clic, y el rol todavía no se había actualizado
   const rutaVisible: Ruta =
-    !rutaSoloTurista && puedeVer(ruta.nombre, !!usuario, rolVisible) ? ruta : { nombre: "inicio" };
+    !rutaSoloTurista && puedeVer(ruta.nombre, usuario, rolVisible) ? ruta : { nombre: "inicio" };
 
   // Dejamos la ruta válida en memoria: al cerrar sesión o cambiar de rol volvemos al inicio
   useEffect(() => {
