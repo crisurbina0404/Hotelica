@@ -6,6 +6,30 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.67.0] — 2026-10-26 · HU-033: activar o desactivar usuarios desde la consola
+
+### Agregado
+- **`historias-usuario/HU-033-activar-desactivar-usuarios.md`** — historia del módulo Administración con 8 reglas y los escenarios de las subtareas HOTELICA-275 a 281: el admin podía crear cuentas (HU-021) pero no había manera de cortarle el acceso a una cuenta desde la plataforma.
+- **Sección "Usuarios de la plataforma" en `src/pages/AdminPanel.tsx`** — lista cada cuenta con avatar, nombre, correo, pastilla de rol (Turista / Hotelero / Admin) y estado (Activo / Desactivado), con chips de filtro por rol; el botón de cada fila ofrece siempre lo contrario del estado actual ("Desactivar" a los activos y "Activar" a los desactivados).
+- **`UsuarioPlataforma` y `USUARIOS_SEED` en `src/data.ts`** — el registro de cuentas de la plataforma (correo como llave, nombre, rol, activo y fecha de creación), con tres cuentas de ejemplo para ver la consola completa desde la primera visita.
+- **`usuarios` en el estado global (`src/store.tsx`)** — `cambiarEstadoUsuario()` valida que el usuario exista, que no se pida el mismo estado y que nadie se desactive a sí mismo (la propia fila del admin es de solo lectura); luego cambia el estado al instante y sube la fila con `subirUsuario()`. Las cuentas se registran solas: el turista al registrarse o entrar, el hotelero al aprobarse su hotel y el admin al confirmarse su rol.
+- **Bloqueo de acceso** — `login()` revisa el estado antes de abrir sesión: una cuenta de hotelero desactivada no entra y, en el camino de Supabase, la sesión recién abierta se cierra con `signOut()` y se explica el motivo.
+- **`supabase/migrations/20261026150000_hu033_usuarios_activo.sql`** — tabla `usuarios` (lectura con sesión iniciada) y disparador `controlar_activo_usuario`, que solo deja cambiar `activo` a un administrador autenticado (misma vía que `controlar_estado_hotel` de HU-042). Se corre desde el SQL Editor del Dashboard.
+- **`tests/CP-033-activar-desactivar.spec.ts`** — 3 pruebas: la lista con filtro por rol y la propia fila sin botón; la desactivación con aviso, pastilla y `activo = FALSE` subido a la base (y la reactivación con `activo = TRUE`); y el intento de iniciar sesión bloqueado para un turista y un hotelero desactivados.
+
+### Cambiado
+- **`src/sync.ts`** — `UsuarioFila`, `aFilaUsuario()`, `deFilaUsuario()`, `cargarUsuarios()`, `subirUsuario()` y `fusionarUsuarios()` (la base manda por correo). Los usuarios se cargan en un `useEffect` propio: si la tabla no responde, la carga de hoteles y habitaciones no se frena.
+- **`decidirHotel()` en `src/store.tsx`** — al crear la cuenta del hotelero (HU-021) también la registra en la tabla de usuarios de la plataforma.
+- **`historias-usuario/Orden de Historias de Usuarios.md`** — HU-033 pasa a ✅ Terminada.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **12 pruebas pasan**: las 3 nuevas de la HU-033 más las 2 de la HU-031, la 1 de la HU-019, las 2 de la HU-032 y las 4 de la HU-042.
+
+### Limitación
+Hay que **correr la migración `20261026150000_hu033_usuarios_activo.sql` desde el SQL Editor** (una sola vez); hasta que se corra, los cambios de estado quedan guardados en el navegador y la app avisa que no se pudo subir a la base. La desactivación corta el próximo inicio de sesión; cerrar la sesión ya abierta de ese usuario depende de Supabase Auth y queda fuera de esta historia.
+
+---
+
 ## [v0.66.0] — 2026-10-26 · HU-032: el hotelero recibe el rechazo por correo con el motivo
 
 ### Agregado

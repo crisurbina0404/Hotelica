@@ -35,7 +35,7 @@
 | 31 | HU-030 | Gestión Hotel | Consultar reporte de ocupación | Media | ✅ Terminada |
 | 32 | HU-031 | Administración | Aprobar un hotel | Alta | ✅ Terminada |
 | 33 | HU-032 | Administración | Rechazar un hotel | Alta | ✅ Terminada |
-| 34 | HU-033 | Administración | Activar o desactivar usuarios | Media | ⬜ Escrita |
+| 34 | HU-033 | Administración | Activar o desactivar usuarios | Media | ✅ Terminada |
 | 35 | HU-034 | Administración | Consultar estadísticas globales | Media | ⬜ Escrita |
 | 36 | HU-035 | Administración | Gestionar notificaciones de reservas | Baja | ⬜ Escrita |
 | 37 | HU-036 | Diseño (oficio visual) | Composición editorial sin el patrón "N pasos" | Media | ✅ Terminada |

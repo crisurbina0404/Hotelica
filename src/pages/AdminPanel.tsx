@@ -5,16 +5,24 @@ import { useMemo } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
 import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha, requisitosIncompletos } from "../data";
-import type { Hotel, CuentaHotelero } from "../data";
+import type { Hotel, CuentaHotelero, UsuarioPlataforma } from "../data";
 import { Reveal, BadgeHotel, Modal, TituloSeccion } from "../ui";
 import { MapaHotel } from "../mapa";
 import {
-  IconoEscudo, IconoCheck, IconoX, IconoOjo, IconoHotel, IconoGrafica, IconoPin,
+  IconoEscudo, IconoCheck, IconoX, IconoOjo, IconoHotel, IconoGrafica, IconoPin, IconoUsuario,
 } from "../icons";
 import { useState } from "react";
 
+// Cómo se ve cada rol en la lista de usuarios (HU-033)
+const ETIQUETA_ROL: Record<UsuarioPlataforma["rol"], string> = { Turista: "Turista", Hotel: "Hotelero", Admin: "Admin" };
+const COLOR_ROL: Record<UsuarioPlataforma["rol"], string> = {
+  Turista: "bg-[#DBEAFE] text-[#1D4ED8]",
+  Hotel: "bg-accent-light text-accent-dark",
+  Admin: "bg-admin-soft text-admin",
+};
+
 export function PanelAdmin({ navegar }: { navegar: Navegar }) {
-  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, enviarRechazoHotelero, avisar, avisarHotel } = useApp();
+  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, enviarRechazoHotelero, avisar, avisarHotel, usuarios, cambiarEstadoUsuario, usuario } = useApp();
   const [viendo, setViendo] = useState<Hotel | null>(null);
   const [cuentaCreada, setCuentaCreada] = useState<CuentaHotelero | null>(null);
   const [enviandoCorreo, setEnviandoCorreo] = useState(false);
@@ -22,10 +30,32 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
   const [rechazando, setRechazando] = useState<Hotel | null>(null);
   const [motivo, setMotivo] = useState("");
   const [errorMotivo, setErrorMotivo] = useState("");
+  // Filtro de la lista de usuarios por rol (HU-033)
+  const [filtroRol, setFiltroRol] = useState<UsuarioPlataforma["rol"] | "Todos">("Todos");
 
   const pendientes = hoteles.filter((h) => h.aprobado === "pendiente");
   const aprobados = hoteles.filter((h) => h.aprobado === "aprobado");
   const historial = hoteles.filter((h) => h.aprobado !== "pendiente");
+
+  // Lista de usuarios de la plataforma, con filtro por rol (HU-033)
+  const usuariosVisibles = filtroRol === "Todos" ? usuarios : usuarios.filter((u) => u.rol === filtroRol);
+  const miCorreo = (usuario?.correo ?? "").trim().toLowerCase();
+
+  // Activar o desactivar una cuenta desde la lista (HU-033)
+  const accionUsuario = (u: UsuarioPlataforma) => {
+    const activo = !u.activo; // el botón siempre ofrece lo contrario del estado actual
+    const r = cambiarEstadoUsuario(u.correo, activo);
+    if (r.error) {
+      avisar(r.error, "error");
+      return;
+    }
+    avisar(
+      activo
+        ? `${u.nombre} activado: ya puede iniciar sesión.`
+        : `${u.nombre} desactivado: ya no podrá iniciar sesión.`,
+      "ok"
+    );
+  };
 
   // Ingresos totales de la plataforma (reservas no canceladas)
   const ingresosPlataforma = reservas.filter((r) => r.estado !== "cancelada").reduce((a, r) => a + r.total, 0);
@@ -313,6 +343,88 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
           </Reveal>
         </section>
       </div>
+
+      {/* ===== Usuarios de la plataforma (HU-033) ===== */}
+      <section className="mt-12">
+        <Reveal>
+          <TituloSeccion ceja="Usuarios" titulo={`Usuarios de la plataforma (${usuarios.length})`} />
+        </Reveal>
+
+        {/* Filtro por rol: la lista se puede ver completa o por cada rol */}
+        <Reveal delay={60}>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {(["Todos", "Turista", "Hotel", "Admin"] as const).map((f) => {
+              const cantidad = f === "Todos" ? usuarios.length : usuarios.filter((u) => u.rol === f).length;
+              const etiqueta = f === "Todos" ? "Todos" : ETIQUETA_ROL[f];
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFiltroRol(f)}
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
+                    filtroRol === f
+                      ? "bg-admin text-white"
+                      : "border border-line bg-white text-muted hover:border-admin/50 hover:text-admin"
+                  }`}
+                >
+                  {etiqueta} ({cantidad})
+                </button>
+              );
+            })}
+          </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <div className="mt-5 overflow-hidden rounded-xl border border-line bg-white shadow-card">
+            {usuariosVisibles.length === 0 ? (
+              <p className="p-6 text-sm text-muted">No hay usuarios de ese rol todavía.</p>
+            ) : (
+              <ul className="divide-y divide-line/70">
+                {usuariosVisibles.map((u) => {
+                  // La propia fila del admin es de solo lectura: nadie se desactiva a sí mismo (HU-033)
+                  const esMiCuenta = u.correo === miCorreo;
+                  return (
+                    <li key={u.correo} className="flex flex-wrap items-center gap-3 px-4 py-3.5 transition-colors hover:bg-canvas/60">
+                      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${COLOR_ROL[u.rol]}`}>
+                        <IconoUsuario size={19} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-ink">
+                          {u.nombre}
+                          {esMiCuenta && <span className="ml-1.5 text-[11px] font-semibold text-muted">(tu cuenta)</span>}
+                        </p>
+                        <p className="truncate text-xs text-muted">{u.correo}</p>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${COLOR_ROL[u.rol]}`}>
+                        {ETIQUETA_ROL[u.rol]}
+                      </span>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                          u.activo ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#FEE2E2] text-danger"
+                        }`}
+                      >
+                        {u.activo ? "Activo" : "Desactivado"}
+                      </span>
+                      {esMiCuenta ? (
+                        <span className="w-28 text-right text-[11px] font-semibold text-muted">Solo lectura</span>
+                      ) : (
+                        <button
+                          onClick={() => accionUsuario(u)}
+                          className={`flex w-28 items-center justify-center gap-1 rounded-md px-3 py-1.5 text-[11px] font-bold text-white transition-all active:scale-95 ${
+                            u.activo ? "bg-danger hover:bg-[#B91C1C]" : "bg-success hover:bg-[#15803D]"
+                          }`}
+                        >
+                          {u.activo ? <IconoX size={13} /> : <IconoCheck size={13} />}
+                          {u.activo ? "Desactivar" : "Activar"}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        </Reveal>
+      </section>
 
       {/* Modal con la cuenta creada al aprobar una solicitud (HU-021) */}
       <Modal abierto={!!cuentaCreada} alCerrar={() => setCuentaCreada(null)} ancho="max-w-md">

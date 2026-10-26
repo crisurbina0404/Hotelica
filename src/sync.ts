@@ -5,7 +5,7 @@
 // sigue funcionando igual que antes con el guardado local.
 // ============================================================
 import { supabase } from "./lib/supabase";
-import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto } from "./data";
+import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto, UsuarioPlataforma } from "./data";
 
 // Así se llaman las columnas en la base (en la app usamos camelCase)
 type HotelFila = {
@@ -28,6 +28,14 @@ type HotelFila = {
   contacto: string | null;
   ubicacion: Punto | null;
   motivo_rechazo: string | null; // por qué el admin rechazó el hotel (HU-032)
+};
+
+type UsuarioFila = {
+  correo: string;
+  nombre: string;
+  rol: "Turista" | "Hotel" | "Admin";
+  activo: boolean; // TRUE = puede iniciar sesión (HU-033)
+  creado_en: string | null;
 };
 
 type HabitacionFila = {
@@ -68,6 +76,16 @@ function aFilaHotel(h: Hotel): HotelFila {
   };
 }
 
+function aFilaUsuario(u: UsuarioPlataforma): UsuarioFila {
+  return {
+    correo: u.correo,
+    nombre: u.nombre,
+    rol: u.rol,
+    activo: u.activo,
+    creado_en: u.creadaEn,
+  };
+}
+
 function aFilaHabitacion(h: Habitacion): HabitacionFila {
   return {
     id: h.id,
@@ -105,6 +123,16 @@ function deFilaHotel(f: HotelFila): Hotel {
     contacto: f.contacto ?? undefined,
     correoDueno: f.correo_dueno ?? undefined,
     motivoRechazo: f.motivo_rechazo ?? undefined,
+  };
+}
+
+function deFilaUsuario(f: UsuarioFila): UsuarioPlataforma {
+  return {
+    correo: f.correo,
+    nombre: f.nombre,
+    rol: f.rol,
+    activo: f.activo ?? true,
+    creadaEn: f.creado_en ?? new Date().toISOString(),
   };
 }
 
@@ -156,6 +184,27 @@ export async function cargarHabitaciones(): Promise<Habitacion[] | null> {
 }
 
 // ----- Escritura: guarda un hotel (inserta o actualiza por el id) -----
+
+// Trae el registro de cuentas de la plataforma (HU-033)
+export async function cargarUsuarios(): Promise<UsuarioPlataforma[] | null> {
+  try {
+    const { data, error } = await supabase.from("usuarios").select("*");
+    if (error || !data) return null;
+    return (data as UsuarioFila[]).map(deFilaUsuario);
+  } catch {
+    return null;
+  }
+}
+
+// Guarda una cuenta (inserta o actualiza por el correo): activo = TRUE/FALSE (HU-033)
+export async function subirUsuario(usuario: UsuarioPlataforma): Promise<{ error?: string }> {
+  try {
+    const { error } = await supabase.from("usuarios").upsert(aFilaUsuario(usuario), { onConflict: "correo" });
+    return error ? { error: mensajeDeError(error) } : {};
+  } catch {
+    return { error: "no hay conexión con la base de datos" };
+  }
+}
 
 export async function subirHotel(hotel: Hotel): Promise<{ error?: string }> {
   try {
@@ -242,6 +291,13 @@ function completarHabitacionDesdeLocal(bd: Habitacion, local: Habitacion): Habit
     ...bd,
     galeria: bd.galeria?.length ? bd.galeria : local.galeria ?? [],
   };
+}
+
+// Cuentas de la plataforma: la BD manda por correo y lo local que no está se queda
+export function fusionarUsuarios(local: UsuarioPlataforma[], base: UsuarioPlataforma[]): UsuarioPlataforma[] {
+  const porCorreo = new Map(local.map((u) => [u.correo, u]));
+  base.forEach((u) => porCorreo.set(u.correo, u));
+  return [...porCorreo.values()];
 }
 
 export function fusionarHabitaciones(local: Habitacion[], base: Habitacion[]): Habitacion[] {

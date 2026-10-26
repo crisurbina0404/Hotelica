@@ -13,11 +13,12 @@ import {
   cupoDeFotos, errorDeGaleria, conPortada,
   errorDeGaleriaHabitacion,
   errorCriteriosContrasena,
+  USUARIOS_SEED,
 } from "./data";
-import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
+import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion, UsuarioPlataforma } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
-import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarHabitaciones, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion } from "./sync";
+import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarHabitaciones, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion, cargarUsuarios, subirUsuario, fusionarUsuarios } from "./sync";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = {
@@ -50,6 +51,7 @@ type Persistido = {
   folio: number; // último número de folio usado
   cuentasHotelero: CuentaHotelero[]; // cuentas creadas por el admin al aprobar hoteles (HU-021)
   habitaciones: Habitacion[]; // inventario de cada hotel, que el hotelero administra (HU-023)
+  usuarios: UsuarioPlataforma[]; // cuentas de la plataforma que el admin activa o desactiva (HU-033)
 };
 
 // Clave de almacenamiento (cambia cuando el catálogo de datos evoluciona)
@@ -82,6 +84,8 @@ function cargar(): Persistido {
             creadaEn: c.creadaEn ?? new Date().toISOString(),
             contrasenaTemporal: c.contrasenaTemporal ?? false,
           })),
+          // Los guardados viejos no traían la lista de usuarios (HU-033)
+          usuarios: d.usuarios ?? USUARIOS_SEED,
         };
       }
     }
@@ -99,6 +103,7 @@ function cargar(): Persistido {
     folio: 1061,
     cuentasHotelero: [],
     habitaciones: HABITACIONES_SEED,
+    usuarios: USUARIOS_SEED,
   };
 }
 
@@ -117,6 +122,19 @@ function leerGuardado(): Persistido | null {
 // Aviso visual que aparece en la esquina (toast)
 export type Toast = { id: number; texto: string; tono: "ok" | "error" | "info" };
 
+// Registra una cuenta en la lista de usuarios de la plataforma si todavía no está (HU-033).
+// Es puro: devuelve la lista nueva sin tocar la que recibe
+function asegurarUsuarioEn(
+  lista: UsuarioPlataforma[],
+  correo: string,
+  nombre: string,
+  rol: UsuarioPlataforma["rol"]
+): UsuarioPlataforma[] {
+  const limpio = correo.trim().toLowerCase();
+  if (!limpio || lista.some((u) => u.correo === limpio)) return lista;
+  return [...lista, { correo: limpio, nombre, rol, activo: true, creadaEn: new Date().toISOString() }];
+}
+
 type AppCtx = {
   hoteles: Hotel[];
   habitaciones: Habitacion[]; // inventario de habitaciones que el hotelero administra (HU-023)
@@ -127,6 +145,7 @@ type AppCtx = {
   pagos: Pago[];
   calificaciones: Calificacion[];
   cuentasHotelero: CuentaHotelero[];
+  usuarios: UsuarioPlataforma[]; // cuentas de la plataforma (HU-033)
   rol: Rol;
   usuario: Usuario | null;
   idioma: Idioma;
@@ -154,6 +173,7 @@ type AppCtx = {
   marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado", motivoRechazo?: string) => CuentaHotelero | null;
+  cambiarEstadoUsuario: (correo: string, activo: boolean) => { error?: string }; // HU-033
   enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   enviarRechazoHotelero: (dueno: string, correo: string, hotelNombre: string, motivo: string) => Promise<{ ok?: boolean; error?: string }>;
   registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
@@ -223,6 +243,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
         hoteles: fusionarHoteles(d.hoteles, hotelesBD ?? []),
         habitaciones: fusionarHabitaciones(d.habitaciones, habitacionesBD ?? []),
       }));
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  // Los usuarios de la plataforma se traen aparte (HU-033): si esa tabla
+  // no responde, la carga de hoteles y habitaciones no debe frenarse
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const usuariosBD = await cargarUsuarios();
+      if (!vivo || !usuariosBD) return;
+      setDatos((d) => ({ ...d, usuarios: fusionarUsuarios(d.usuarios, usuariosBD) }));
     })();
     return () => {
       vivo = false;
@@ -597,11 +631,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : h
       ),
       cuentasHotelero: cuentaCreada ? [...d.cuentasHotelero, cuentaCreada] : d.cuentasHotelero,
+      // La cuenta del hotelero también queda registrada en la plataforma (HU-033)
+      usuarios: cuentaCreada ? asegurarUsuarioEn(d.usuarios, cuentaCreada.correo, cuentaCreada.nombre, "Hotel") : d.usuarios,
     }));
 
     // La decisión del admin también queda registrada en la base de datos (Fase 2)
     // La foto de arriba es de antes del cambio, así que el motivo se manda aparte (HU-032)
     if (hotel) subirHotelConAviso({ ...hotel, aprobado: decision, ...(motivoRechazo ? { motivoRechazo } : {}) });
+
+    // Subimos la cuenta nueva del hotelero a la tabla de usuarios (HU-033)
+    if (cuentaCreada) {
+      subirUsuario({ correo: cuentaCreada.correo, nombre: cuentaCreada.nombre, rol: "Hotel", activo: true, creadaEn: cuentaCreada.creadaEn }).then((r) => {
+        if (r.error) avisar(`La cuenta de ${cuentaCreada.correo} quedó registrada solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+      });
+    }
 
     return cuentaCreada;
   };
@@ -986,6 +1029,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const cambiarRol = (r: Rol) => setRol(r);
 
+  // ¿Esa cuenta está activa en la plataforma? (HU-033).
+  // Si todavía no aparece en la lista, se considera activa (nadie la desactivó)
+  const cuentaActiva = (lista: UsuarioPlataforma[], correo: string): boolean => {
+    const fila = lista.find((u) => u.correo === correo.trim().toLowerCase());
+    return fila ? fila.activo : true;
+  };
+
+  // Registra la cuenta en la lista de la plataforma y la sube a la base (HU-033)
+  const asegurarUsuario = (correo: string, nombre: string, rol: UsuarioPlataforma["rol"]) => {
+    const limpio = correo.trim().toLowerCase();
+    // Si ya está registrada no la tocamos (así no pisamos un estado desactivado)
+    if (datos.usuarios.some((u) => u.correo === limpio)) return;
+    const cuenta: UsuarioPlataforma = { correo: limpio, nombre, rol, activo: true, creadaEn: new Date().toISOString() };
+    setDatos((d) => ({ ...d, usuarios: asegurarUsuarioEn(d.usuarios, limpio, nombre, rol) }));
+    subirUsuario(cuenta).then((r) => {
+      if (r.error) avisar(`Tu cuenta quedó registrada solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+    });
+  };
+
+  // El admin activa o desactiva una cuenta de la plataforma (HU-033)
+  const cambiarEstadoUsuario = (correo: string, activo: boolean): { error?: string } => {
+    const limpio = correo.trim().toLowerCase();
+    const fila = datos.usuarios.find((u) => u.correo === limpio);
+    if (!fila) return { error: "No existe ninguna cuenta con ese correo." };
+    // Nadie se desactiva a sí mismo: la consola no puede quedar sin administrador (HU-033)
+    if (!activo && usuario?.correo?.trim().toLowerCase() === limpio) {
+      return { error: "No podés desactivar tu propia cuenta de administrador." };
+    }
+    // El estado actual manda: no se pide el cambio que ya está hecho
+    if (fila.activo === activo) {
+      return { error: `${fila.nombre} ya está ${activo ? "activo" : "desactivado"}: no hay nada que cambiar.` };
+    }
+    const actualizada = { ...fila, activo };
+    setDatos((d) => ({
+      ...d,
+      usuarios: d.usuarios.map((u) => (u.correo === limpio ? actualizada : u)),
+    }));
+    // El cambio viaja de inmediato a la base de datos: activo = TRUE/FALSE (HU-033)
+    subirUsuario(actualizada).then((r) => {
+      if (r.error) avisar(`El estado de ${fila.nombre} cambió solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+    });
+    return {};
+  };
+
   // Pregunta a la base si ese correo está en la lista de administradores (HU-042).
   // Si la base no responde, no: el rol de admin nunca se regala por una falla
   const esAdministrador = async (correo: string): Promise<boolean> => {
@@ -1015,6 +1102,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       (c) => c.correo === correo.trim().toLowerCase() && c.contrasena === contrasena.trim()
     );
     if (cuenta) {
+      // Una cuenta desactivada por el admin no puede entrar (HU-033)
+      if (!cuentaActiva(datos.usuarios, cuenta.correo)) {
+        return { error: "Tu cuenta está desactivada. Contactá al administrador de Hotelica para reactivarla." };
+      }
       // Si la contraseña temporal ya venció (48h), no dejamos entrar
       if (contrasenaTemporalVencida(cuenta)) {
         return { error: "Tu contraseña temporal venció (48 horas). Pedile al administrador una nueva contraseña." };
@@ -1046,9 +1137,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const nombre = data.user.user_metadata?.nombre || correo.split("@")[0];
       const telefono = data.user.user_metadata?.telefono || "";
       const direccion = data.user.user_metadata?.direccion || "";
+
+      // Una cuenta desactivada por el admin no puede iniciar sesión (HU-033):
+      // cerramos la sesión recién abierta y explicamos el motivo
+      if (!cuentaActiva(datos.usuarios, correo)) {
+        await supabase.auth.signOut();
+        return { error: "Tu cuenta está desactivada. Contactá al administrador de Hotelica para reactivarla." };
+      }
+
       const esAdmin = await esAdministrador(correo);
       setUsuario({ nombre, rol: esAdmin ? "Admin" : "Turista", correo, telefono, direccion });
       setRol(esAdmin ? "admin" : "turista"); // un turista nunca debe quedar con el rol del demo anterior
+      // La cuenta queda registrada en la plataforma por si el admin necesita administrarla (HU-033)
+      asegurarUsuario(correo, nombre, esAdmin ? "Admin" : "Turista");
       avisar(esAdmin ? `Bienvenido, ${nombre} — consola de administración` : `Bienvenido, ${nombre}`, "ok");
       return { rol: esAdmin ? "Admin" : "Turista" };
     }
@@ -1080,6 +1181,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const nombreDisplay = nombre || correo.split("@")[0];
       setUsuario({ nombre: nombreDisplay, rol: "Turista", correo, telefono: "", direccion: "" });
       setRol("turista");
+      // La cuenta queda registrada en la plataforma (HU-033)
+      asegurarUsuario(correo, nombreDisplay, "Turista");
       avisar(`Bienvenido, ${nombreDisplay}`, "ok");
     }
 
@@ -1208,6 +1311,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pagos: datos.pagos,
       calificaciones: datos.calificaciones,
       cuentasHotelero: datos.cuentasHotelero,
+      usuarios: datos.usuarios,
       rol,
       usuario,
       idioma,
@@ -1235,6 +1339,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       marcarNotificacionesLeidas,
       calificar,
       decidirHotel,
+      cambiarEstadoUsuario,
       enviarCuentaHotelero,
       enviarRechazoHotelero,
       registrarHotel,

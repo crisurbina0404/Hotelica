@@ -589,6 +589,26 @@ export function generarContrasenaHotelero(): string {
   return `hotel${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
+// ----- Cuentas de la plataforma (HU-033) -----
+
+// Cuenta real que el administrador puede activar o desactivar desde la consola.
+// El correo es la clave: es el mismo que usan Supabase Auth y las cuentas de hotelero
+export type UsuarioPlataforma = {
+  correo: string; // siempre en minúsculas
+  nombre: string;
+  rol: "Turista" | "Hotel" | "Admin";
+  activo: boolean;
+  creadaEn: string; // fecha y hora de creación (ISO)
+};
+
+// Cuentas de ejemplo para que la consola muestre usuarios desde la primera visita;
+// las reales se suman solas al registrarse, al aprobarse un hotel y al entrar como admin
+export const USUARIOS_SEED: UsuarioPlataforma[] = [
+  { correo: "admin@hotelica.ni", nombre: "Administración", rol: "Admin", activo: true, creadaEn: "2026-09-01T09:00:00.000Z" },
+  { correo: "maria.fernandez@hotelica.ni", nombre: "María Fernández", rol: "Turista", activo: true, creadaEn: "2026-09-02T10:15:00.000Z" },
+  { correo: "jorge.pineda@hotelica.ni", nombre: "Jorge Pineda", rol: "Turista", activo: true, creadaEn: "2026-09-10T16:40:00.000Z" },
+];
+
 // ----- Criterios de contraseña segura del hotelero (HU-040) -----
 
 // Estado de cada criterio; sirve para las palomitas de la interfaz y para validar
