@@ -6,6 +6,25 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.63.0] — 2026-10-26 · HU-031: el admin aprueba un hotel y revisa los faltantes antes de publicarlo
+
+### Agregado
+- **`historias-usuario/HU-031-aprobar-un-hotel.md`** — historia del módulo Administración, con 6 escenarios BDD y las subtareas HOTELICA-261 a 266. El backlog la marcaba como escrita, pero el archivo no existía: se redactó primero, como en la HU-030.
+- **`src/data.ts`** — `requisitosIncompletos()` devuelve la lista de lo que un hotel necesita para que el admin lo pueda aprobar: foto representativa, descripción de 30 caracteres, dirección de 8, departamento y municipio válidos, pin en el mapa y el correo del dueño.
+- **`tests/CP-031-aprobar-hotel.spec.ts`** — primera prueba E2E del proyecto (`npm run test:e2e`): aprueba los dos hoteles pendientes de la semilla y verifica que un hotel incompleto no pase. Corre con Supabase y el traductor de Google bloqueados para no tocar la base ni mandar correos reales.
+
+### Cambiado
+- **`src/pages/AdminPanel.tsx`** — `aprobar()` ahora revisa los requisitos mínimos antes de decidir: si falta algo, muestra un aviso con lo que falta y el hotel sigue pendiente (subtarea HOTELICA-263, que era la única de la HU que faltaba). El encabezado del archivo y el comentario de la sección pasan de HU-009 a HU-031.
+- **`src/data.ts`** — los dos hoteles pendientes de la semilla (Mirador de Catarina y Posada Volcán Telica) ahora traen `correoDueno`: sin correo del dueño no hay cuenta que crear ni notificación que enviar, así que la nueva validación los habría dejado sin salida en la demo.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **2 pruebas pasan**: (1) la bandeja lista las 2 solicitudes, al aprobar aparece el aviso, el modal con las credenciales del dueño y el error del correo sin Supabase, el hotel sale de la bandeja, queda en el historial y guardado como `aprobado` en el navegador; al aprobar el segundo aparece "Bandeja al día" y ya no queda botón "Aprobar"; (2) un hotel sin foto, descripción, dirección completa, pin ni correo no se aprueba: se lista cada faltante y sigue en `pendiente`. Sin errores en la consola del navegador.
+
+### Limitación
+La subida a la base de datos y el correo real se ejercitan en su camino de error (la red está cortada en la prueba), así que el envío efectivo del correo de credenciales sigue sin evidencia automatizada.
+
+---
+
 ## [v0.62.3] — 2026-10-21 · Registro: el botón abre la ventana y la X deja seguir navegando
 
 ### Corregido

@@ -311,6 +311,7 @@ export const HOTELES_SEED: Hotel[] = [
     rating: 0,
     totalResenas: 0,
     fechaRegistro: "2026-07-21",
+    correoDueno: "roberto@miradordecatarina.com", // el admin necesita el correo para crearle la cuenta (HU-031)
   },
   {
     id: "h-telica",
@@ -330,6 +331,7 @@ export const HOTELES_SEED: Hotel[] = [
     rating: 0,
     totalResenas: 0,
     fechaRegistro: "2026-07-28",
+    correoDueno: "ana@posadatelica.com", // el admin necesita el correo para crearle la cuenta (HU-031)
   },
   {
     id: "h-ruta",
@@ -786,6 +788,45 @@ export function validarImagenHotel(archivo: File): string {
     return "La imagen pesa más de 5 MB: elegí una más liviana.";
   }
   return "";
+}
+
+// Revisa que el hotel tenga lo mínimo para que el admin lo pueda aprobar (HU-031)
+// Devuelve la lista de lo que falta: si viene vacía, el hotel se puede aprobar
+export function requisitosIncompletos(hotel: Hotel): string[] {
+  const faltan: string[] = [];
+
+  // Sin foto el hotel no se muestra bien en las búsquedas del turista
+  if (!hotel.imagen?.trim()) {
+    faltan.push("la foto representativa del hotel");
+  }
+
+  // Descripción y dirección con los mismos largos mínimos de la inscripción (HU-021)
+  if ((hotel.descripcion ?? "").trim().length < 30) {
+    faltan.push("una descripción de al menos 30 caracteres");
+  }
+  if ((hotel.direccion ?? "").trim().length < 8) {
+    faltan.push("una dirección de al menos 8 caracteres");
+  }
+
+  // Departamento y municipio tienen que existir en los catálogos oficiales
+  if (!DEPARTAMENTOS.some((d) => d.id === hotel.departamentoId)) {
+    faltan.push("el departamento donde queda el hotel");
+  }
+  if (!MUNICIPIOS.some((m) => m.id === hotel.municipioId)) {
+    faltan.push("el municipio donde queda el hotel");
+  }
+
+  // Sin el pin en el mapa el huésped no llega al hotel (HU-037)
+  if (validarUbicacionExacta(hotel.ubicacion ?? null, hotel.municipioId)) {
+    faltan.push("la ubicación exacta marcada en el mapa");
+  }
+
+  // El correo del dueño es el que recibe la cuenta y el aviso de aprobación
+  if (!esCorreo((hotel.correoDueno ?? "").trim().toLowerCase())) {
+    faltan.push("el correo del dueño del hotel");
+  }
+
+  return faltan;
 }
 
 // Revisa los datos de una habitación nueva antes de registrarla (HU-023)

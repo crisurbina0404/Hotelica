@@ -1,10 +1,10 @@
 // ============================================================
-// Hotelica — Consola de administración (HU-009: aprobar hoteles)
+// Hotelica — Consola de administración (HU-031: aprobar un hotel)
 // ============================================================
 import { useMemo } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
-import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha } from "../data";
+import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha, requisitosIncompletos } from "../data";
 import type { Hotel, CuentaHotelero } from "../data";
 import { Reveal, BadgeHotel, Modal, TituloSeccion } from "../ui";
 import { MapaHotel } from "../mapa";
@@ -38,6 +38,13 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
   }, [hoteles, reservas]);
 
   const aprobar = async (h: Hotel) => {
+    // Si al hotel le falta algo básico no se aprueba y le decimos qué falta (HU-031)
+    const faltan = requisitosIncompletos(h);
+    if (faltan.length > 0) {
+      avisar(`"${h.nombre}" no se puede aprobar todavía. Falta: ${faltan.join("; ")}.`, "error");
+      return;
+    }
+
     // Al aprobar se crea la cuenta de hotelero que le da acceso al panel (HU-021)
     const cuenta = decidirHotel(h.id, "aprobado");
     if (cuenta) {
@@ -119,7 +126,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
         ))}
       </div>
 
-      {/* ===== Aprobación de hoteles (HU-009) ===== */}
+      {/* ===== Aprobación de hoteles (HU-031) ===== */}
       <section className="mt-12">
         <Reveal>
           <TituloSeccion ceja="Solicitudes de registro" titulo={`Hoteles pendientes de aprobación (${pendientes.length})`} />
