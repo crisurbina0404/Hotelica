@@ -133,7 +133,7 @@ type AppCtx = {
   toasts: Toast[];
   avisar: (texto: string, tono?: Toast["tono"]) => void;
   cambiarRol: (r: Rol) => void;
-  login: (correo: string, contrasena: string) => Promise<{ error?: string; rol?: "Hotel" | "Turista" }>;
+  login: (correo: string, contrasena: string) => Promise<{ error?: string; rol?: "Hotel" | "Turista" | "Admin" }>;
   registrar: (correo: string, contrasena: string, nombre: string) => Promise<{ error?: string }>;
   loginSocial: (proveedor: string) => Promise<{ error?: string }>;
   logout: () => void;
@@ -182,11 +182,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return crudo ? JSON.parse(crudo) : null;
     } catch { return null; }
   });
-  // El rol también se guarda al recargar la página, si hay sesión de hotelero/admin
+  // El rol también se guarda al recargar la página, si hay sesión de hotelero.
+  // El de admin nunca se toma de acá: lo confirma la base contra el correo (HU-042)
   const [rol, setRol] = useState<Rol>(() => {
     if (!localStorage.getItem("hotelica-usuario")) return "turista";
     const guardado = localStorage.getItem("hotelica-rol");
-    return guardado === "hotel" || guardado === "admin" ? guardado : "turista";
+    return guardado === "hotel" ? "hotel" : "turista";
   });
   const [toasts, setToasts] = useState<Toast[]>([]);
   // El español es el idioma de origen: la traducción al idioma del navegador
@@ -227,6 +228,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Al abrir o recargar la página volvemos a preguntar a la base quién es admin:
+  // un rol "admin" escrito a mano en el navegador no vuelve a servir (HU-042)
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const correo = session?.user?.email;
+      if (!vivo) return;
+
+      // Sin sesión de Supabase no hay manera de ser administrador
+      if (!correo) {
+        setRol((r) => (r === "admin" ? "turista" : r));
+        return;
+      }
+
+      const esAdmin = await esAdministrador(correo);
+      if (!vivo) return;
+      setRol((r) => (esAdmin ? "admin" : r === "admin" ? "turista" : r));
+    })();
+    return () => { vivo = false; };
+  }, []);
+
   // Si otra pestaña guarda cambios, copiamos su estado para no pisarnos (bug sobreventa)
   useEffect(() => {
     const alCambiarEnOtraPestana = (e: StorageEvent) => {
@@ -248,9 +271,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     else localStorage.removeItem("hotelica-usuario");
   }, [usuario]);
 
-  // Persistir el rol junto con la sesión (si no hay sesión, vuelve a turista)
+  // Persistir el rol junto con la sesión (si no hay sesión, vuelve a turista).
+  // El rol de admin no se guarda: en cada carga lo vuelve a confirmar la base (HU-042)
   useEffect(() => {
-    if (usuario) localStorage.setItem("hotelica-rol", rol);
+    if (usuario && rol !== "admin") localStorage.setItem("hotelica-rol", rol);
     else localStorage.removeItem("hotelica-rol");
   }, [rol, usuario]);
 
@@ -907,8 +931,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const cambiarRol = (r: Rol) => setRol(r);
 
+  // Pregunta a la base si ese correo está en la lista de administradores (HU-042).
+  // Si la base no responde, no: el rol de admin nunca se regala por una falla
+  const esAdministrador = async (correo: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from("administradores")
+        .select("correo")
+        .limit(50);
+      if (error) return false;
+      const buscado = correo.trim().toLowerCase();
+      // La lista es corta: la traemos toda y comparamos sin distinguir mayúsculas,
+      // porque el correo pudo quedar guardado distinto de como se escribió al entrar
+      return (data ?? []).some((f) => (f.correo ?? "").toLowerCase() === buscado);
+    } catch {
+      return false;
+    }
+  };
+
   // Login con Supabase Auth (HU-002) o con una cuenta de hotelero creada por el admin (HU-021)
-  const login = async (correo: string, contrasena: string): Promise<{ error?: string; rol?: "Hotel" | "Turista" }> => {
+  const login = async (correo: string, contrasena: string): Promise<{ error?: string; rol?: "Hotel" | "Turista" | "Admin" }> => {
     if (!correo.trim() || !contrasena.trim()) {
       return { error: "Correo y contraseña son obligatorios" };
     }
@@ -944,14 +986,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { error: error.message };
     }
 
-    // Obtener nombre del perfil
+    // Obtener nombre del perfil; el rol de admin lo da la lista de la base (HU-042)
     if (data.user) {
       const nombre = data.user.user_metadata?.nombre || correo.split("@")[0];
       const telefono = data.user.user_metadata?.telefono || "";
       const direccion = data.user.user_metadata?.direccion || "";
-      setUsuario({ nombre, rol: "Turista", correo, telefono, direccion });
-      setRol("turista"); // un turista nunca debe quedar con el rol del demo anterior
-      avisar(`Bienvenido, ${nombre}`, "ok");
+      const esAdmin = await esAdministrador(correo);
+      setUsuario({ nombre, rol: esAdmin ? "Admin" : "Turista", correo, telefono, direccion });
+      setRol(esAdmin ? "admin" : "turista"); // un turista nunca debe quedar con el rol del demo anterior
+      avisar(esAdmin ? `Bienvenido, ${nombre} — consola de administración` : `Bienvenido, ${nombre}`, "ok");
+      return { rol: esAdmin ? "Admin" : "Turista" };
     }
 
     return { rol: "Turista" };

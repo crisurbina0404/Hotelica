@@ -8,14 +8,14 @@ import { DEPARTAMENTOS } from "./data";
 import { t } from "./i18n";
 import {
   BanderaNI, IconoCorazon, IconoMenu, IconoX,
-  IconoEscudo, IconoCheck,
+  IconoCheck,
   LogoGoogle,
 } from "./icons";
 import { IconoBuscar, IconoUsuario } from "./icons";
 import { Marca, Modal, MarcaFooter } from "./ui";
 // ----- Barra de navegación principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
-  const { favoritos, rol, usuario, idioma, cambiarRol, login, registrar, loginSocial, logout, registroAbierto, abrirRegistro, cerrarRegistro, avisar } = useApp();
+  const { favoritos, rol, usuario, idioma, login, registrar, loginSocial, logout, registroAbierto, abrirRegistro, cerrarRegistro } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
   // Modal de login
@@ -100,8 +100,10 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
     setLoginAbierto(false);
     setCorreo("");
     setContrasena("");
-    // La cuenta de hotelero entra directo a su panel (HU-021)
+    // La cuenta de hotelero entra directo a su panel (HU-021) y el
+    // administrador a su consola, que solo se abre con cuenta real (HU-042)
     if (resultado.rol === "Hotel") navegar({ nombre: "panel" });
+    if (resultado.rol === "Admin") navegar({ nombre: "admin" });
   };
 
   // Manejador del formulario de registro (HU-001)
@@ -130,22 +132,6 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
     setRegNombre("");
     setRegCorreo("");
     setRegContrasena("");
-  };
-
-  // La consola de administración sigue en modo demostración porque el módulo
-  // todavía no está implementado. El panel del hotel ya no tiene demo: se entra
-  // únicamente con la cuenta que crea el admin al aprobar la inscripción (HU-021).
-  const entrarAlAdmin = () => {
-    cambiarRol("admin");
-    navegar({ nombre: "admin" });
-    avisar("Consola de administración en modo demostración", "info");
-  };
-
-  const salirDelAdmin = () => {
-    const esHotelero = usuario?.rol === "Hotel";
-    cambiarRol(esHotelero ? "hotel" : "turista");
-    navegar({ nombre: esHotelero ? "panel" : "inicio" });
-    avisar(esHotelero ? "Volviste a tu panel del hotel" : "Volviste al sitio", "info");
   };
 
   // Enlace de navegación con estado activo
@@ -235,27 +221,6 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               </button>
             </div>
           )}
-          {/* Acceso de demostración a la consola de administración: es el único
-              módulo que todavía no se usa con una cuenta real */}
-          <div className="relative hidden lg:block">
-            <button
-              onClick={() => (rol === "admin" ? salirDelAdmin() : entrarAlAdmin())}
-              className={`flex items-center gap-2 rounded-full border py-1.5 pl-1.5 pr-3 text-sm font-semibold transition-all ${
-                clara
-                  ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
-                  : "border-line bg-white text-ink hover:border-primary/40 hover:shadow-sm"
-              }`}
-              title={rol === "admin" ? "Volver al sitio" : "Abrir la consola de administración (demostración)"}
-            >
-              <span className={`flex h-7 w-7 items-center justify-center rounded-full ${
-                rol === "admin" ? "bg-admin text-white" : "bg-admin-soft text-admin"
-              }`}>
-                <IconoEscudo size={15} />
-              </span>
-              <span className="hidden sm:block">{rol === "admin" ? "Salir de admin" : "Demo admin"}</span>
-            </button>
-          </div>
-
           {/* Botón hamburguesa (móvil) */}
           <button
             onClick={() => setMenuMovil((v) => !v)}

@@ -6,6 +6,28 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.64.0] — 2026-10-26 · HU-042: la consola de admin ya no se abre con el demo, solo con una cuenta real
+
+### Agregado
+- **`historias-usuario/HU-042-acceso-del-administrador.md`** — historia del módulo Administración, con 7 reglas, 6 escenarios BDD y las subtareas HOTELICA-274 a 279: cualquiera podía entrar a la consola (aprobar hoteles, crear cuentas, ver ingresos) con el botón "Demo admin" o con el rol `admin` escrito a mano en el navegador.
+- **`supabase/migrations/20261026090000_hu042_acceso_administrador.sql`** — tabla `administradores` (solo lectura con sesión iniciada), función `es_admin()` (security definer) y disparador `controlar_estado_hotel` que rechaza cambios de `aprobado` hechos sin sesión de administrador con el mensaje "Solo un administrador puede aprobar o rechazar un hotel".
+- **`tests/ayudas.ts`** — ayudas compartidas de las pruebas E2E: cortan la red externa y simulan el login de Supabase y la lista de administradores, para probar la consola sin tocar la base real ni mandar correos.
+- **`tests/CP-042-acceso-admin.spec.ts`** — 4 pruebas: el botón demo ya no existe y el rol `admin` escrito a mano no abre la consola; solo un correo de la lista entra y "Cerrar sesión" lo saca; un turista nunca ve la consola; si el correo sale de la lista, al recargar vuelve a turista.
+
+### Cambiado
+- **`src/store.tsx`** — `login()` puede devolver `"Admin"` y, tras consultar `administradores` con `esAdministrador()`, asume el rol solo si el correo está en la lista; un `useEffect` vuelve a verificar la sesión al recargar y baja el rol a turista si ya no califica; el rol `admin` ya no se guarda en `localStorage` (se confirma en cada carga); sin sesión al arrancar, la app queda en turista.
+- **`src/layout.tsx`** — desaparecen el botón "Demo admin", `entrarAlAdmin()` y `salirDelAdmin()`; `manejarLogin` lleva al administrador directo a la consola, igual que el hotelero va a su panel.
+- **`src/App.tsx`** — `puedeVer("admin")` exige `rol === "admin"` **y** un usuario con sesión.
+- **`tests/CP-031-aprobar-hotel.spec.ts`** — dejó de usar el botón demo: ahora entra con login de administrador (ayudas de `tests/ayudas.ts`).
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **6 pruebas pasan**: las 2 de la HU-031 (aprobar los pendientes con sus avisos y modal, y bloquear un hotel incompleto) más las 4 de la HU-042. Sin errores en la consola del navegador.
+
+### Limitación
+Los escenarios 1, 4 y 6 de la regla del servidor (disparador de `aprobado`) se verifican en el SQL Editor del Dashboard de Supabase, no en Playwright; además hay que correr la migración y agregar el correo del admin real a `administradores` antes de usar la consola en la base real. RLS de la Fase 2 sigue abierto: solo se blindó el cambio de `aprobado`.
+
+---
+
 ## [v0.63.0] — 2026-10-26 · HU-031: el admin aprueba un hotel y revisa los faltantes antes de publicarlo
 
 ### Agregado

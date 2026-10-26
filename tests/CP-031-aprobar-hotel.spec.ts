@@ -1,27 +1,22 @@
 // ============================================================
 // Hotelica — CP-031: aprobar un hotel desde la consola de admin
-// Prueba los 6 escenarios de la HU-031 con la base de datos y
-// el correo simulados, para no tocar Supabase ni mandar correos
+// Prueba los 6 escenarios de la HU-031 entrando con login de
+// administrador (HU-042) y con la base y el correo simulados
 // ============================================================
 import { test, expect, type Page } from "@playwright/test";
+import { nuevoControl, sinRedExterna, responderSupabase, iniciarSesion } from "./ayudas";
 
-// Cortamos Supabase (la app tiene que seguir con lo local) y el
-// traductor de Google, cuyo widget tapa los botones de la consola
-async function sinSupabase(page: Page) {
-  await page.route("**/rest/v1/**", (ruta) => ruta.abort());
-  await page.route("**/auth/v1/**", (ruta) => ruta.abort());
-  await page.route("**/functions/v1/**", (ruta) => ruta.abort());
-  await page.route("**/translate.google.com/**", (ruta) => ruta.abort());
-}
-
-// Entramos al sitio y abrimos la consola de administración (demo)
+// Preparación común: red cortada y login de administrador hasta la consola
 async function abrirConsola(page: Page) {
+  const control = nuevoControl();
+  sinRedExterna(page);
+  responderSupabase(page, control);
   await page.goto("/");
-  await page.getByRole("button", { name: /Demo admin/ }).click();
+  // El login de administrador entra directo a la consola (HU-042)
+  await iniciarSesion(page, "admin@hotelica.ni", "secreta123", control);
 }
 
 test("el admin aprueba los hoteles pendientes y la bandeja queda al día", async ({ page }) => {
-  await sinSupabase(page);
   await abrirConsola(page);
 
   // Escenario 1: la bandeja lista las solicitudes esperando aprobación
@@ -72,8 +67,6 @@ test("el admin aprueba los hoteles pendientes y la bandeja queda al día", async
 });
 
 test("un hotel incompleto no se aprueba y se lista lo que le falta", async ({ page }) => {
-  await sinSupabase(page);
-
   // Dejamos una solicitud a medias: sin foto, sin descripción,
   // con una dirección mínima, sin pin en el mapa y sin correo del dueño
   await page.addInitScript(() => {

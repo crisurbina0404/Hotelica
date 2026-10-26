@@ -39,11 +39,11 @@ function usePantallaMovil(): boolean {
 }
 
 // ¿Puede verse esta pantalla? El panel del hotel solo se abre con la cuenta
-// que el admin creó al aprobar el hotel; la consola de admin sigue en modo
-// demostración porque ese módulo todavía no está implementado.
+// que el admin creó al aprobar el hotel; la consola de administración pide
+// además sesión de Supabase, porque el rol de admin lo confirma la base (HU-042)
 function puedeVer(nombre: Ruta["nombre"], usuario: Usuario | null, rolActual: Rol): boolean {
   if (nombre === "panel") return usuario?.rol === "Hotel";
-  if (nombre === "admin") return rolActual === "admin";
+  if (nombre === "admin") return rolActual === "admin" && !!usuario;
   return !RUTAS_PROTEGIDAS.includes(nombre) || !!usuario;
 }
 
