@@ -163,6 +163,24 @@ export async function subirHotel(hotel: Hotel): Promise<{ error?: string }> {
   }
 }
 
+// Actualiza solo el promedio y el contador de reseñas del hotel (HU-019):
+// sin esto, al recargar la base traía el promedio viejo y la calificación se perdía
+export async function subirCalificacion(
+  hotelId: string,
+  rating: number,
+  totalResenas: number
+): Promise<{ error?: string }> {
+  try {
+    const { error } = await supabase
+      .from("hoteles")
+      .update({ rating, total_resenas: totalResenas })
+      .eq("id", hotelId);
+    return error ? { error: mensajeDeError(error) } : {};
+  } catch {
+    return { error: "no hay conexión con la base de datos" };
+  }
+}
+
 export async function subirHabitacion(habitacion: Habitacion): Promise<{ error?: string }> {
   return subirHabitaciones([habitacion]);
 }

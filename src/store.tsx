@@ -17,7 +17,7 @@ import {
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
-import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarHabitaciones, subirHabitacion, subirHabitaciones, subirHotel } from "./sync";
+import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarHabitaciones, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion } from "./sync";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = {
@@ -516,10 +516,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const calificar: AppCtx["calificar"] = (folio, hotelId, estrellas, comentario) => {
     const reserva = datos.reservas.find((r) => r.folio === folio);
     if (!reserva || !sePuedeCalificar(reserva) || validarCalificacion(estrellas)) return false;
-    if (!datos.hoteles.some((h) => h.id === hotelId)) return false;
+    const hotel = datos.hoteles.find((h) => h.id === hotelId);
+    if (!hotel) return false;
 
     const texto = comentario.trim();
     const fecha = hoyISO();
+    // El promedio nuevo se calcula una sola vez, para guardarlo igual en el
+    // navegador y en la base de datos
+    const nuevoRating = nuevoPromedio(hotel.rating, hotel.totalResenas, estrellas);
+    const nuevoTotal = hotel.totalResenas + 1;
 
     setDatos((d) => {
       const nueva: Calificacion = {
@@ -547,15 +552,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         reservas: d.reservas.map((r) => (r.folio === folio ? { ...r, calificada: true } : r)),
         hoteles: d.hoteles.map((h) =>
           h.id === hotelId
-            ? {
-                ...h,
-                rating: nuevoPromedio(h.rating, h.totalResenas, estrellas),
-                totalResenas: h.totalResenas + 1,
-              }
+            ? { ...h, rating: nuevoRating, totalResenas: nuevoTotal }
             : h
         ),
         resenas: texto ? [resena, ...d.resenas] : d.resenas,
       };
+    });
+
+    // Al recargar la página los hoteles se vuelven a traer de la base, que manda
+    // por encima de lo local: sin subir el promedio, la calificación se perdía
+    subirCalificacion(hotelId, nuevoRating, nuevoTotal).then((r) => {
+      if (r.error) {
+        avisar(`Tu calificación se guardó solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+      }
     });
     return true;
   };

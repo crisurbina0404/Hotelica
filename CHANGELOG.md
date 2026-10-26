@@ -6,6 +6,19 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.64.1] — 2026-10-26 · HU-019: la calificación ya no se pierde al recargar (el promedio sube de verdad)
+
+### Corregido
+- **`src/store.tsx` + `src/sync.ts`** — al calificar, el promedio nuevo solo se guardaba en el navegador. Como al recargar los hoteles se vuelven a traer de Supabase y la base manda sobre lo local (`fusionarHoteles`), la tarjeta volvía a mostrar `0.0` y `0 reseñas` aunque la reserva siguiera marcada como calificada. Ahora `calificar()` calcula el promedio una vez, lo guarda en el navegador **y** lo sube a la tabla `hoteles` con `subirCalificacion()` (columnas `rating` y `total_resenas`); si la base no responde, avisa que la calificación quedó solo en el navegador.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **7 pruebas pasan**: la nueva `tests/CP-019-calificar-estadia.spec.ts` deja una reserva terminada, califica con 5 estrellas, ve `5.0` y `1 reseñas` en la tarjeta y, tras recargar, sigue viéndolos (además confirma que el `PATCH` con el promedio llegó a la base); se comprobó que sin el fix esa prueba falla. Las 2 de HU-031 y las 4 de HU-042 siguen en verde.
+
+### Limitación
+El comentario de la calificación y el registro de `calificaciones` siguen guardándose solo en el navegador: no existe tabla para ellos en la base todavía, así que otro dispositivo no vería el texto de la reseña (el promedio sí, porque viaja en `hoteles`).
+
+---
+
 ## [v0.64.0] — 2026-10-26 · HU-042: la consola de admin ya no se abre con el demo, solo con una cuenta real
 
 ### Agregado

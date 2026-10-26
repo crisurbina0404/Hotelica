@@ -79,6 +79,7 @@ Solo se puede calificar **después del check-out** y **una sola vez por reserva*
   - `validarCalificacion(estrellas)` — `""` si es un entero entre 1 y 5, si no el mensaje de error.
   - `calificacionDe(calificaciones, folio)` — devuelve la calificación de una reserva.
 - Persistencia: `calificaciones` se agrega a `Persistido` en `src/store.tsx` con `?? []` (igual que `pagos` y `notificaciones`).
+- **El promedio también se sube a la base:** `subirCalificacion()` en `src/sync.ts` actualiza `rating` y `total_resenas` de la fila del hotel en Supabase apenas se envía la calificación. Sin eso, al recargar la página los hoteles volvían a traerse de la base (que manda sobre lo local en `fusionarHoteles`) y el promedio regresaba a `0.0` aunque la reserva siguiera marcada como calificada. Si la base no responde, se avisa que la calificación quedó guardada solo en el navegador.
 - `calificar()` en `src/store.tsx` valida antes de escribir: si la reserva no está completada, ya fue calificada o las estrellas no son válidas, no cambia nada; si no, guarda el registro, marca `calificada`, recalcula el promedio con `nuevoPromedio()` y agrega la reseña cuando hay comentario.
 - Botón y sello en `src/pages/MyReservations.tsx` con `sePuedeCalificar(r)`; el detalle muestra la estrella del turista.
 
