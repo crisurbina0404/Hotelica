@@ -599,7 +599,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
 
     // La decisión del admin también queda registrada en la base de datos (Fase 2)
-    if (hotel) subirHotelConAviso({ ...hotel, aprobado: decision });
+    // La foto de arriba es de antes del cambio, así que el motivo se manda aparte (HU-032)
+    if (hotel) subirHotelConAviso({ ...hotel, aprobado: decision, ...(motivoRechazo ? { motivoRechazo } : {}) });
 
     return cuentaCreada;
   };

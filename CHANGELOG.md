@@ -6,6 +6,17 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.65.1] — 2026-10-26 · HU-032: el motivo del rechazo ahora sí llega a la base
+
+### Corregido
+- **`src/store.tsx`** — al rechazar, la fila que se sube a Supabase se armaba con la foto del hotel capturada *antes* de guardar el motivo, así que `motivo_rechazo` llegaba `null` a la tabla `hoteles` aunque en el navegador el motivo sí quedara guardado (se veía en la consulta y en el historial, pero no en la base). Ahora `decidirHotel()` manda el motivo en la misma subida.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **9 pruebas pasan**: la CP-032 ahora intercepta la fila que la app sube y exige `aprobado = 'rechazado'` y `motivo_rechazo` con el texto que escribió el admin; se comprobó que sin el fix esa prueba falla con `null`.
+
+---
+
+
 ## [v0.65.0] — 2026-10-26 · HU-032: rechazar un hotel con motivo obligatorio
 
 ### Agregado

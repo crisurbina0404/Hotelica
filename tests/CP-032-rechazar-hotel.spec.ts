@@ -19,6 +19,16 @@ async function abrirConsola(page: Page) {
 test("el admin rechaza una solicitud con motivo y el hotel queda registrado", async ({ page }) => {
   await abrirConsola(page);
 
+  // Capturamos la fila que la app sube a la base, para ver que el motivo viaja
+  let filaSubida: Record<string, unknown> | null = null;
+  await page.route("**/rest/v1/hoteles*", async (ruta) => {
+    const metodo = ruta.request().method();
+    if (metodo === "POST" || metodo === "PATCH" || metodo === "PUT") {
+      filaSubida = (await ruta.request().postDataJSON()) as Record<string, unknown>;
+    }
+    await ruta.fulfill({ status: 200, json: [] });
+  });
+
   // Escenario 1: cada pendiente trae su botón de rechazo
   await expect(page.getByText("Hoteles pendientes de aprobación (2)")).toBeVisible();
   await expect(
@@ -71,6 +81,10 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
   });
   expect(guardado.estado).toBe("rechazado");
   expect(guardado.motivo).toBe("Sin fotos y dirección incompleta");
+
+  // Escenario 3: lo que subió a la base también trae el estado y el motivo
+  expect(filaSubida?.aprobado).toBe("rechazado");
+  expect(filaSubida?.motivo_rechazo).toBe("Sin fotos y dirección incompleta");
 
   // Escenario 5: el panel del hotel recibe el aviso con el motivo
   const aviso = await page.evaluate(() => {
