@@ -29,6 +29,13 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
     await ruta.fulfill({ status: 200, json: [] });
   });
 
+  // Capturamos el correo de rechazo que la app manda a la Edge Function (HU-032)
+  let correoEnviado: Record<string, unknown> | null = null;
+  await page.route("**/functions/v1/enviar-rechazo-hotelero*", async (ruta) => {
+    correoEnviado = (await ruta.request().postDataJSON()) as Record<string, unknown>;
+    await ruta.fulfill({ status: 200, json: { message: "ok" } });
+  });
+
   // Escenario 1: cada pendiente trae su botón de rechazo
   await expect(page.getByText("Hoteles pendientes de aprobación (2)")).toBeVisible();
   await expect(
@@ -59,6 +66,13 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
 
   // Escenario 4: aviso de confirmación con el nombre del hotel
   await expect(page.getByText(/"Mirador de Catarina" rechazado/)).toBeVisible();
+
+  // Escenario 5: el correo automático salió al dueño con el hotel y el motivo
+  await expect(page.getByText("Correo de rechazo enviado a roberto@miradordecatarina.com.")).toBeVisible();
+  expect(correoEnviado?.dueno).toBe("Roberto López");
+  expect(correoEnviado?.correo).toBe("roberto@miradordecatarina.com");
+  expect(correoEnviado?.hotelNombre).toBe("Mirador de Catarina");
+  expect(correoEnviado?.motivo).toBe("Sin fotos y dirección incompleta");
 
   // Escenario 3: salió de la bandeja, entró al historial como rechazado
   await expect(page.getByText("Hoteles pendientes de aprobación (1)")).toBeVisible();
@@ -110,7 +124,7 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
   const filaDeLaBase = (motivoRechazo: string | null, nombre = "Mirador de Catarina (base)") => ({
     id: "h-masaya",
     nombre,
-    dueno: "Roberto Gómez",
+    dueno: "Roberto López",
     departamento_id: "masaya",
     municipio_id: "m-catarina",
     direccion: "Al lado de la iglesia",
@@ -229,6 +243,8 @@ test("un hotel incompleto muestra sus requisitos al rechazarlo", async ({ page }
   await modal.getByLabel("Motivo del rechazo").fill("Solicitud incompleta");
   await modal.getByRole("button", { name: "Confirmar rechazo" }).click();
   await expect(page.getByText(/"Hotel Sin Datos" rechazado/)).toBeVisible();
+  // Escenario 5: sin correo del dueño no hay correo de rechazo que enviar
+  await expect(page.getByText(/correo de rechazo/i)).toHaveCount(0);
   const estado = await page.evaluate(() => {
     const datos = JSON.parse(localStorage.getItem("hotelica-fase1-v2") ?? "{}");
     return datos.hoteles?.[0]?.aprobado;

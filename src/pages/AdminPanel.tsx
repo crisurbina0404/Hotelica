@@ -14,7 +14,7 @@ import {
 import { useState } from "react";
 
 export function PanelAdmin({ navegar }: { navegar: Navegar }) {
-  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, avisar, avisarHotel } = useApp();
+  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, enviarRechazoHotelero, avisar, avisarHotel } = useApp();
   const [viendo, setViendo] = useState<Hotel | null>(null);
   const [cuentaCreada, setCuentaCreada] = useState<CuentaHotelero | null>(null);
   const [enviandoCorreo, setEnviandoCorreo] = useState(false);
@@ -75,7 +75,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
   };
 
   // Confirma el rechazo con el motivo escrito (HU-032)
-  const confirmarRechazo = () => {
+  const confirmarRechazo = async () => {
     if (!rechazando) return;
     const texto = motivo.trim();
     // Sin motivo no hay rechazo: el hotelero tiene que saber por qué (HU-032)
@@ -83,11 +83,25 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
       setErrorMotivo("Escribí el motivo del rechazo: el hotelero necesita saber por qué.");
       return;
     }
-    decidirHotel(rechazando.id, "rechazado", texto);
+    const hotel = rechazando;
+    decidirHotel(hotel.id, "rechazado", texto);
     // Aviso automático en el panel del hotel con el motivo (HU-032)
-    avisarHotel(rechazando.id, "", `Hotel rechazado por Hotelica: ${texto}`);
-    avisar(`"${rechazando.nombre}" rechazado: no será visible para turistas.`, "error");
+    avisarHotel(hotel.id, "", `Hotel rechazado por Hotelica: ${texto}`);
+    avisar(`"${hotel.nombre}" rechazado: no será visible para turistas.`, "error");
+    // Cerramos el formulario antes de esperar el correo
     setRechazando(null);
+
+    // El correo de rechazo solo sale si el dueño dejó contacto (HU-032)
+    if (hotel.correoDueno) {
+      setEnviandoCorreo(true);
+      const resultado = await enviarRechazoHotelero(hotel.dueno, hotel.correoDueno.trim().toLowerCase(), hotel.nombre, texto);
+      setEnviandoCorreo(false);
+      if (resultado.ok) {
+        avisar(`Correo de rechazo enviado a ${hotel.correoDueno}.`, "ok");
+      } else {
+        avisar(`No se pudo enviar el correo de rechazo: ${resultado.error ?? "error desconocido"}. El aviso del panel sí quedó.`, "error");
+      }
+    }
   };
 
   // Botones de la solicitud. Los comparten la tabla de escritorio y las tarjetas del celular

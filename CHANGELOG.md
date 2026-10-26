@@ -6,6 +6,24 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.66.0] — 2026-10-26 · HU-032: el hotelero recibe el rechazo por correo con el motivo
+
+### Agregado
+- **`supabase/functions/enviar-rechazo-hotelero/index.ts`** — Edge Function con Brevo (misma estructura y secrets que `enviar-cuenta-hotelero`): recibe dueño, correo, hotel y motivo, y manda un correo con asunto "Tu hotel X no fue aprobado — Hotelica". El HTML trae el motivo resaltado en un bloque rojo y los pasos para corregir los datos y volver a inscribir el hotel.
+- **`enviarRechazoHotelero()` en `src/store.tsx`** — patrón idéntico a `enviarCuentaHotelero()`: llama a la function con el token de la sesión y devuelve `{ ok }` o `{ error }`.
+- **HU-032 ampliada** — regla 3, regla 7, Escenario 5 (HOTELICA-272) y MoSCoW: el correo automático con el motivo pasó de "podría tener" a ser parte de la notificación obligatoria (junto al aviso del panel); notas de implementación actualizadas.
+
+### Cambiado
+- **`src/pages/AdminPanel.tsx`** — `confirmarRechazo()` ahora es async: después de rechazar (estado, aviso del panel y toast) cierra el formulario y, si el hotel tiene `correoDueno`, manda el correo; si el envío falla, avisa con toast de error pero el rechazo y el aviso del panel ya quedaron hechos.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **9 pruebas pasan**: la CP-032 ahora intercepta la llamada a `functions/v1/enviar-rechazo-hotelero` y exige que el cuerpo traiga el dueño, el correo, el hotel y el motivo, más el toast "Correo de rechazo enviado a ..."; el caso sin correo del dueño comprueba que no aparece ningún toast de correo.
+
+### Despliegue
+La function quedó desplegada en el proyecto el mismo día con `npx supabase functions deploy enviar-rechazo-hotelero` (la CLI ya estaba logueada); usa los secrets de Brevo `BREVO_API_KEY` y `BREVO_SENDER_EMAIL` que ya existían en el proyecto. Si se cambia el HTML, se repite ese comando.
+
+---
+
 ## [v0.65.1] — 2026-10-26 · HU-032: el motivo del rechazo ahora sí llega a la base
 
 ### Corregido

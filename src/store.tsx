@@ -155,6 +155,7 @@ type AppCtx = {
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
   decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado", motivoRechazo?: string) => CuentaHotelero | null;
   enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
+  enviarRechazoHotelero: (dueno: string, correo: string, hotelNombre: string, motivo: string) => Promise<{ ok?: boolean; error?: string }>;
   registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
   actualizarHotel: (hotelId: string, datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel };
   agregarHabitacion: (hotelId: string, datos: DatosHabitacion) => { errores?: ErroresHabitacion; habitacion?: Habitacion };
@@ -642,6 +643,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return { ok: true };
     } catch (e) {
       return { error: "No se pudo enviar el correo de credenciales" };
+    }
+  };
+
+  // Envía el correo de rechazo con el motivo al dueño del hotel (HU-032)
+  // Usa la Edge Function enviar-rechazo-hotelero (Brevo) igual que el de aprobación
+  const enviarRechazoHotelero = async (dueno: string, correo: string, hotelNombre: string, motivo: string): Promise<{ ok?: boolean; error?: string }> => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return { error: "Configuración de Supabase no encontrada" };
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token ?? supabaseAnonKey;
+
+      const res = await fetch(`${supabaseUrl}/functions/v1/enviar-rechazo-hotelero`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          apikey: supabaseAnonKey,
+        },
+        body: JSON.stringify({
+          dueno,
+          correo,
+          hotelNombre,
+          motivo,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        return { error: data?.error ?? "No se pudo enviar el correo" };
+      }
+
+      return { ok: true };
+    } catch (e) {
+      return { error: "No se pudo enviar el correo de rechazo" };
     }
   };
 
@@ -1195,6 +1236,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       calificar,
       decidirHotel,
       enviarCuentaHotelero,
+      enviarRechazoHotelero,
       registrarHotel,
       actualizarHotel,
       agregarHabitacion,
