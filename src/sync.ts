@@ -27,6 +27,7 @@ type HotelFila = {
   correo_dueno: string | null;
   contacto: string | null;
   ubicacion: Punto | null;
+  motivo_rechazo: string | null; // por qué el admin rechazó el hotel (HU-032)
 };
 
 type HabitacionFila = {
@@ -63,6 +64,7 @@ function aFilaHotel(h: Hotel): HotelFila {
     correo_dueno: h.correoDueno ?? null,
     contacto: h.contacto ?? null,
     ubicacion: h.ubicacion ?? null,
+    motivo_rechazo: h.motivoRechazo ?? null,
   };
 }
 
@@ -102,6 +104,7 @@ function deFilaHotel(f: HotelFila): Hotel {
     fechaRegistro: f.fecha_registro,
     contacto: f.contacto ?? undefined,
     correoDueno: f.correo_dueno ?? undefined,
+    motivoRechazo: f.motivo_rechazo ?? undefined,
   };
 }
 
@@ -218,6 +221,8 @@ function completarHotelDesdeLocal(bd: Hotel, local: Hotel): Hotel {
     ubicacion: bd.ubicacion ?? local.ubicacion,
     correoDueno: bd.correoDueno ?? local.correoDueno,
     contacto: bd.contacto ?? local.contacto,
+    // El motivo viaja en su columna (HU-032); si la base aún no lo trae, conservamos el local
+    motivoRechazo: bd.motivoRechazo ?? local.motivoRechazo,
   };
 }
 

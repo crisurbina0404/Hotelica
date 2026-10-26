@@ -33,6 +33,7 @@ export type Hotel = {
   fechaRegistro: string;
   contacto?: string; // teléfono opcional que dejó el hotelero al inscribirse (HU-021)
   correoDueno?: string; // correo con el que el hotelero va a entrar a su panel
+  motivoRechazo?: string; // por qué el admin rechazó la solicitud (HU-032), vacío si no hubo rechazo
 };
 
 export type EstadoHabitacion = "disponible" | "mantenimiento" | "no_disponible";

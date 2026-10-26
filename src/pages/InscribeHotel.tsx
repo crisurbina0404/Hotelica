@@ -481,6 +481,12 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
                   <p className="text-sm font-bold text-[#B91C1C]">
                     La solicitud de <b>{resultadoConsulta.hotel.nombre}</b> fue <b>Rechazada</b>.
                   </p>
+                  {/* El motivo del rechazo queda a la vista del dueño (HU-032) */}
+                  {resultadoConsulta.hotel.motivoRechazo && (
+                    <p className="mt-1 text-xs font-semibold text-[#B91C1C]">
+                      Motivo: {resultadoConsulta.hotel.motivoRechazo}
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-[#B91C1C]/80">
                     Lamentablemente tu hotel no fue aprobado. Podés inscribirlo de nuevo con información actualizada.
                   </p>

@@ -6,6 +6,30 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.65.0] — 2026-10-26 · HU-032: rechazar un hotel con motivo obligatorio
+
+### Agregado
+- **`historias-usuario/HU-032-rechazar-un-hotel.md`** — historia del módulo Administración con 8 reglas, 6 escenarios BDD y las subtareas HOTELICA-268 a 273: el admin ya tenía el botón "Rechazar", pero ejecutaba el rechazo de golpe, sin confirmación y sin dejar constancia de por qué.
+- **Modal de rechazo en `src/pages/AdminPanel.tsx`** — al pulsar "Rechazar" (bandeja o modal de revisión) se abre un formulario con los requisitos incumplidos del hotel y un motivo obligatorio; si el motivo está vacío muestra el error y el hotel sigue pendiente.
+- **`motivoRechazo` en el tipo `Hotel` (`src/data.ts`)** — el motivo queda registrado con el hotel y se muestra en el historial de la consola y en la consulta pública de solicitud de `InscribeHotel` (el único lugar donde el dueño de un hotel rechazado puede enterarse, porque nunca tuvo cuenta).
+- **Notificación al hotel** — `avisarHotel()` deja el aviso "Hotel rechazado por Hotelica: ..." en "Avisos recientes" del panel del hotel.
+- **`supabase/migrations/20261026120000_hu032_motivo_rechazo.sql`** — columna `motivo_rechazo` en la tabla `hoteles`, para que el motivo viaje a la base en vez de quedarse solo en el navegador (se corre desde el SQL Editor del Dashboard, igual que la de HU-042).
+- **`tests/CP-032-rechazar-hotel.spec.ts`** — 2 pruebas que cubren los 6 escenarios: rechazo con motivo desde la bandeja (validación, cambio de estado, historial con pastilla y motivo, aviso al hotel, consulta pública y el motivo que sobrevive a la recarga) y un hotel incompleto que muestra sus requisitos al rechazarlo.
+
+### Cambiado
+- **`src/store.tsx`** — `decidirHotel()` acepta el motivo opcional y lo guarda en el hotel junto con `aprobado: "rechazado"`.
+- **`src/pages/AdminPanel.tsx`** — `rechazar()` ya no decide al vuelo: abre el formulario de rechazo (antes cambiaba el estado sin confirmación ni motivo).
+- **`src/sync.ts`** — `HotelFila`, `aFilaHotel()` y `deFilaHotel()` traducen la nueva columna `motivo_rechazo`; `completarHotelDesdeLocal()` respeta el motivo que venga de la base y, si no trae ninguno, conserva el local: antes el merge lo borraba al recargar.
+
+### Verificado
+`npm run typecheck` y `npm run build` sin errores. `npx playwright test` → **9 pruebas pasan**: las 2 nuevas de la HU-032 (una de ellas recarga dos veces y comprueba que el motivo no se pierde ni sin la columna ni con ella) más las 2 de la HU-031, la 1 de la HU-019 y las 4 de la HU-042.
+
+### Limitación
+Hay que **correr la migración `20261026120000_hu032_motivo_rechazo.sql` desde el SQL Editor** (una sola vez); hasta que se corra, los guardados de hoteles en la base fallan y la app avisa que el hotel quedó solo en el navegador. La notificación al hotel sigue siendo un aviso del panel y no un correo (no hay Edge Function genérica de correos).
+
+---
+
+
 ## [v0.64.1] — 2026-10-26 · HU-019: la calificación ya no se pierde al recargar (el promedio sube de verdad)
 
 ### Corregido

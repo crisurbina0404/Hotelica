@@ -153,7 +153,7 @@ type AppCtx = {
   avisarHotel: (hotelId: string, folio: string, texto: string) => void;
   marcarNotificacionesLeidas: (hotelId: string) => void;
   calificar: (folio: string, hotelId: string, estrellas: number, comentario: string) => boolean;
-  decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado") => CuentaHotelero | null;
+  decidirHotel: (hotelId: string, decision: "aprobado" | "rechazado", motivoRechazo?: string) => CuentaHotelero | null;
   enviarCuentaHotelero: (cuenta: CuentaHotelero, hotelNombre: string) => Promise<{ ok?: boolean; error?: string }>;
   registrarHotel: (datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel; hotel?: Hotel };
   actualizarHotel: (hotelId: string, datos: DatosRegistroHotel) => { errores?: ErroresRegistroHotel };
@@ -571,7 +571,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // El administrador aprueba o rechaza un hotel inscrito desde el inicio (HU-021 + HU-031/032)
   // Al aprobar se crea la cuenta con la que el hotelero entrará a su panel
-  const decidirHotel = (hotelId: string, decision: "aprobado" | "rechazado"): CuentaHotelero | null => {
+  const decidirHotel = (hotelId: string, decision: "aprobado" | "rechazado", motivoRechazo?: string): CuentaHotelero | null => {
     const hotel = datos.hoteles.find((h) => h.id === hotelId);
     const yaTieneCuenta = datos.cuentasHotelero.some((c) => c.hotelId === hotelId);
 
@@ -590,7 +590,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     setDatos((d) => ({
       ...d,
-      hoteles: d.hoteles.map((h) => (h.id === hotelId ? { ...h, aprobado: decision } : h)),
+      hoteles: d.hoteles.map((h) =>
+        h.id === hotelId
+          ? { ...h, aprobado: decision, ...(motivoRechazo ? { motivoRechazo } : {}) }
+          : h
+      ),
       cuentasHotelero: cuentaCreada ? [...d.cuentasHotelero, cuentaCreada] : d.cuentasHotelero,
     }));
 

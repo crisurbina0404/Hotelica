@@ -14,10 +14,14 @@ import {
 import { useState } from "react";
 
 export function PanelAdmin({ navegar }: { navegar: Navegar }) {
-  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, avisar } = useApp();
+  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, avisar, avisarHotel } = useApp();
   const [viendo, setViendo] = useState<Hotel | null>(null);
   const [cuentaCreada, setCuentaCreada] = useState<CuentaHotelero | null>(null);
   const [enviandoCorreo, setEnviandoCorreo] = useState(false);
+  // Solicitud que se está rechazando y el motivo que escribió el admin (HU-032)
+  const [rechazando, setRechazando] = useState<Hotel | null>(null);
+  const [motivo, setMotivo] = useState("");
+  const [errorMotivo, setErrorMotivo] = useState("");
 
   const pendientes = hoteles.filter((h) => h.aprobado === "pendiente");
   const aprobados = hoteles.filter((h) => h.aprobado === "aprobado");
@@ -63,9 +67,27 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
       avisar(`"${h.nombre}" aprobado: ya aparece en las búsquedas de los turistas.`, "ok");
     }
   };
+  // El rechazo abre su formulario en vez de decidir al vuelo (HU-032)
   const rechazar = (h: Hotel) => {
-    decidirHotel(h.id, "rechazado");
-    avisar(`"${h.nombre}" rechazado: no será visible para turistas.`, "error");
+    setMotivo("");
+    setErrorMotivo("");
+    setRechazando(h);
+  };
+
+  // Confirma el rechazo con el motivo escrito (HU-032)
+  const confirmarRechazo = () => {
+    if (!rechazando) return;
+    const texto = motivo.trim();
+    // Sin motivo no hay rechazo: el hotelero tiene que saber por qué (HU-032)
+    if (!texto) {
+      setErrorMotivo("Escribí el motivo del rechazo: el hotelero necesita saber por qué.");
+      return;
+    }
+    decidirHotel(rechazando.id, "rechazado", texto);
+    // Aviso automático en el panel del hotel con el motivo (HU-032)
+    avisarHotel(rechazando.id, "", `Hotel rechazado por Hotelica: ${texto}`);
+    avisar(`"${rechazando.nombre}" rechazado: no será visible para turistas.`, "error");
+    setRechazando(null);
   };
 
   // Botones de la solicitud. Los comparten la tabla de escritorio y las tarjetas del celular
@@ -233,6 +255,10 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                     <img src={h.imagen} alt={h.nombre} className="h-10 w-13 rounded-md object-cover" style={{ width: 52 }} />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-ink">{h.nombre}</p>
+                      {/* El motivo del rechazo queda a la vista en el historial (HU-032) */}
+                      {h.aprobado === "rechazado" && h.motivoRechazo && (
+                        <p className="truncate text-[11px] font-semibold text-danger">Motivo: {h.motivoRechazo}</p>
+                      )}
                       <p className="flex items-center gap-1 text-[11px] text-muted">
                         <IconoPin size={11} /> {MUNICIPIOS.find((m) => m.id === h.municipioId)?.nombre}
                       </p>
@@ -339,6 +365,58 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                 </button>
               </div>
             )}
+          </div>
+        )}
+      </Modal>
+      {/* Modal del rechazo: requisitos incumplidos + motivo obligatorio (HU-032) */}
+      <Modal abierto={!!rechazando} alCerrar={() => setRechazando(null)} ancho="max-w-md">
+        {rechazando && (
+          <div className="p-7">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FEE2E2] text-danger"><IconoX size={22} /></span>
+            <h3 className="mt-4 font-display text-xl font-bold text-ink">Rechazar "{rechazando.nombre}"</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              El hotel saldrá de la bandeja y no aparecerá en las búsquedas. El motivo queda registrado y el hotelero lo verá en sus avisos.
+            </p>
+            {/* Lo que le falta al hotel, como apoyo para escribir el motivo (HU-032) */}
+            {requisitosIncompletos(rechazando).length > 0 && (
+              <div className="mt-4 rounded-xl bg-[#FEF2F2] p-4 text-sm">
+                <p className="font-bold text-danger">Requisitos incumplidos</p>
+                <ul className="mt-1.5 list-inside list-disc text-muted">
+                  {requisitosIncompletos(rechazando).map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <label htmlFor="motivo-rechazo" className="mt-4 block text-xs font-bold uppercase tracking-wider text-muted">
+              Motivo del rechazo (obligatorio)
+            </label>
+            <textarea
+              id="motivo-rechazo"
+              value={motivo}
+              onChange={(e) => {
+                setMotivo(e.target.value);
+                setErrorMotivo("");
+              }}
+              rows={3}
+              placeholder="Ej: La descripción es muy corta y no tiene foto representativa"
+              className="mt-1.5 w-full resize-none rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-danger"
+            />
+            {errorMotivo && <p className="mt-1.5 text-xs font-semibold text-danger">{errorMotivo}</p>}
+            <div className="mt-5 flex gap-2.5">
+              <button
+                onClick={() => setRechazando(null)}
+                className="flex-1 rounded-lg border border-line py-3 text-sm font-bold text-muted transition-colors hover:border-ink/30"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmarRechazo}
+                className="flex-1 rounded-lg bg-danger py-3 text-sm font-bold text-white transition-all hover:bg-[#B91C1C] active:scale-[0.98]"
+              >
+                Confirmar rechazo
+              </button>
+            </div>
           </div>
         )}
       </Modal>
