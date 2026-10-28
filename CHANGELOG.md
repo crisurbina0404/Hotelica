@@ -135,6 +135,46 @@ Los escenarios 1, 4 y 6 de la regla del servidor (disparador de `aprobado`) se v
 ### Limitación
 La subida a la base de datos y el correo real se ejercitan en su camino de error (la red está cortada en la prueba), así que el envío efectivo del correo de credenciales sigue sin evidencia automatizada.
 
+## [v0.62.7] — 2026-10-25 · Video para hoteleros: plantilla, storyboard y guion ElevenLabs
+
+### Agregado
+- **`video-estudio/VIDEO-HOTELEROS.md`** — storyboard por segundos del video orientado a dueños de hotel: problema (cuaderno/chats/tarifas), publicar el hotel (HU-021/023/024/025), gestionar reservas con badges de estado oficiales (HU-026/027), llegadas y salidas del día (HU-028/029), ocupación y sello verificado (HU-030), y cierre de marca. ~18 s de voz sobre 20 s de video.
+- **`video-estudio/video-hoteleros-animado.html`** — plantilla animada con el mismo motor y reglas del video turista (20 s exactos, animaciones finitas, sprite de iconos de `src/icons.tsx`, reduced-motion cubierto, versión compacta para pantallas bajas).
+- **`video-estudio/GUION-HOTELEROS-ELEVENLABS.md`** — guion de locución hoteleros (46 palabras con voseo) con tiempos por segmento, tags de emoción para Eleven v3, bloques hot01–hot07 y tabla de montaje.
+- **`video-estudio/voz-hoteleros-elevenlabs.txt`** — texto listo para pegar en ElevenLabs.
+
+### Retirado (v0.62.8 — 2026-10-25)
+A pedido de la autora se retiraron los guiones de locución/TTS y el video hoteleros (los archivos de las versiones v0.62.6 y v0.62.7). El material se reutilizó como base de una plantilla de prompt para producir los mismos tipos de video en otro proyecto. Quedan en `video-estudio/` los archivos originales de la entrega: `VIDEO-ESTUDIO.md` y `video-animado.html`.
+
+---
+
+## [v0.62.6] — 2026-10-25 · Guion de la voz listo para ElevenLabs (pausas y emociones)
+
+### Agregado
+- **`video-estudio/GUION-ELEVENLABS.md`** — guía de producción de la voz en ElevenLabs: sección de modelo (Eleven v3 con audio tags vs Multilingual v2 estable), tabla de tags de emoción usados por segmento, guion completo en una pieza y guion por segmentos (hc01–hc07) para montar cada frase sobre su escena, más reglas de ortografía pronunciada (i-ve-a, chek-in) y tabla de montaje sobre el video.
+- **`video-estudio/voz-elevenlabs.txt`** — el mismo guion en texto plano, listo para pegar directo en la casilla de ElevenLabs.
+
+### Cambiado
+- **`video-estudio/GUION-VOZ-NARRACION.md`** — la sección de ElevenLabs ahora remite al documento nuevo y conserva solo los ajustes generales de la plataforma.
+
+---
+
+## [v0.62.5] — 2026-10-25 · La entrega del video vive en `video-estudio/` y usa el set de iconos del proyecto
+
+### Cambiado
+- **`video-estudio/`** (nueva carpeta) — `VIDEO-ESTUDIO.md` y `video-animado.html` se movieron desde la raíz del proyecto para que la entrega del video quede separada del resto del código.
+- **`video-estudio/video-animado.html`** — se reemplazaron los emojis (📓📁📅🧳🏨🛡️🇳🇮) por el set de iconos SVG propio del proyecto (`src/icons.tsx`), dibujados inline en un sprite `<symbol>` + `<use>` con el mismo estilo del sitio (viewBox 24, trazo `currentColor` de 1.9 px). La plantilla ya no depende de emojis ni de librerías externas de iconos.
+
+### Agregado
+- **`video-estudio/GUION-VOZ-NARRACION.md`** — guion de locución alineado al storyboard: 7 segmentos con tiempo de entrada/duración/calzada de palabras para 20 s, dirección para locutor humano, versión SSML (voz `es-NI-FeminaNeural`, con pausas y pronunciaciadores seguros como IVA y check-in), versión para ElevenLabs y tabla de ensamblaje. El texto largo original quedó documentado como versión extendida de ~30 s.
+
+---
+
+## [v0.62.4] — 2026-10-25 · Reparado el video animado de la entrega de estudio
+
+### Corregido
+- **`video-animado.html`** — la plantilla fallaba al reproducirse: las fuentes oficiales (Fraunces, Outfit, Libre Baskerville) nunca se cargaban y todo caía a Georgia/Segoe UI; el modal de reserva tenía las etiquetas de los 3 pasos mal cerradas (`<span>…</div>`), lo que desencajaba el indicador; los `animation-delay` en línea no tenían animación asignada, así que las apariciones escalonadas no funcionaban; la barra de progreso se llenaba en la primera escena y ya no se reiniciaba; y la regla `prefers-reduced-motion` con `opacity: 1 !important` sobre todas las escenas las superponía una sobre otra. Se restauró el timeline a los 20 s exactos del storyboard (buscar y reservar ahora duran 4 s cada una) y se añadió una versión compacta para pantallas bajas.
+
 ---
 
 ## [v0.62.3] — 2026-10-21 · Registro: el botón abre la ventana y la X deja seguir navegando
