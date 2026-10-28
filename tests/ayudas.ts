@@ -30,6 +30,7 @@ export function responderSupabase(page: Page, control: Control) {
   void page.route("**/rest/v1/administradores*", (ruta) =>
     ruta.fulfill({ json: control.correosAdmin.map((correo) => ({ correo })) })
   );
+  void page.route("**/rest/v1/resenas*", (ruta) => ruta.fulfill({ json: [] }));
   void page.route("**/auth/v1/token*", (ruta) => ruta.fulfill({ json: sesionDe(control.correoActivo) }));
   void page.route("**/auth/v1/user*", (ruta) => ruta.fulfill({ json: usuarioDe(control.correoActivo) }));
 }

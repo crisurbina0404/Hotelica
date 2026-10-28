@@ -93,7 +93,7 @@ Reglas de negocio de esta historia:
 
 - **Vida de la temporal:** `VIDA_TEMPORAL_MS` en `src/data.ts` pasa de 24 a 48 horas (subtarea HOTELICA-256).
 - **Criterios:** `criteriosDeContrasena()`, `esContrasenaSegura()` y `errorCriteriosContrasena()` en `src/data.ts`, para que la validación viva en un solo lugar (subtarea HOTELICA-257).
-- **Guardado:** `cambiarContrasenaHotelero(nueva, confirmar, actual?)` en `src/store.tsx` valida criterios, coincidencia y, cuando se pasa `actual`, que coincida con la contraseña guardada (subtarea HOTELICA-258).
+- **Guardado:** `cambiarContrasenaHotelero(nueva, confirmar, actual?)` en `src/store.tsx` valida criterios, coincidencia y, cuando se pasa `actual`, que coincida con la contraseña guardada (subtarea HOTELICA-258). La validación se corre contra el estado **antes** de escribir: estaba dentro del guardado y la respuesta de "actualizada" salía aunque la contraseña actual estuviera mal (falso éxito, corregido con pruebas en `tests/CP-005-cambiar-contrasena-hotelero.spec.ts`).
 - **Palomitas en vivo:** componente `ChecklistContrasena` en `src/ui.tsx`, usado en el banner del panel y en el perfil (subtarea HOTELICA-259).
 - **Perfil con tres campos:** en `src/pages/Profile.tsx` se agrega el campo "Contraseña actual" al formulario existente (subtarea HOTELICA-260).
 - **Textos:** los mensajes de 24 horas del panel, el perfil, la inscripción y el login se actualizan a 48 (subtarea HOTELICA-261).

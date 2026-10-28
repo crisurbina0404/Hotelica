@@ -5,7 +5,7 @@
 // sigue funcionando igual que antes con el guardado local.
 // ============================================================
 import { supabase } from "./lib/supabase";
-import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto, UsuarioPlataforma } from "./data";
+import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto, Resena, UsuarioPlataforma } from "./data";
 
 // Así se llaman las columnas en la base (en la app usamos camelCase)
 type HotelFila = {
@@ -48,6 +48,16 @@ type HabitacionFila = {
   estado: EstadoHabitacion;
   detalle: string;
   galeria: string[] | null; // fotos del tipo de habitación (HU-041)
+};
+
+type ResenaFila = {
+  id: string;
+  hotel_id: string;
+  autor: string;
+  origen: string;
+  rating: number;
+  comentario: string | null; // el turista puede calificar sin escribir nada
+  fecha: string | null;
 };
 
 // ----- De la app hacia la base -----
@@ -97,6 +107,18 @@ function aFilaHabitacion(h: Habitacion): HabitacionFila {
     estado: h.estado,
     detalle: h.detalle,
     galeria: h.galeria ?? [],
+  };
+}
+
+function aFilaResena(r: Resena): ResenaFila {
+  return {
+    id: r.id,
+    hotel_id: r.hotelId,
+    autor: r.autor,
+    origen: r.origen,
+    rating: r.rating,
+    comentario: r.comentario || null,
+    fecha: r.fecha || null,
   };
 }
 
@@ -150,6 +172,18 @@ function deFilaHabitacion(f: HabitacionFila): Habitacion {
   };
 }
 
+function deFilaResena(f: ResenaFila): Resena {
+  return {
+    id: f.id,
+    hotelId: f.hotel_id,
+    autor: f.autor,
+    origen: f.origen,
+    rating: f.rating ?? 0,
+    comentario: f.comentario ?? "",
+    fecha: f.fecha ?? "",
+  };
+}
+
 // Traducir el error de Supabase a un mensaje que se pueda leer
 function mensajeDeError(error: { code?: string; message?: string } | null): string {
   if (!error) return "error desconocido";
@@ -199,6 +233,11 @@ export async function cargarUsuarios(): Promise<Carga<UsuarioPlataforma>> {
   return cargarTabla("usuarios", deFilaUsuario);
 }
 
+// Trae las reseñas que otros visitantes dejaron en otros navegadores (HU-019)
+export async function cargarResenas(): Promise<Carga<Resena>> {
+  return cargarTabla("resenas", deFilaResena);
+}
+
 // Guarda una cuenta (inserta o actualiza por el correo): activo = TRUE/FALSE (HU-033)
 export async function subirUsuario(usuario: UsuarioPlataforma): Promise<{ error?: string }> {
   try {
@@ -230,6 +269,17 @@ export async function subirCalificacion(
       .from("hoteles")
       .update({ rating, total_resenas: totalResenas })
       .eq("id", hotelId);
+    return error ? { error: mensajeDeError(error) } : {};
+  } catch {
+    return { error: "no hay conexión con la base de datos" };
+  }
+}
+
+// Guarda la reseña que escribió el turista (HU-019): sin esto el comentario
+// quedaba solo en el navegador y era invisible para el resto del mundo
+export async function subirResena(resena: Resena): Promise<{ error?: string }> {
+  try {
+    const { error } = await supabase.from("resenas").upsert(aFilaResena(resena), { onConflict: "id" });
     return error ? { error: mensajeDeError(error) } : {};
   } catch {
     return { error: "no hay conexión con la base de datos" };

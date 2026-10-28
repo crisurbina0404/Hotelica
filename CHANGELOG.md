@@ -6,6 +6,19 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.70.0] — 2026-10-28 · Arreglos a imperfecciones del módulo Administración, perfil y reseñas
+
+### Corregido
+- **`cambiarContrasenaHotelero` en `src/store.tsx`** — la validación de la contraseña actual corría dentro del guardado de `setDatos`, así que la respuesta de "Contraseña actualizada" salía aunque la contraseña actual estuviera mal (falso éxito). Ahora se valida contra el estado **antes** de escribir y el formulario muestra el aviso de siempre. Regresión cubierta en `tests/CP-005-cambiar-contrasena-hotelero.spec.ts` (contraseña actual errada no cambia nada; la correcta sí entra y sirve para volver a iniciar sesión).
+- **`actualizarPerfil` en `src/store.tsx`** — los cambios del perfil se guardaban local aunque Supabase fallara, pero el error pasaba a la consola del navegador y el turista veía "¡Guardado exitosamente!" sin enterarse de la mitad faltante. Ahora se avisa que quedó solo en este navegador (mismo patrón que la calificación).
+- **El comentario de la reseña sube a la base (HU-019)** — el texto del comentario vivía solo en el `localStorage` del que lo escribió. Se creó la tabla `resenas` (`supabase/migrations/20261028120000_hu019_resenas.sql`), se agregó `subirResena()`/`cargarResenas()` a `src/sync.ts` y la sincronización del arranque ahora trae 4 tablas, cada una con su nombre para el merge (reseñas y habitaciones también traen `hotelId` entre los campos y adivinarlos se cruzaba). Si la base no responde, el comentario queda local y se avisa.
+- **Tope de los campos de texto** — nombre del perfil con tope de 60 caracteres y dirección de 120 (validación además del `maxLength`); titular de la tarjeta con tope de 60 y referencia de transferencia con tope de 30 en el modal de reserva.
+
+### Pruebas
+- `tests/CP-019-calificar-estadia.spec.ts` — el caso del promedio ahora también llena el comentario y vela por que suba completo a la base (tabla `resenas` simulada), no solo el promedio del hotel.
+- `tests/ayudas.ts` — `responderSupabase()` responde también `resenas` con lista vacía para que la cuarta tabla no frene los specs de la consola.
+- Suite completa: **17/17 verdes**.
+
 ## [v0.69.0] — 2026-10-28 · HU-035: centro de notificaciones de reservas para el admin
 
 ### Agregado

@@ -581,7 +581,7 @@ export function ModalReserva({
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
                       <label className="block sm:col-span-2">
                         <span className={etiquetaCampo}>Nombre del titular</span>
-                        <input value={datosPago.titular} onChange={(e) => actualizarPago("titular", e.target.value)} placeholder="Como figura en la tarjeta" className={claseCampo} />
+                        <input value={datosPago.titular} onChange={(e) => actualizarPago("titular", e.target.value)} placeholder="Como figura en la tarjeta" maxLength={60} className={claseCampo} />
                       </label>
                       <label className="block sm:col-span-2">
                         <span className={etiquetaCampo}>Número de tarjeta</span>
@@ -609,7 +609,7 @@ export function ModalReserva({
                       </label>
                       <label className="block">
                         <span className={etiquetaCampo}>Número de referencia</span>
-                        <input value={datosPago.referencia} onChange={(e) => actualizarPago("referencia", e.target.value)} placeholder="Ej: TRX-001234" className={claseCampo} />
+                        <input value={datosPago.referencia} onChange={(e) => actualizarPago("referencia", e.target.value)} placeholder="Ej: TRX-001234" maxLength={30} className={claseCampo} />
                       </label>
                       <p className="text-xs text-muted">Transfiere el total a la cuenta de Hotelica y anota aquí el número de referencia.</p>
                     </div>

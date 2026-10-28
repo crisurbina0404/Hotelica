@@ -18,7 +18,7 @@ import {
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion, UsuarioPlataforma } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
-import { cargarHabitaciones, cargarHoteles, fusionarHoteles, fusionarHabitaciones, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion, cargarUsuarios, subirUsuario, fusionarUsuarios } from "./sync";
+import { cargarHabitaciones, cargarHoteles, cargarResenas, fusionarHoteles, fusionarHabitaciones, fusionarPorId, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion, subirResena, cargarUsuarios, subirUsuario, fusionarUsuarios } from "./sync";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = {
@@ -287,13 +287,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [ultimaSync, setUltimaSync] = useState<string | null>(null);
 
   // Cada tabla se mezcla en cuanto su propia carga responde: si usuarios
-  // tarda o falla, que no frene el merge de hoteles y habitaciones
-  const mezclarTabla = (r: Awaited<ReturnType<typeof cargarHoteles>> | Awaited<ReturnType<typeof cargarHabitaciones>> | Awaited<ReturnType<typeof cargarUsuarios>>) => {
-    if (r.error || r.datos.length === 0) return;
+  // tarda o falla, que no frene el merge de hoteles y habitaciones.
+  // El nombre de la tabla va aparte porque reseñas y habitaciones también
+  // traen hotelId entre sus campos y adivinar por ahí se cruza.
+  type TablaSincronizada = "hoteles" | "habitaciones" | "usuarios" | "resenas";
+  // Toda carga termina como una lista cualquiera + mensaje de error;
+  // qué hacer con la lista lo decide el nombre de la tabla
+  type RespuestaTabla = { datos: any[]; error: string | null };
+  const mezclarTabla = (tabla: TablaSincronizada, r: RespuestaTabla | undefined) => {
+    if (!r || r.error || r.datos.length === 0) return;
     const { datos } = r;
     setDatos((d) => {
-      if ("correo" in datos[0]) return { ...d, usuarios: fusionarUsuarios(d.usuarios, datos as UsuarioPlataforma[]) };
-      if ("hotelId" in datos[0]) return { ...d, habitaciones: fusionarHabitaciones(d.habitaciones, datos as Habitacion[]) };
+      if (tabla === "usuarios") return { ...d, usuarios: fusionarUsuarios(d.usuarios, datos as UsuarioPlataforma[]) };
+      if (tabla === "habitaciones") return { ...d, habitaciones: fusionarHabitaciones(d.habitaciones, datos as Habitacion[]) };
+      if (tabla === "resenas") return { ...d, resenas: fusionarPorId(d.resenas, datos as Resena[]) };
       return { ...d, hoteles: fusionarHoteles(d.hoteles, datos as Hotel[]) };
     });
   };
@@ -303,11 +310,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSincronizando(true);
     setErrorSync(null);
 
-    const cargas = [cargarHoteles(), cargarHabitaciones(), cargarUsuarios()];
-    // El merge arranca al vuelo, sin esperar a que respondan las tres
-    for (const carga of cargas) void carga.then((r) => mezclarTabla(r));
+    const cargas: [TablaSincronizada, Promise<RespuestaTabla>][] = [
+      ["hoteles", cargarHoteles()],
+      ["habitaciones", cargarHabitaciones()],
+      ["usuarios", cargarUsuarios()],
+      ["resenas", cargarResenas()],
+    ];
+    // El merge arranca al vuelo, sin esperar a que respondan todas
+    for (const [tabla, carga] of cargas) void carga.then((r) => mezclarTabla(tabla, r));
 
-    const resultados = await Promise.allSettled(cargas);
+    const resultados = await Promise.allSettled(cargas.map(([, carga]) => carga));
 
     // Juntamos los mensajes de las tablas que fallaron para avisar de una sola vez
     const fallos = resultados
@@ -698,6 +710,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const nuevoRating = nuevoPromedio(hotel.rating, hotel.totalResenas, estrellas);
     const nuevoTotal = hotel.totalResenas + 1;
 
+    // La reseña se arma afuera del setDatos porque también la subimos a la base
+    const resena: Resena = {
+      id: `r-${Date.now()}`,
+      hotelId,
+      autor: reserva.turista,
+      origen: "Nicaragua, Centroamérica",
+      rating: estrellas,
+      comentario: texto,
+      fecha,
+    };
+
     setDatos((d) => {
       const nueva: Calificacion = {
         id: `c-${Date.now()}`,
@@ -705,16 +728,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         hotelId,
         autor: reserva.turista,
         estrellas,
-        comentario: texto,
-        fecha,
-      };
-      // El comentario también queda publicado como reseña del hotel
-      const resena: Resena = {
-        id: `r-${Date.now()}`,
-        hotelId,
-        autor: reserva.turista,
-        origen: "Nicaragua, Centroamérica",
-        rating: estrellas,
         comentario: texto,
         fecha,
       };
@@ -738,6 +751,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         avisar(`Tu calificación se guardó solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
       }
     });
+
+    // El comentario también viaja a la base para que lo lean desde
+    // cualquier navegador; si es vacío ni siquiera se vuelve reseña
+    if (texto) {
+      subirResena(resena).then((r) => {
+        if (r.error) {
+          avisar(`Tu comentario se guardó solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
+        }
+      });
+    }
     return true;
   };
 
@@ -1130,24 +1153,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (errorCriterios) return { error: errorCriterios };
     if (limpia !== confirmar.trim()) return { error: "Las contraseñas no coinciden. Escribí la misma en los dos campos." };
 
-    // Si viene la contraseña actual (cambio desde el perfil), tiene que coincidir con la guardada
-    let encontrada = false;
-    let actualIncorrecta = false;
+    // Revisamos la cuenta contra el estado actual ANTES de escribir:
+    // si validábamos dentro de setDatos la respuesta llegaba antes de que
+    // el cambio se procesara y decía "correcto" aunque estuviera mal
+    const laCuenta = datos.cuentasHotelero.find(
+      (c) => c.correo === usuario.correo.trim().toLowerCase()
+    );
+    if (!laCuenta) return { error: "No encontramos tu cuenta de hotelero." };
+
+    // Solo exige la actual cuando el formulario la envía
+    if (actual !== undefined && laCuenta.contrasena !== actual.trim()) {
+      return { error: "La contraseña actual no es correcta." };
+    }
+
     setDatos((d) => ({
       ...d,
-      cuentasHotelero: d.cuentasHotelero.map((c) => {
-        if (c.correo !== usuario.correo.trim().toLowerCase()) return c;
-        encontrada = true;
-        // Solo exige la actual cuando el formulario la envía
-        if (actual !== undefined && c.contrasena !== actual.trim()) {
-          actualIncorrecta = true;
-          return c;
-        }
-        return { ...c, contrasena: limpia, contrasenaTemporal: false };
-      }),
+      cuentasHotelero: d.cuentasHotelero.map((c) =>
+        c.correo === laCuenta.correo ? { ...c, contrasena: limpia, contrasenaTemporal: false } : c
+      ),
     }));
-    if (actualIncorrecta) return { error: "La contraseña actual no es correcta." };
-    if (!encontrada) return { error: "No encontramos tu cuenta de hotelero." };
     return {};
   };
 
@@ -1372,9 +1396,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       data: { nombre: datos.nombre, telefono: datos.telefono, direccion: datos.direccion },
     });
 
-    // Si Supabase falla (sesión expirada, login social, etc.), guardamos localmente
+    // Si Supabase falla (sesión expirada, login social, etc.) seguimos con lo
+    // local, pero lo decimos: no es lo mismo que un guardado completo
     if (error) {
-      console.warn("Supabase updateUser falló, guardando localmente:", error.message);
+      avisar("Tus cambios se guardaron solo en este navegador: no se pudieron subir a la base de datos.", "error");
     }
 
     // Actualizamos el estado local con los nuevos datos (siempre, con o sin Supabase)

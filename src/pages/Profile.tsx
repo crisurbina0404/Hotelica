@@ -24,6 +24,8 @@ function validarCampos(nombre: string, telefono: string, direccion: string): Err
     errores.nombre = "El nombre es obligatorio.";
   } else if (nombre.trim().length < 3) {
     errores.nombre = "El nombre debe tener al menos 3 caracteres.";
+  } else if (nombre.trim().length > 60) {
+    errores.nombre = "El nombre no puede pasar de 60 caracteres.";
   }
 
   if (!telefono.trim()) {
@@ -38,6 +40,8 @@ function validarCampos(nombre: string, telefono: string, direccion: string): Err
     errores.direccion = "La dirección es obligatoria.";
   } else if (direccion.trim().length < 5) {
     errores.direccion = "La dirección debe tener al menos 5 caracteres.";
+  } else if (direccion.trim().length > 120) {
+    errores.direccion = "La dirección no puede pasar de 120 caracteres.";
   }
 
   return errores;
@@ -222,6 +226,7 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                     if (errores.nombre) setErrores((prev) => ({ ...prev, nombre: undefined }));
                   }}
                   disabled={!editando}
+                  maxLength={60}
                   placeholder="Tu nombre completo"
                   className={editando ? (errores.nombre ? claseCampoError : claseCampoNormal) : claseCampoBloqueado}
                 />
@@ -286,6 +291,7 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                     if (errores.direccion) setErrores((prev) => ({ ...prev, direccion: undefined }));
                   }}
                   disabled={!editando}
+                  maxLength={120}
                   placeholder="Managua, Nicaragua"
                   className={editando ? (errores.direccion ? claseCampoError : claseCampoNormal) : claseCampoBloqueado}
                 />

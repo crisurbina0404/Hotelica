@@ -116,9 +116,11 @@ function sembrarNavegador(page: Page) {
 }
 
 // Simula la base: al calificar, el PATCH actualiza la fila que luego se lee
+// y el comentario llega como fila nueva de la tabla resenas (HU-019)
 function prepararBase(page: Page) {
   const fila = filaBD();
   let subioPromedio = false;
+  let resenaSubida: Record<string, unknown> | null = null;
 
   sinRedExterna(page);
 
@@ -135,11 +137,19 @@ function prepararBase(page: Page) {
   });
   void page.route("**/rest/v1/habitaciones*", (ruta) => ruta.fulfill({ json: [] }));
 
-  return { subio: () => subioPromedio };
+  void page.route("**/rest/v1/resenas*", async (ruta) => {
+    if (ruta.request().method() === "POST") {
+      resenaSubida = (await ruta.request().postDataJSON()) as Record<string, unknown>;
+    }
+    // La fila de vuelta no se usa: solo confirmamos que el insert funcionó
+    await ruta.fulfill({ status: 201, json: [] });
+  });
+
+  return { subio: () => subioPromedio, resena: () => resenaSubida };
 }
 
-test("la calificación sube el promedio del hotel y no se pierde al recargar", async ({ page }) => {
-  const { subio } = prepararBase(page);
+test("la calificación sube el promedio del hotel y el comentario no se pierde al recargar", async ({ page }) => {
+  const { subio, resena } = prepararBase(page);
   await sembrarNavegador(page);
 
   await page.goto("/");
@@ -148,8 +158,9 @@ test("la calificación sube el promedio del hotel y no se pierde al recargar", a
   await page.locator("header").getByRole("button", { name: "Mis reservas" }).click();
   await page.getByRole("button", { name: "Calificar estadía" }).click();
 
-  // Escenario 6: marcamos 5 estrellas y enviamos
+  // Escenario 6: marcamos 5 estrellas, escribimos el comentario y enviamos
   await page.getByRole("button", { name: "Calificar con 5 estrellas" }).click();
+  await page.getByPlaceholder("Cuéntanos").fill("La suite estaba impecable y el desayuno riquísimo.");
   await page.getByRole("button", { name: "Enviar calificación" }).click();
   await expect(page.getByText(/Tu calificación ya cuenta para el promedio/)).toBeVisible();
 
@@ -158,6 +169,11 @@ test("la calificación sube el promedio del hotel y no se pierde al recargar", a
   await expect(page.getByText("El Continental")).toBeVisible();
   await expect(page.getByText("1 reseñas")).toBeVisible();
   await expect(page.getByText("5.0", { exact: true })).toBeVisible();
+
+  // El comentario subió a la base como fila de resenas, no solo al navegador
+  await expect
+    .poll(() => String(resena()?.comentario ?? ""), { timeout: 8000 })
+    .toBe("La suite estaba impecable y el desayuno riquísimo.");
 
   // Escenario 9: al recargar, la base manda y el promedio sigue en5.0
   expect(subio()).toBe(true);
