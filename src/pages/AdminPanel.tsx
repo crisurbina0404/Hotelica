@@ -3,13 +3,15 @@
 // ============================================================
 import { useMemo } from "react";
 import { useApp } from "../store";
+import type { EventoReserva, TipoEvento } from "../store";
 import type { Navegar } from "../rutas";
-import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha, requisitosIncompletos } from "../data";
+import { DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha, fmtFechaHora, requisitosIncompletos } from "../data";
 import type { Hotel, CuentaHotelero, UsuarioPlataforma } from "../data";
 import { Reveal, BadgeHotel, Modal, TituloSeccion } from "../ui";
 import { MapaHotel } from "../mapa";
+import { EstadisticasGlobales } from "./EstadisticasGlobales";
 import {
-  IconoEscudo, IconoCheck, IconoX, IconoOjo, IconoHotel, IconoGrafica, IconoPin, IconoUsuario,
+  IconoEscudo, IconoCheck, IconoX, IconoOjo, IconoHotel, IconoGrafica, IconoPin, IconoUsuario, IconoCampana,
 } from "../icons";
 import { useState } from "react";
 
@@ -21,8 +23,26 @@ const COLOR_ROL: Record<UsuarioPlataforma["rol"], string> = {
   Admin: "bg-admin-soft text-admin",
 };
 
+// Cómo se ve cada evento de reserva en la bitácora del admin (HU-035)
+const ETIQUETA_EVENTO: Record<TipoEvento, string> = {
+  nueva: "Nueva", pago: "Pago", confirmada: "Confirmada",
+  rechazada: "Rechazada", cancelada: "Cancelada", entrada: "Entrada", salida: "Salida",
+};
+
+// Colores con los mismos pasteles de estado del sitio (guía de diseño §1.4)
+const COLOR_EVENTO: Record<TipoEvento, string> = {
+  nueva: "bg-accent-light text-[#92400E] border-[#FCD34D]",
+  pago: "bg-[#DBEAFE] text-[#1D4ED8] border-[#93C5FD]",
+  confirmada: "bg-[#DBEAFE] text-[#1D4ED8] border-[#93C5FD]",
+  rechazada: "bg-[#FEE2E2] text-[#B91C1C] border-[#FCA5A5]",
+  cancelada: "bg-[#FEE2E2] text-[#B91C1C] border-[#FCA5A5]",
+  entrada: "bg-primary-light text-primary border-[#5EEAD4]",
+  salida: "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]",
+};
+
 export function PanelAdmin({ navegar }: { navegar: Navegar }) {
-  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, enviarRechazoHotelero, avisar, avisarHotel, usuarios, cambiarEstadoUsuario, usuario } = useApp();
+  const { hoteles, reservas, decidirHotel, enviarCuentaHotelero, enviarRechazoHotelero, avisar, avisarHotel, usuarios, cambiarEstadoUsuario, usuario,
+    eventosAdmin, marcarEvento, marcarEventosLeidos, borrarEvento, borrarEventosLeidos } = useApp();
   const [viendo, setViendo] = useState<Hotel | null>(null);
   const [cuentaCreada, setCuentaCreada] = useState<CuentaHotelero | null>(null);
   const [enviandoCorreo, setEnviandoCorreo] = useState(false);
@@ -32,6 +52,8 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
   const [errorMotivo, setErrorMotivo] = useState("");
   // Filtro de la lista de usuarios por rol (HU-033)
   const [filtroRol, setFiltroRol] = useState<UsuarioPlataforma["rol"] | "Todos">("Todos");
+  // Filtro de la bitácora de eventos por tipo (HU-035)
+  const [filtroEvento, setFiltroEvento] = useState<TipoEvento | "Todas">("Todas");
 
   const pendientes = hoteles.filter((h) => h.aprobado === "pendiente");
   const aprobados = hoteles.filter((h) => h.aprobado === "aprobado");
@@ -40,6 +62,14 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
   // Lista de usuarios de la plataforma, con filtro por rol (HU-033)
   const usuariosVisibles = filtroRol === "Todos" ? usuarios : usuarios.filter((u) => u.rol === filtroRol);
   const miCorreo = (usuario?.correo ?? "").trim().toLowerCase();
+
+  // Bitácora de reservas con filtro por tipo; el hotel se resuelve para mostrar su nombre (HU-035)
+  const eventosVisibles = filtroEvento === "Todas"
+    ? eventosAdmin
+    : eventosAdmin.filter((e) => e.tipo === filtroEvento);
+  const eventosSinLeer = eventosAdmin.filter((e) => !e.leida).length;
+  const eventosLeidos = eventosAdmin.length - eventosSinLeer;
+  const hotelDeEvento = (e: EventoReserva) => hoteles.find((h) => h.id === e.hotelId)?.nombre ?? "Hotel desconocido";
 
   // Activar o desactivar una cuenta desde la lista (HU-033)
   const accionUsuario = (u: UsuarioPlataforma) => {
@@ -344,6 +374,115 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
         </section>
       </div>
 
+      {/* ===== Centro de notificaciones de reservas (HU-035) ===== */}
+      <section className="mt-12">
+        <Reveal>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <TituloSeccion
+              ceja="Actividad de reservas"
+              titulo={`Notificaciones de reservas${eventosSinLeer > 0 ? ` (${eventosSinLeer} sin ver)` : ` (${eventosAdmin.length})`}`}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={marcarEventosLeidos}
+                disabled={eventosSinLeer === 0}
+                className="rounded-lg border border-line bg-white px-3.5 py-2 text-xs font-bold text-muted transition-colors hover:border-admin/50 hover:text-admin disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Marcar leídas
+              </button>
+              <button
+                onClick={borrarEventosLeidos}
+                disabled={eventosLeidos === 0}
+                className="rounded-lg border border-line bg-white px-3.5 py-2 text-xs font-bold text-muted transition-colors hover:border-danger/50 hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Borrar las leídas
+              </button>
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Filtro por tipo de evento: la bitácora se puede ver completa o por cada movimiento */}
+        <Reveal delay={60}>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {(["Todas", "nueva", "pago", "confirmada", "rechazada", "cancelada", "entrada", "salida"] as const).map((f) => {
+              const cantidad = f === "Todas"
+                ? eventosAdmin.length
+                : eventosAdmin.filter((e) => e.tipo === f).length;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFiltroEvento(f)}
+                  className={`rounded-full px-4 py-2 text-xs font-bold transition-colors ${
+                    filtroEvento === f
+                      ? "bg-admin text-white"
+                      : "border border-line bg-white text-muted hover:border-admin/50 hover:text-admin"
+                  }`}
+                >
+                  {f === "Todas" ? "Todas" : ETIQUETA_EVENTO[f]} ({cantidad})
+                </button>
+              );
+            })}
+          </div>
+        </Reveal>
+
+        <Reveal delay={100}>
+          <div className="mt-5 rounded-xl border border-line bg-white shadow-card">
+            {eventosVisibles.length === 0 ? (
+              <div className="flex items-center gap-4 p-6">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-admin-soft text-admin"><IconoCampana size={22} /></span>
+                <div>
+                  <p className="font-display text-base font-bold text-ink">Sin actividad por ahora</p>
+                  <p className="text-sm text-muted">
+                    {filtroEvento === "Todas"
+                      ? "Cuando un turista reserve, pague, cancele o se registre su llegada, el movimiento va a parar acá."
+                      : "No hay notificaciones de ese tipo todavía."}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <ul className="divide-y divide-line/70">
+                {eventosVisibles.map((e) => (
+                  <li
+                    key={e.id}
+                    data-evento={e.tipo}
+                    className={`flex flex-wrap items-center gap-3 px-4 py-3.5 transition-colors hover:bg-canvas/60 ${
+                      e.leida ? "" : "bg-admin-soft/25"
+                    }`}
+                  >
+                    <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${COLOR_EVENTO[e.tipo]}`}>
+                      {ETIQUETA_EVENTO[e.tipo]}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-ink">
+                        <span className="tabular-nums text-admin">{e.folio}</span> · {e.texto}
+                      </p>
+                      <p className="truncate text-xs text-muted">{hotelDeEvento(e)} · {fmtFechaHora(e.fecha)}</p>
+                    </div>
+                    {e.leida ? (
+                      <span className="text-[11px] font-semibold text-muted">Visto</span>
+                    ) : (
+                      <button
+                        onClick={() => marcarEvento(e.id)}
+                        className="rounded-md border border-line px-2.5 py-1.5 text-[11px] font-bold text-muted transition-colors hover:border-admin/50 hover:text-admin"
+                      >
+                        Marcar vista
+                      </button>
+                    )}
+                    <button
+                      onClick={() => borrarEvento(e.id)}
+                      aria-label={`Borrar la notificación del folio ${e.folio}`}
+                      className="rounded-md border border-transparent p-1.5 text-muted transition-colors hover:border-danger/40 hover:text-danger"
+                    >
+                      <IconoX size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Reveal>
+      </section>
+
       {/* ===== Usuarios de la plataforma (HU-033) ===== */}
       <section className="mt-12">
         <Reveal>
@@ -425,6 +564,9 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
           </div>
         </Reveal>
       </section>
+
+      {/* ===== Estadísticas globales de toda la plataforma (HU-034) ===== */}
+      <EstadisticasGlobales />
 
       {/* Modal con la cuenta creada al aprobar una solicitud (HU-021) */}
       <Modal abierto={!!cuentaCreada} alCerrar={() => setCuentaCreada(null)} ancho="max-w-md">

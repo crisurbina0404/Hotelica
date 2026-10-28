@@ -1,4 +1,4 @@
-# Orden de Historias de Usuarios — Product Backlog Oficial
+﻿# Orden de Historias de Usuarios — Product Backlog Oficial
 
 | Orden | ID | Épica / Módulo | Título Corto | Prioridad | Estado |
 |---|---|---|---|---|---|
@@ -36,8 +36,8 @@
 | 32 | HU-031 | Administración | Aprobar un hotel | Alta | ✅ Terminada |
 | 33 | HU-032 | Administración | Rechazar un hotel | Alta | ✅ Terminada |
 | 34 | HU-033 | Administración | Activar o desactivar usuarios | Media | ✅ Terminada |
-| 35 | HU-034 | Administración | Consultar estadísticas globales | Media | ⬜ Escrita |
-| 36 | HU-035 | Administración | Gestionar notificaciones de reservas | Baja | ⬜ Escrita |
+| 35 | HU-034 | Administración | Consultar estadísticas globales | Media | ✅ Terminada |
+| 36 | HU-035 | Administración | Gestionar notificaciones de reservas | Baja | ✅ Terminada |
 | 37 | HU-036 | Diseño (oficio visual) | Composición editorial sin el patrón "N pasos" | Media | ✅ Terminada |
 | 38 | HU-037 | Búsqueda / Gestión Hotel | Mapa de ubicación exacta del hotel | Media | ✅ Terminada |
 | 39 | HU-038 | Diseño (portada) / Autenticación | Fotos reales, registro de hoteleros y reserva con cuenta | Media | ✅ Terminada |

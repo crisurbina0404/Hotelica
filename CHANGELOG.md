@@ -6,6 +6,32 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.69.0] — 2026-10-28 · HU-035: centro de notificaciones de reservas para el admin
+
+### Agregado
+- **`historias-usuario/HU-035-gestionar-notificaciones-de-reservas.md`** — historia del módulo Administración (8 reglas y 8 escenarios BDD): el admin no tenía un lugar para ver los movimientos de reservas de todos los hoteles a la vez; solo el hotelero recibía avisos en su panel.
+- **Sección "Notificaciones de reservas" en `src/pages/AdminPanel.tsx`** — bitácora con folio, texto, hotel y fecha con hora por evento, pastillas de tipo con los pasteles de estado del sitio, filtro por tipo (Nueva / Pago / Confirmada / Rechazada / Cancelada / Entrada / Salida), botones "Marcar vista", "Marcar leídas", "Borrar las leídas" y borrado individual; el título cuenta cuántas quedan sin ver.
+- **`TipoEvento` y `EventoReserva` en `src/store.tsx`** — el modelo de la bitácora (`eventosAdmin` dentro de `Persistido`, con `?? []` para guardados viejos del navegador).
+- **Registro automático en las 5 acciones de reservas de `src/store.tsx`** — crear reserva (HU-013), registrar pago (HU-018), confirmar o rechazar con motivo (HU-027), cancelar (HU-016) y check-in (HU-028) y check-out (HU-029) escriben su evento con `agregarEventoEn()` dentro del mismo `setDatos`, junto al cambio; el rechazo y la cancelación son eventos distintos.
+
+### Corregido
+- El `value` del contexto de `src/store.tsx` se memoizaba con una lista de dependencias que no traía `sincronizando`, `errorSync` y `ultimaSync`: la sección de estadísticas se quedaba en "Actualizando datos…" para siempre. Los tres entran a la lista.
+
+### Pruebas
+- **`tests/CP-035-notificaciones-admin.spec.ts`** — 2 casos que prueban la bitácora sembrada en el navegador: listar, filtrar por tipo, distinguir rechazo de cancelación, marcar vistas (una y todas), borrar en bloque y sobrevivir la recarga.
+
+## [v0.68.0] — 2026-10-28 · HU-034: consultar estadísticas globales y estado de la consulta
+
+### Agregado
+- **`historias-usuario/HU-034-consultar-estadisticas-globales.md`** — historia del módulo Administración (8 reglas y 9 escenarios BDD): la consola listaba hoteles y cuentas pero no mostraba la foto completa de usuarios, hoteles, reservas e ingresos.
+- **Sección "Estadísticas globales" en la consola (`src/pages/AdminPanel.tsx`)** — cuatro métricas con desglose (usuarios activos con turistas y hoteleros, hoteles registrados con aprobados y por aprobar, total de reservas con no canceladas y canceladas, ingresos totales con IVA), resumen del cálculo (ticket promedio e IVA incluido), aviso de registros inválidos excluidos y estado vacío.
+- **Sincronización con estado en `src/store.tsx` y `src/sync.ts`** — las cargas dejan de tragarse los errores con `catch {}` vacío: devuelven `{ datos, error }` y el contexto expone `sincronizando`, `errorSync`, `ultimaSync` y `reintentarSync()`; cada tabla se mezcla en cuanto responde, así que la carga lenta de una no frena a las demás.
+- **`TarjetaMetrica` en `src/ui.tsx`** — tarjeta de indicador con ícono, esqueleto que pulsa mientras llega el dato y desglose.
+- **Exportación del reporte en `src/exportarEstadisticas.ts`** — PDF con la marca y Excel desde la pantalla, con fecha de generación, alcance de los datos y detalle del cálculo (`hotelica-estadisticas-YYYY-MM-DD.pdf/xlsx`); las librerías `jspdf`, `jspdf-autotable` y `xlsx` cargan solo al exportar.
+
+### Pruebas
+- **`tests/CP-034-estadisticas-globales.spec.ts`** — 2 casos: las cuatro métricas con su desglose, la regla de ingresos explicada y el PDF que baja con su nombre con fecha; y el aviso de base caída con botón Reintentar y los datos locales en pantalla.
+
 ## [v0.67.0] — 2026-10-26 · HU-033: activar o desactivar usuarios desde la consola
 
 ### Agregado

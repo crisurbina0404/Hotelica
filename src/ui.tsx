@@ -323,6 +323,43 @@ export function TituloSeccion({ ceja, titulo, centro = false }: { ceja: string; 
   );
 }
 
+// ----- Tarjeta de métrica para los paneles (estadísticas globales, HU-034) -----
+export function TarjetaMetrica({
+  titulo,
+  valor,
+  detalle,
+  icono,
+  color,
+  compacto = false,
+  cargando = false,
+}: {
+  titulo: string;
+  valor: string;
+  detalle: string;
+  icono: ReactNode;
+  color: string;
+  compacto?: boolean;
+  cargando?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-line bg-white p-5 shadow-card transition-transform hover:-translate-y-1">
+      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>{icono}</span>
+      <div className="min-w-0">
+        {/* Mientras el dato no está, mostramos una barra que pulsa en vez de un cero engañoso */}
+        {cargando ? (
+          <p className="h-6 w-16 animate-pulse rounded-md bg-canvas" />
+        ) : (
+          <p className={`font-display font-extrabold leading-none text-ink tabular-nums ${compacto ? "text-base" : "text-2xl"}`}>
+            {valor}
+          </p>
+        )}
+        <p className="mt-1 text-xs font-semibold text-muted">{titulo}</p>
+        {detalle && <p className="mt-0.5 text-[11px] leading-snug text-muted/90">{detalle}</p>}
+      </div>
+    </div>
+  );
+}
+
 // ----- Palomitas de los criterios de contraseña segura (HU-040) -----
 export function ChecklistContrasena({ clave, oscuro = false }: { clave: string; oscuro?: boolean }) {
   const c = criteriosDeContrasena(clave);

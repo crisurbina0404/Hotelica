@@ -39,6 +39,19 @@ export type Notificacion = {
   leida: boolean;
 };
 
+// Los eventos de reserva que ve el administrador en su centro de notificaciones (HU-035)
+export type TipoEvento = "nueva" | "pago" | "confirmada" | "rechazada" | "cancelada" | "entrada" | "salida";
+
+export type EventoReserva = {
+  id: string;
+  folio: string;
+  hotelId: string;
+  tipo: TipoEvento;
+  texto: string;
+  fecha: string;   // ISO completa con hora (yyyy-mm-ddThh:mm:ss)
+  leida: boolean;
+};
+
 // Forma de los datos que se guardan en el navegador
 type Persistido = {
   hoteles: Hotel[];
@@ -52,6 +65,7 @@ type Persistido = {
   cuentasHotelero: CuentaHotelero[]; // cuentas creadas por el admin al aprobar hoteles (HU-021)
   habitaciones: Habitacion[]; // inventario de cada hotel, que el hotelero administra (HU-023)
   usuarios: UsuarioPlataforma[]; // cuentas de la plataforma que el admin activa o desactiva (HU-033)
+  eventosAdmin: EventoReserva[]; // bitácora de eventos de reservas del admin (HU-035)
 };
 
 // Clave de almacenamiento (cambia cuando el catálogo de datos evoluciona)
@@ -71,7 +85,7 @@ function cargar(): Persistido {
         const favoritos: Record<string, string[]> = Array.isArray(viejos)
           ? { invitado: viejos as string[] }
           : (viejos as Record<string, string[]> | undefined) ?? {};
-        return {
+        const respuestaDeCarga: Persistido = {
           ...d, favoritos,
           // Los guardados viejos no traían habitaciones: usamos las semillas (HU-023)
           habitaciones: d.habitaciones ?? HABITACIONES_SEED,
@@ -86,7 +100,10 @@ function cargar(): Persistido {
           })),
           // Los guardados viejos no traían la lista de usuarios (HU-033)
           usuarios: d.usuarios ?? USUARIOS_SEED,
+          // Los guardados viejos no traían el centro de notificaciones (HU-035)
+          eventosAdmin: d.eventosAdmin ?? [],
         };
+        return respuestaDeCarga;
       }
     }
   } catch {
@@ -104,6 +121,7 @@ function cargar(): Persistido {
     cuentasHotelero: [],
     habitaciones: HABITACIONES_SEED,
     usuarios: USUARIOS_SEED,
+    eventosAdmin: [],
   };
 }
 
@@ -135,6 +153,27 @@ function asegurarUsuarioEn(
   return [...lista, { correo: limpio, nombre, rol, activo: true, creadaEn: new Date().toISOString() }];
 }
 
+// Agrega un evento a la bitácora de reservas que consulta el admin (HU-035).
+// Es puro: devuelve la lista nueva; el evento más nuevo queda primero
+function agregarEventoEn(
+  lista: EventoReserva[],
+  folio: string,
+  hotelId: string,
+  tipo: TipoEvento,
+  texto: string
+): EventoReserva[] {
+  const nuevo: EventoReserva = {
+    id: `ev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    folio,
+    hotelId,
+    tipo,
+    texto,
+    fecha: ahoraISO(),
+    leida: false,
+  };
+  return [nuevo, ...lista];
+}
+
 type AppCtx = {
   hoteles: Hotel[];
   habitaciones: Habitacion[]; // inventario de habitaciones que el hotelero administra (HU-023)
@@ -142,10 +181,20 @@ type AppCtx = {
   resenas: Resena[];
   favoritos: string[];
   notificaciones: Notificacion[];
+  eventosAdmin: EventoReserva[]; // bitácora de eventos de reservas para el admin (HU-035)
+  marcarEvento: (id: string) => void;
+  marcarEventosLeidos: () => void;
+  borrarEvento: (id: string) => void;
+  borrarEventosLeidos: () => void;
   pagos: Pago[];
   calificaciones: Calificacion[];
   cuentasHotelero: CuentaHotelero[];
   usuarios: UsuarioPlataforma[]; // cuentas de la plataforma (HU-033)
+  // Estado de la consulta a la base de datos, lo usa la sección de estadísticas (HU-034)
+  sincronizando: boolean;
+  errorSync: string | null;
+  ultimaSync: string | null;
+  reintentarSync: () => Promise<void>;
   rol: Rol;
   usuario: Usuario | null;
   idioma: Idioma;
@@ -230,37 +279,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [datos]);
 
-  // Fase 2: al abrir la app traemos los hoteles y habitaciones de la base de datos.
-  // Si la BD no responde nos quedamos con lo local y la app sigue igual.
-  useEffect(() => {
-    let vivo = true;
-    (async () => {
-      const [hotelesBD, habitacionesBD] = await Promise.all([cargarHoteles(), cargarHabitaciones()]);
-      if (!vivo) return;
-      if (!hotelesBD && !habitacionesBD) return;
-      setDatos((d) => ({
-        ...d,
-        hoteles: fusionarHoteles(d.hoteles, hotelesBD ?? []),
-        habitaciones: fusionarHabitaciones(d.habitaciones, habitacionesBD ?? []),
-      }));
-    })();
-    return () => {
-      vivo = false;
-    };
-  }, []);
+  // Fase 2: al abrir la app traemos hoteles, habitaciones y usuarios de la base.
+  // Si la BD no responde nos quedamos con lo local y la app sigue igual,
+  // pero ahora sabemos y lo decimos (estado de consulta, HU-034)
+  const [sincronizando, setSincronizando] = useState(false);
+  const [errorSync, setErrorSync] = useState<string | null>(null);
+  const [ultimaSync, setUltimaSync] = useState<string | null>(null);
 
-  // Los usuarios de la plataforma se traen aparte (HU-033): si esa tabla
-  // no responde, la carga de hoteles y habitaciones no debe frenarse
+  // Cada tabla se mezcla en cuanto su propia carga responde: si usuarios
+  // tarda o falla, que no frene el merge de hoteles y habitaciones
+  const mezclarTabla = (r: Awaited<ReturnType<typeof cargarHoteles>> | Awaited<ReturnType<typeof cargarHabitaciones>> | Awaited<ReturnType<typeof cargarUsuarios>>) => {
+    if (r.error || r.datos.length === 0) return;
+    const { datos } = r;
+    setDatos((d) => {
+      if ("correo" in datos[0]) return { ...d, usuarios: fusionarUsuarios(d.usuarios, datos as UsuarioPlataforma[]) };
+      if ("hotelId" in datos[0]) return { ...d, habitaciones: fusionarHabitaciones(d.habitaciones, datos as Habitacion[]) };
+      return { ...d, hoteles: fusionarHoteles(d.hoteles, datos as Hotel[]) };
+    });
+  };
+
+  // Trae todo de la base de una vez; cada tabla puede fallar por separado
+  const sincronizarAhora = async () => {
+    setSincronizando(true);
+    setErrorSync(null);
+
+    const cargas = [cargarHoteles(), cargarHabitaciones(), cargarUsuarios()];
+    // El merge arranca al vuelo, sin esperar a que respondan las tres
+    for (const carga of cargas) void carga.then((r) => mezclarTabla(r));
+
+    const resultados = await Promise.allSettled(cargas);
+
+    // Juntamos los mensajes de las tablas que fallaron para avisar de una sola vez
+    const fallos = resultados
+      .filter((r) => r.status === "fulfilled" && r.value.error)
+      .map((r) => (r as PromiseFulfilledResult<{ error: string | null }>).value.error);
+    if (resultados.some((r) => r.status === "rejected")) {
+      fallos.unshift("no hay conexión con la base de datos");
+    }
+
+    if (fallos.length > 0) setErrorSync(fallos[0]);
+    setUltimaSync(ahoraISO());
+    setSincronizando(false);
+  };
+
+  // Traemos al abrir la página; la sección de estadísticas puede reintentarlos
   useEffect(() => {
-    let vivo = true;
-    (async () => {
-      const usuariosBD = await cargarUsuarios();
-      if (!vivo || !usuariosBD) return;
-      setDatos((d) => ({ ...d, usuarios: fusionarUsuarios(d.usuarios, usuariosBD) }));
-    })();
-    return () => {
-      vivo = false;
-    };
+    void sincronizarAhora();
   }, []);
 
   // Al abrir o recargar la página volvemos a preguntar a la base quién es admin:
@@ -402,6 +466,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ...d,
         folio: Math.max(d.folio, guardado?.folio ?? 0) + 1,
         reservas: [nueva, ...d.reservas],
+        // La reserva nueva queda en la bitácora del admin (HU-035)
+        eventosAdmin: agregarEventoEn(
+          d.eventosAdmin, nueva.folio, r.hotelId, "nueva",
+          `${r.turista} reservó del ${r.llegada} al ${r.salida}`
+        ),
       };
     });
     return nueva;
@@ -425,6 +494,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       pagos: [nuevo, ...d.pagos],
       reservas: d.reservas.map((r) =>
         r.folio === folio && pagado ? { ...r, estado: "confirmada" } : r
+      ),
+      // El pago también queda en la bitácora del admin (HU-035)
+      eventosAdmin: agregarEventoEn(
+        d.eventosAdmin, folio,
+        d.reservas.find((r) => r.folio === folio)?.hotelId ?? "",
+        "pago", `Pago con ${metodo} registrado para el folio ${folio}`
       ),
     }));
     return nuevo;
@@ -488,28 +563,55 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Cambia el estado de una reserva (confirmar, check-in, check-out, cancelar)
   // El motivo solo se guarda cuando el hotel rechaza la reserva (HU-027)
   const cambiarEstadoReserva = (folio: string, estado: EstadoReserva, motivoRechazo?: string) => {
-    setDatos((d) => ({
-      ...d,
-      reservas: d.reservas.map((r) => {
-        if (r.folio !== folio) return r;
-        const reserva = { ...r, estado };
-        // Solo escribimos el motivo si venía uno: así un confirmar no borra nada
-        return motivoRechazo ? { ...reserva, motivoRechazo } : reserva;
-      }),
-    }));
+    setDatos((d) => {
+      // Solo confirmar, cancelar y rechazar entran en la bitácora del admin (HU-035)
+      const tipoEvento: TipoEvento | null =
+        estado === "cancelada"
+          ? motivoRechazo ? "rechazada" : "cancelada"
+          : estado === "confirmada" ? "confirmada" : null;
+      const laReserva = d.reservas.find((r) => r.folio === folio);
+
+      return {
+        ...d,
+        reservas: d.reservas.map((r) => {
+          if (r.folio !== folio) return r;
+          const reserva = { ...r, estado };
+          // Solo escribimos el motivo si venía uno: así un confirmar no borra nada
+          return motivoRechazo ? { ...reserva, motivoRechazo } : reserva;
+        }),
+        eventosAdmin:
+          tipoEvento && laReserva
+            ? agregarEventoEn(
+                d.eventosAdmin, folio, laReserva.hotelId, tipoEvento,
+                tipoEvento === "rechazada"
+                  ? `Reserva de ${laReserva.turista} rechazada por el hotel: ${motivoRechazo}`
+                  : tipoEvento === "cancelada"
+                  ? `${laReserva.turista} canceló su reserva`
+                  : `Reserva de ${laReserva.turista} confirmada`
+              )
+            : d.eventosAdmin,
+      };
+    });
   };
 
   // Registra la entrada del huésped: estado Check-in con la hora de este momento (HU-028)
   // Devuelve la marca de fecha y hora para poder avisar con ella en el panel
   const registrarCheckin = (folio: string) => {
     const marca = ahoraISO();
-    setDatos((d) => ({
-      ...d,
-      reservas: d.reservas.map((r) => {
-        if (r.folio !== folio) return r;
-        return { ...r, estado: "checkin" as EstadoReserva, checkinEn: marca };
-      }),
-    }));
+    setDatos((d) => {
+      const laReserva = d.reservas.find((r) => r.folio === folio);
+      return {
+        ...d,
+        reservas: d.reservas.map((r) => {
+          if (r.folio !== folio) return r;
+          return { ...r, estado: "checkin" as EstadoReserva, checkinEn: marca };
+        }),
+        // La llegada del huésped queda en la bitácora del admin (HU-035)
+        eventosAdmin: laReserva
+          ? agregarEventoEn(d.eventosAdmin, folio, laReserva.hotelId, "entrada", `Check-in de ${laReserva.turista} registrado`)
+          : d.eventosAdmin,
+      };
+    });
     return marca;
   };
 
@@ -517,13 +619,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Devuelve la marca para que el panel avise con la hora exacta y descargue la factura
   const registrarCheckout = (folio: string) => {
     const marca = ahoraISO();
-    setDatos((d) => ({
-      ...d,
-      reservas: d.reservas.map((r) => {
-        if (r.folio !== folio) return r;
-        return { ...r, estado: "completada" as EstadoReserva, checkoutEn: marca };
-      }),
-    }));
+    setDatos((d) => {
+      const laReserva = d.reservas.find((r) => r.folio === folio);
+      return {
+        ...d,
+        reservas: d.reservas.map((r) => {
+          if (r.folio !== folio) return r;
+          return { ...r, estado: "completada" as EstadoReserva, checkoutEn: marca };
+        }),
+        // La salida también queda en la bitácora del admin (HU-035)
+        eventosAdmin: laReserva
+          ? agregarEventoEn(d.eventosAdmin, folio, laReserva.hotelId, "salida", `Check-out de ${laReserva.turista} registrado`)
+          : d.eventosAdmin,
+      };
+    });
     return marca;
   };
 
@@ -544,6 +653,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ...d,
       notificaciones: d.notificaciones.map((n) => (n.hotelId === hotelId ? { ...n, leida: true } : n)),
     }));
+  };
+
+  // ===== Gestión del centro de notificaciones del admin (HU-035) =====
+
+  // Marca un solo evento como visto
+  const marcarEvento: AppCtx["marcarEvento"] = (id) => {
+    setDatos((d) => ({
+      ...d,
+      eventosAdmin: d.eventosAdmin.map((e) => (e.id === id && !e.leida ? { ...e, leida: true } : e)),
+    }));
+  };
+
+  // Marca toda la bitácora como leída (deja de contar como nueva)
+  const marcarEventosLeidos: AppCtx["marcarEventosLeidos"] = () => {
+    setDatos((d) => ({
+      ...d,
+      eventosAdmin: d.eventosAdmin.map((e) => (e.leida ? e : { ...e, leida: true })),
+    }));
+  };
+
+  // Borrar un solo evento (por ejemplo si fue un registro de prueba)
+  const borrarEvento: AppCtx["borrarEvento"] = (id) => {
+    setDatos((d) => ({ ...d, eventosAdmin: d.eventosAdmin.filter((e) => e.id !== id) }));
+  };
+
+  // Borrar en bloque los eventos que ya están leídos
+  const borrarEventosLeidos: AppCtx["borrarEventosLeidos"] = () => {
+    setDatos((d) => ({ ...d, eventosAdmin: d.eventosAdmin.filter((e) => !e.leida) }));
   };
 
   // Registra la calificación de la reserva y recalcula el promedio (HU-019)
@@ -1308,6 +1445,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       resenas: datos.resenas,
       favoritos: favoritosDe(datos.favoritos, usuario),
       notificaciones: datos.notificaciones,
+      // Bitácora de eventos de reservas (HU-035)
+      eventosAdmin: datos.eventosAdmin,
+      marcarEvento,
+      marcarEventosLeidos,
+      borrarEvento,
+      borrarEventosLeidos,
+      // Estado de la consulta a la base (HU-034)
+      sincronizando,
+      errorSync,
+      ultimaSync,
+      reintentarSync: sincronizarAhora,
       pagos: datos.pagos,
       calificaciones: datos.calificaciones,
       cuentasHotelero: datos.cuentasHotelero,
@@ -1358,8 +1506,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       disponiblesDe,
     }),
     // registroAbierto también entra: sin él, el contexto se queda con el valor
-    // viejo y el modal de registro no abre (o no cierra) hasta que cambie otra cosa
-    [datos, rol, usuario, idioma, toasts, registroAbierto]
+    // viejo y el modal de registro no abre (o no cierra) hasta que cambie otra cosa.
+    // Los estados de la consulta van aparte (HU-034): sin ellos la pantalla se
+    // quedaría en "Actualizando datos…" para siempre
+    [datos, rol, usuario, idioma, toasts, registroAbierto, sincronizando, errorSync, ultimaSync]
   );
 
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;

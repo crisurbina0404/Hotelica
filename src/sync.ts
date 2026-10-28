@@ -153,6 +153,10 @@ function deFilaHabitacion(f: HabitacionFila): Habitacion {
 // Traducir el error de Supabase a un mensaje que se pueda leer
 function mensajeDeError(error: { code?: string; message?: string } | null): string {
   if (!error) return "error desconocido";
+  // La red caída llega como "TypeError: Failed to fetch" dentro del objeto de error
+  if ((error.message ?? "").includes("Failed to fetch")) {
+    return "no hay conexión con la base de datos";
+  }
   if (error.code === "42501" || (error.message ?? "").includes("row-level security")) {
     return "la base de datos no tiene permisos de escritura (falta aplicar el script SQL)";
   }
@@ -162,38 +166,37 @@ function mensajeDeError(error: { code?: string; message?: string } | null): stri
 
 // ----- Lectura: trae todo lo guardado en la BD -----
 
-// Devuelve null si la BD no responde: la app sigue con lo local
-export async function cargarHoteles(): Promise<Hotel[] | null> {
+// Lo que devuelven las cargas: la lista traída o el motivo del fallo
+// (en la Fase 1 los fallos se tragaban con un catch vacío y nadie
+// se enteraba de que la base no respondió, HU-034)
+type Carga<T> = { datos: T[]; error: string | null };
+
+// Devuelve la lista; si la BD no responde, datos va vacío con el mensaje del error
+async function cargarTabla<T>(
+  tabla: string,
+  convertir: (fila: any) => T
+): Promise<Carga<T>> {
   try {
-    const { data, error } = await supabase.from("hoteles").select("*");
-    if (error || !data) return null;
-    return (data as HotelFila[]).map(deFilaHotel);
+    const { data, error } = await supabase.from(tabla).select("*");
+    if (error) return { datos: [], error: mensajeDeError(error) };
+    if (!data) return { datos: [], error: "la base de datos no devolvió filas" };
+    return { datos: (data as any[]).map(convertir), error: null };
   } catch {
-    return null;
+    return { datos: [], error: "no hay conexión con la base de datos" };
   }
 }
 
-export async function cargarHabitaciones(): Promise<Habitacion[] | null> {
-  try {
-    const { data, error } = await supabase.from("habitaciones").select("*");
-    if (error || !data) return null;
-    return (data as HabitacionFila[]).map(deFilaHabitacion);
-  } catch {
-    return null;
-  }
+export async function cargarHoteles(): Promise<Carga<Hotel>> {
+  return cargarTabla("hoteles", deFilaHotel);
 }
 
-// ----- Escritura: guarda un hotel (inserta o actualiza por el id) -----
+export async function cargarHabitaciones(): Promise<Carga<Habitacion>> {
+  return cargarTabla("habitaciones", deFilaHabitacion);
+}
 
 // Trae el registro de cuentas de la plataforma (HU-033)
-export async function cargarUsuarios(): Promise<UsuarioPlataforma[] | null> {
-  try {
-    const { data, error } = await supabase.from("usuarios").select("*");
-    if (error || !data) return null;
-    return (data as UsuarioFila[]).map(deFilaUsuario);
-  } catch {
-    return null;
-  }
+export async function cargarUsuarios(): Promise<Carga<UsuarioPlataforma>> {
+  return cargarTabla("usuarios", deFilaUsuario);
 }
 
 // Guarda una cuenta (inserta o actualiza por el correo): activo = TRUE/FALSE (HU-033)
