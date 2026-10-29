@@ -457,6 +457,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const folio = `HC-${(guardado?.folio ?? datos.folio) + 1}`;
     const nueva: Reserva = {
       ...r,
+      // Los comentarios entran limpios: sin espacios de sobra y con tope,
+      // igual que el resto de los campos de texto del sitio
+      comentarios: (r.comentarios ?? "").trim().slice(0, 500),
       folio,
       estado: "pendiente",
       creada: hoyISO(),

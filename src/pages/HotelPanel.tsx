@@ -798,7 +798,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-xs font-bold text-white shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-xs font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
                 >
                   <IconoCheck size={14} />
                   Guardar mi contraseña
@@ -1015,7 +1015,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
                 >
                   <IconoCheck size={15} />
                   Guardar cambios
@@ -1825,7 +1825,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
                   multiple
                   disabled={edicionBloqueada || subiendo}
                   onChange={elegirFotos}
-                  className={`block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent-light file:px-4 file:py-2 file:text-xs file:font-bold file:text-hotel transition-colors hover:file:bg-accent hover:file:text-white disabled:cursor-not-allowed disabled:opacity-60 ${errorFoto ? "rounded-lg border border-[#FCA5A5] p-2" : ""}`}
+                  className={`block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent-light file:px-4 file:py-2 file:text-xs file:font-bold file:text-hotel transition-colors hover:file:bg-accent hover:file:text-primary-ink disabled:cursor-not-allowed disabled:opacity-60 ${errorFoto ? "rounded-lg border border-[#FCA5A5] p-2" : ""}`}
                 />
               </label>
               <p className="text-[11px] font-semibold leading-relaxed text-muted">

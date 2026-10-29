@@ -138,8 +138,10 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
   const confirmarRechazo = async () => {
     if (!rechazando) return;
     const texto = motivo.trim();
-    // Sin motivo no hay rechazo: el hotelero tiene que saber por qué (HU-032)
-    if (!texto) {
+    // Sin motivo no hay rechazo: el hotelero tiene que saber por qué (HU-032).
+    // Pedimos los mismos 3 caracteres que el rechazo de reservas del panel del
+    // hotel (HU-027): las dos reglas tenían medidas distinto
+    if (texto.length < 3) {
       setErrorMotivo("Escribí el motivo del rechazo: el hotelero necesita saber por qué.");
       return;
     }

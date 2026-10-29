@@ -35,6 +35,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
   const aprobados = hoteles.filter((h) => h.aprobado === "aprobado");
   const destacados = aprobados.filter((h) => h.destacado);
 
+  // La primera reseña manda como cita destacada; las otras dos acompañan debajo
+  const [citaDestacada, ...otrasResenas] = resenas.slice(0, 3);
+
   // Municipios del departamento elegido
   const municipios = MUNICIPIOS.filter((m) => m.departamentoId === depto);
 
@@ -73,14 +76,14 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
   return (
     <main>
       {/* ============ HERO: lo primero que ve el turista ============ */}
-      <section className="relative flex min-h-[700px] flex-col overflow-hidden">
+      <section className="relative flex min-h-[560px] flex-col overflow-hidden sm:min-h-[700px]">
         <div className="absolute inset-0">
           <img src={IMAGEN_HERO} alt="Atardecer en el lago de Nicaragua con los volcanes de Ometepe" className="h-full w-full object-cover" />
           {/* Overlay teal profundo definido en la guía de estilo */}
           <div className="absolute inset-0 bg-[linear-gradient(165deg,rgba(11,53,64,0.66)_0%,rgba(7,36,44,0.58)_45%,rgba(5,27,33,0.78)_100%)]" />
         </div>
 
-        <div className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col justify-end px-4 pb-40 pt-32 sm:px-6 lg:pb-44">
+        <div className="relative mx-auto flex w-full max-w-7xl flex-1 flex-col justify-end px-4 pb-32 pt-20 sm:px-6 sm:pb-40 sm:pt-32 lg:pb-44">
           <Reveal>
             <p className="inline-flex w-fit items-center gap-2.5 rounded-full border border-white/30 bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
               <BanderaNI size={14} /> Plataforma turística de Nicaragua
@@ -88,7 +91,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
           </Reveal>
 
           <Reveal delay={120}>
-            <h1 className="mt-5 max-w-3xl font-display text-4xl font-extrabold leading-[1.08] text-white sm:text-5xl lg:text-[3.6rem]">
+            <h1 className="mt-4 max-w-3xl font-display text-4xl font-extrabold leading-[1.08] text-white sm:text-5xl lg:text-[3.6rem]">
               {t(idioma, "heroTitulo")}{" "}
               <span className="relative inline-block text-accent">
                 Nicaragua
@@ -101,13 +104,15 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
           </Reveal>
 
           <Reveal delay={240}>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-teal-50/90 sm:text-lg">
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-pretty text-teal-50/90 sm:text-lg">
               {t(idioma, "heroSubtitulo")}
             </p>
           </Reveal>
 
           <Reveal delay={360}>
-            <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-2 text-sm text-teal-50/95">
+            {/* En móvil van en grid de 3 para que ninguna cifra quede sola
+                en una línea suelta; desde tablet vuelven a ser fila flex */}
+            <div className="mt-6 grid grid-cols-3 gap-2 text-sm text-pretty text-teal-50/95 sm:flex sm:flex-wrap sm:items-center sm:gap-x-7 sm:gap-y-2">
               <span className="flex items-center gap-2"><span className="text-accent"><IconoPalmera size={18} /></span><b>{aprobados.length}</b> {t(idioma, "heroDestinos")}</span>
               <span className="flex items-center gap-2"><span className="text-accent"><IconoPin size={18} /></span><b>{MUNICIPIOS.length}</b> {t(idioma, "heroMunicipios")}</span>
               <span className="flex items-center gap-2"><span className="text-accent"><IconoComillas size={18} /></span><b>{resenas.length}</b> {t(idioma, "heroResenas")}</span>
@@ -119,8 +124,8 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
       {/* ============ BUSCADOR PRINCIPAL (HU-006) ============ */}
       <section className="relative z-10 mx-auto -mt-28 max-w-6xl px-4 sm:px-6">
         <Reveal>
-          <form onSubmit={buscar} className="rounded-2xl border border-line bg-white p-5 shadow-lift sm:p-6" aria-label="Buscador de hoteles">
-            <div className="mb-4 flex items-center gap-2.5">
+          <form onSubmit={buscar} className="rounded-2xl border border-line bg-white p-4 shadow-lift sm:p-6" aria-label="Buscador de hoteles">
+            <div className="mb-3 flex items-center gap-2.5 sm:mb-4">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-white"><IconoBuscar size={17} /></span>
               <div>
                 <p className="font-display text-base font-bold text-ink">{t(idioma, "buscadorTitulo")}</p>
@@ -129,9 +134,11 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
             </div>
 
             {/* Jerarquía de campos: dónde (ancho) → cuándo (medio) → cuántos (compacto) */}
-            <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-[1.5fr_1.25fr_1fr_1fr_0.65fr_auto]">
+            {/* En móvil la retícula es de 2 columnas para que dónde/cuándo/cuántos
+                queden en parejas y el CTA quede dentro de la primera pantalla */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-[1.5fr_1.25fr_1fr_1fr_0.65fr_auto]">
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Departamento *</span>
+                <span className="mb-0.5 block text-[11px] font-bold uppercase tracking-wider text-muted sm:mb-1">Departamento *</span>
                 <select
                   value={depto}
                   onChange={(e) => { setDepto(e.target.value); setMuni(""); }}
@@ -148,7 +155,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               </label>
 
               <label className="block">
-                <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-muted">Municipio (opcional)</span>
+                <span className="mb-0.5 block text-[11px] font-bold uppercase tracking-wider text-muted sm:mb-1">Municipio (opcional)</span>
                 <select value={muni} onChange={(e) => setMuni(e.target.value)} className={claseCampo} disabled={!depto}>
                   <option value="">{depto ? "Todos los municipios" : "Elige primero un departamento"}</option>
                   {municipios.map((m) => (
@@ -158,7 +165,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               </label>
 
               <label className="block">
-                <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted"><IconoCalendario size={12} /> Llegada</span>
+                <span className="mb-0.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted sm:mb-1"><IconoCalendario size={12} /> Llegada</span>
                 <input
                   type="date" value={llegada} min={hoyISO()}
                   onChange={(e) => setLlegada(e.target.value)}
@@ -169,7 +176,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               </label>
 
               <label className="block">
-                <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted"><IconoCalendario size={12} /> Salida</span>
+                <span className="mb-0.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted sm:mb-1"><IconoCalendario size={12} /> Salida</span>
                 <input
                   type="date" value={salida} min={llegada}
                   onChange={(e) => setSalida(e.target.value)}
@@ -180,7 +187,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               </label>
 
               <label className="block">
-                <span className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted"><IconoHuespedes size={12} /> Huéspedes</span>
+                <span className="mb-0.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-muted sm:mb-1"><IconoHuespedes size={12} /> Huéspedes</span>
                 <input
                   type="number" min={1} max={10} value={huespedes}
                   onChange={(e) => setHuespedes(Number(e.target.value))}
@@ -193,9 +200,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="group flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.97] lg:w-auto"
+                  className="group flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-3 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-[0.97] sm:px-6 sm:py-2.5 lg:w-auto"
                 >
-                  <IconoBuscar size={16} className="transition-transform group-hover:rotate-12" />
+                  <IconoBuscar size={16} className="hidden transition-transform group-hover:rotate-12 sm:block" />
                   {t(idioma, "buscarBtn")}
                 </button>
               </div>
@@ -223,7 +230,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
           </div>
         </Reveal>
 
-        <div className="mt-8 flex snap-x gap-4 overflow-x-auto pb-4">
+        {/* Tira deslizable con las 8 tarjetas: se mueve con el dedo o la
+            rueda, pero sin barra visible en el borde */}
+        <div className="tira-desliza mt-8 flex snap-x gap-4 overflow-x-auto pb-4">
           {DEPARTAMENTOS.map((d, i) => {
             const cantidad = aprobados.filter((h) => h.departamentoId === d.id).length;
             return (
@@ -287,7 +296,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               <div className="flex flex-col items-start gap-4 lg:items-end">
                 <button
                   onClick={() => setInscripcionAbierta(true)}
-                  className="rounded-lg bg-accent px-6 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]"
+                  className="rounded-lg bg-accent px-6 py-3 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent active:scale-[0.97]"
                 >
                   Registrar mi hotel
                 </button>
@@ -346,7 +355,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
               </p>
               <button
                 onClick={() => navegar({ nombre: "resultados" })}
-                className="mt-7 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-accent-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="mt-7 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-primary-ink transition-colors hover:bg-accent-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 Empezar por la búsqueda
               </button>
@@ -384,11 +393,35 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         <Reveal>
           <TituloSeccion ceja="Voces viajeras" titulo="Lo que dicen quienes ya reservaron" />
         </Reveal>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
-          {resenas.slice(0, 3).map((r, i) => {
+        {/* Retícula rota a propósito: una cita ancha manda y las otras dos
+            van debajo, en vez de tres testimonios idénticos en fila */}
+        {citaDestacada && (
+          <Reveal>
+            <figure className="mt-10 flex flex-col gap-6 rounded-xl border border-line bg-white p-7 shadow-card sm:p-9 lg:flex-row lg:items-center lg:gap-10">
+              <span className="shrink-0 text-accent"><IconoComillas size={38} /></span>
+              <div className="flex-1">
+                <blockquote className="font-display text-xl leading-snug text-ink sm:text-2xl">
+                  “{citaDestacada.comentario}”
+                </blockquote>
+                <figcaption className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                    {citaDestacada.autor.split(" ").map((x) => x[0]).slice(0, 2).join("")}
+                  </span>
+                  <span className="text-sm font-bold text-ink">{citaDestacada.autor}</span>
+                  <span className="text-xs text-muted">
+                    {citaDestacada.origen} · se hospedó en {hoteles.find((h) => h.id === citaDestacada.hotelId)?.nombre}
+                  </span>
+                  <Estrellas valor={citaDestacada.rating} size={14} />
+                </figcaption>
+              </div>
+            </figure>
+          </Reveal>
+        )}
+        <div className="mt-6 grid gap-6 md:grid-cols-2">
+          {otrasResenas.map((r, i) => {
             const hotel = hoteles.find((h) => h.id === r.hotelId);
             return (
-              <Reveal key={r.id} delay={i * 110} className={i === 1 ? "md:translate-y-6" : ""}>
+              <Reveal key={r.id} delay={(i + 1) * 110}>
                 <figure className="flex h-full flex-col rounded-xl border border-line bg-white p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lift">
                   <span className="text-accent"><IconoComillas size={26} /></span>
                   <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-ink">“{r.comentario}”</blockquote>

@@ -6,7 +6,7 @@
 import { useRef, useState } from "react";
 import { useApp } from "../store";
 import {
-  DEPARTAMENTOS, MUNICIPIOS, validarRegistroHotel, validarImagenHotel, soloDigitosTelefono,
+  DEPARTAMENTOS, MUNICIPIOS, validarRegistroHotel, validarImagenHotel, soloDigitosTelefono, esCorreo,
 } from "../data";
 import type { DatosRegistroHotel, ErroresRegistroHotel, Hotel } from "../data";
 import { Reveal } from "../ui";
@@ -133,6 +133,11 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
     const correo = correoConsulta.trim().toLowerCase();
     if (!correo) {
       avisar("Ingresá el correo con el que inscribiste tu hotel.", "error");
+      return;
+    }
+    // Un correo a medias siempre da "no encontrado": mejor decirle qué falta
+    if (!esCorreo(correo)) {
+      avisar("Revisá el correo: falta el @ o el dominio (ejemplo: dueno@hotelica.ni).", "error");
       return;
     }
 
@@ -396,7 +401,7 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
                   type="file"
                   accept="image/*"
                   onChange={(e) => elegirImagen(e.target.files?.[0])}
-                  className={`block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent-light file:px-4 file:py-2 file:text-xs file:font-bold file:text-hotel transition-colors hover:file:bg-accent hover:file:text-white ${errores.imagen ? "border border-[#FCA5A5] p-2" : ""}`}
+                  className={`block w-full text-sm text-muted file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-accent-light file:px-4 file:py-2 file:text-xs file:font-bold file:text-hotel transition-colors hover:file:bg-accent hover:file:text-primary-ink ${errores.imagen ? "border border-[#FCA5A5] p-2" : ""}`}
                 />
                 <p className="mt-1 text-[11px] text-muted">JPG, PNG o WEBP de hasta 5 MB. Es obligatoria al menos una.</p>
                 {registro.imagen && (
@@ -421,7 +426,7 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
                 </p>
                 <button
                   type="submit"
-                  className="flex shrink-0 items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97]"
+                  className="flex shrink-0 items-center gap-2 rounded-lg bg-accent px-6 py-3 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97]"
                 >
                   <IconoCheck size={16} />
                   Finalizar solicitud

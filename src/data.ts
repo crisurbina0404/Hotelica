@@ -992,7 +992,7 @@ export function errorDeGaleriaHabitacion(cantidadActual: number): string {
 }
 
 // Correo con formato usuario@dominio.algo
-function esCorreo(texto: string): boolean {
+export function esCorreo(texto: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(texto);
 }
 

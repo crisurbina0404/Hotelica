@@ -124,7 +124,7 @@ export function RecuperarContrasena({ navegar }: { navegar: Navegar }) {
               <button
                 type="submit"
                 disabled={cargando}
-                className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
+                className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
               >
                 {cargando ? "Enviando..." : "Enviar enlace de recuperación"}
               </button>

@@ -166,7 +166,9 @@ bucles decorativos): consumen CPU/GPU/batería y ya fueron retiradas en v0.5.0.
 
 ## 6. Componentes base (referencia rápida)
 
-- **Botón primario (CTA):** `bg-accent` → hover `bg-accent-dark`, texto blanco,
+- **Botón primario (CTA):** `bg-accent` → hover `bg-accent-dark`, texto `primary-ink`
+  (`#051B21`: el blanco sobre oro llega a 1.99:1 y §10.4 pide 4.5:1; en ámbar
+  `#B45309` el blanco sí pasa y se mantiene),
   `rounded-lg`, `active:scale-[0.97]`. Es el botón de "Buscar hoteles", "Confirmar reserva".
 - **Botón secundario:** borde 2px `primary`, texto `primary`, hover `bg-primary-soft`.
 - **Botón peligro:** `bg-danger` → hover más oscuro. Solo cancelar/rechazar.

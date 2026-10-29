@@ -6,6 +6,41 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.72.0] — 2026-10-28 · Ronda de diseño: contraste del oro, portada en móvil y pulido del comprobante
+
+### Corregido
+- **Botones dorados sobre blanco** — los botones con fondo `bg-accent` y texto blanco quedaban en 1,9:1 de contraste. Ahora el texto sobre la familia dorada es `text-primary-ink` (teal profundo): los 9 elementos dorados medidos en vivo en la portada pasan, 0 fallos. El `file:text-white` que queda sobre `bg-hotel` (#B45309) mide 5,05:1 y pasa también; la regla quedó escrita en el §6 del brief `.opencode/skills/hotelica-design/SKILL.md`.
+- **Huérfanas del hero y del pie** — `text-pretty` en el subtítulo del hero y en el párrafo del footer: el hero dejó de terminar en "Caribe." suelto (la última línea pasó del 12 % al 77 % de ancho) y el pie del 14 % al 23 %.
+- **Portada en móvil (360 px)** — las cifras del hero van en `grid-cols-3` en una sola fila (ninguna cifra queda huérfana, `text-pretty` en cada celda); el buscador pasa de 6 campos apilados a 3 filas en parejas (departamento|municipio · llegada|salida · huéspedes|botón); el hero se compacta solo en móvil (`min-h` 560, `pt-20` y márgenes un paso más cortos, todo restaurado desde `sm:`); y el botón "Buscar hoteles" queda en una sola línea con objetivo táctil de 44 px (el ícono se oculta bajo `sm:`). El CTA termina en 769 px sobre un pliegue de 780: la búsqueda completa se ve sin scrollear (antes el botón quedaba unos 90 px bajo el pliegue).
+- **Testimonios** — la primera reseña manda como cita destacada y las otras dos acompañan debajo apiladas, en vez de tres tarjetas iguales de alto desigual.
+- **Comprobante descargable (`src/pages/BookingModal.tsx`)** — el HTML del comprobante declaraba las caras de la marca literales (`font-family: 'Fraunces', Georgia…`); ahora define `--font-display`, `--font-body` y `--font-brand` en su propio `:root` (es un documento aparte y no hereda `index.css`) y los usa con `var()`. También se borró el `border-left: 3px solid #177E8C` de la nota: es el patrón `side-tab` de impeccable, el borde grueso lateral que delata UI generada.
+- **CSS muerto** — fuera `@keyframes floaty` y `.anim-floaty`: nadie los usaba y la animación infinita contradice la regla de movimiento finito (§5 del brief).
+- **Pie de página responsive (`src/layout.tsx`)** — la retícula del pie era de una sola columna hasta `lg`, así que en celular y tablet medía ~940 px (más de una pantalla de footer). Ahora va en dos columnas desde el celular —con la marca y la columna "Hotelica" a todo el ancho para que los enlaces no se estrechen a 143 px—, en 2×2 en tablet y en las cuatro columnas de escritorio sin cambios. Medido: 360 → 785 px (antes 943), 768 → 559 px (antes una columna de ~940), 1440 → 397 px intacto; ningún bloque desborda y no hay `overflow-x` en ninguno de los tres anchos.
+- **Tira de destinos sin barra visible (`src/pages/Home.tsx` + `src/index.css`)** — la tira horizontal de los 8 departamentos seguía deslizándose pero con la barra de desplazamiento pegada a las tarjetas. La tira conserva el deslizamiento con dedo o rueda (sigue siendo `overflow-x-auto` con snap) y la clase nueva `.tira-desliza` (`scrollbar-width: none` + `::-webkit-scrollbar { display: none }`) oculta la barra. Verificado a 1440: desliza (`scrollWidth` 1904 > `clientWidth` 1232), `scrollbarWidth` computado `none`, 8 tarjetas de 224×208 y sin `overflow-x` en la página.
+
+### Pruebas
+- `npx tsc --noEmit` y `npm run build` sin errores; suite E2E **18/18 verdes** (26 s).
+- `impeccable detect` sobre `src/`: **0 hallazgos** (antes marcaba 4 en `BookingModal.tsx`).
+- Medición en vivo en 360×780 y 1440×900: sin `overflow-x`, buscador en 3 filas con el CTA dentro del pliegue, cifras en una fila y retícula de 6 columnas en desktop.
+
+---
+
+## [v0.71.0] — 2026-10-28 · Segunda ronda de imperfecciones: topes de texto, motivo unificado y consulta de estado
+
+### Corregido
+- **Tope de los comentarios** — el comentario de la reserva (modal de reserva) y el de la calificación (Mis Reservas) eran los dos únicos campos de texto sin límite del sitio: se podía pegar un texto enorme y quedaba guardado tal cual. Ahora los dos textareas tienen `maxLength={500}` con su contador visible (`x/500`), y `crearReserva()` guarda el comentario limpio y recortado (`trim().slice(0, 500)`).
+- **Motivo del rechazo: una sola regla** — el admin pedía 1 carácter y el hotelero 3 para el mismo tipo de motivo. Los dos lados ahora piden los mismos 3 caracteres con el mensaje de siempre (HU-027 y HU-032 dicen "obligatorio" en ambos).
+- **Consulta de estado con correo a medias** — `esCorreo()` se exportó desde `src/data.ts` y la consulta pública de estado (`InscribeHotel.tsx`) revisa el formato antes de buscar: un correo sin dominio avisa "Revisá el correo: falta el @ o el dominio" en vez de caer en "no encontrado" sin explicar nada.
+
+### Pruebas
+- **`tests/CP-021-consulta-estado.spec.ts`** — abre la inscripción pública, consulta con un correo sin dominio y vela por el aviso de formato; luego con un correo bien formado y vela por el "no encontrado".
+- Suite completa: **18/18 verdes** (las 17 de antes más la nueva). `npx tsc --noEmit` y `npm run build` sin errores.
+
+### Nota (decisión, no defecto)
+- El registro de turista (HU-001) sigue pidiendo 6 caracteres: la política de 8 + número + símbolo es de HU-040 y aplica al cambio de contraseña del hotelero. Las dos puertas son distintas a propósito.
+
+---
+
 ## [v0.70.0] — 2026-10-28 · Arreglos a imperfecciones del módulo Administración, perfil y reseñas
 
 ### Corregido

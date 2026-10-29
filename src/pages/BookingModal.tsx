@@ -71,7 +71,14 @@ function descargarDocumento(r: Reserva, hotelNombre: string, habitacionTipo: str
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esFactura ? `Factura ${r.folio}` : `Comprobante ${r.folio}`} — Hotelica</title>
 <style>
-  body { font-family: 'Outfit', 'Segoe UI', Arial, sans-serif; background: #F8F6F0; color: #1C2B30; margin: 0; padding: 40px 16px; }
+  /* El comprobante se descarga como documento aparte, así que repite aquí
+     los tokens de tipografía que el sitio declara en index.css */
+  :root {
+    --font-display: "Fraunces", "Georgia", serif;
+    --font-body: "Outfit", "Segoe UI", sans-serif;
+    --font-brand: "Libre Baskerville", "Georgia", serif;
+  }
+  body { font-family: var(--font-body); background: #F8F6F0; color: #1C2B30; margin: 0; padding: 40px 16px; }
   .caja { max-width: 600px; margin: auto; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 18px rgba(11,53,64,.14); }
   .cabecera { background: linear-gradient(135deg, #0B3540, #07242C); padding: 30px 24px 24px; text-align: center; border-bottom: 3px solid #F7A81B; }
   .cabecera svg { width: 220px; height: auto; display: block; margin: 0 auto; }
@@ -79,10 +86,10 @@ function descargarDocumento(r: Reserva, hotelNombre: string, habitacionTipo: str
   .guion { color: #E0A83C; }
   .contenido { padding: 30px 28px 26px; }
   .ceja { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #177E8C; }
-  .titulo { margin: 8px 0; font-family: 'Fraunces', Georgia, serif; font-size: 27px; font-weight: 700; color: #0B3540; }
+  .titulo { margin: 8px 0; font-family: var(--font-display); font-size: 27px; font-weight: 700; color: #0B3540; }
   .folio { margin: 24px 0 6px; padding: 22px 20px; text-align: center; background: #FDF0D7; border: 2px dashed #F7A81B; border-radius: 12px; }
   .folio-ceja { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #D98A0B; }
-  .folio-numero { margin: 8px 0 6px; font-family: 'Fraunces', Georgia, serif; font-size: 36px; font-weight: 800; color: #0B3540; }
+  .folio-numero { margin: 8px 0 6px; font-family: var(--font-display); font-size: 36px; font-weight: 800; color: #0B3540; }
   .folio-nota { margin: 0; font-size: 13px; color: #5D6E73; }
   .bloque { margin: 22px 0 0; padding: 6px 20px 14px; background: #F8F6F0; border: 1px solid #E4DFD2; border-radius: 12px; }
   .bloque-titulo { margin: 16px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0B3540; }
@@ -93,10 +100,10 @@ function descargarDocumento(r: Reserva, hotelNombre: string, habitacionTipo: str
   .valor { text-align: right; font-weight: 700; color: #1C2B30; }
   .total { margin: 24px 0 0; padding: 22px 20px; text-align: center; background: #0B3540; border-radius: 12px; }
   .total-etiqueta { margin: 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8FD3DE; }
-  .total-monto { margin: 8px 0 12px; font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 800; color: #F7A81B; }
-  .nota { margin: 22px 0 0; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: #5D6E73; background: #EFF5F6; border-left: 3px solid #177E8C; border-radius: 8px; }
+  .total-monto { margin: 8px 0 12px; font-family: var(--font-display); font-size: 34px; font-weight: 800; color: #F7A81B; }
+  .nota { margin: 22px 0 0; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: #5D6E73; background: #EFF5F6; border-radius: 8px; }
   .pie { padding: 24px; text-align: center; background: #07242C; }
-  .pie-marca { margin: 0; font-family: 'Libre Baskerville', Georgia, serif; font-size: 15px; font-weight: 700; letter-spacing: 4px; color: #F8F6F0; }
+  .pie-marca { margin: 0; font-family: var(--font-brand); font-size: 15px; font-weight: 700; letter-spacing: 4px; color: #F8F6F0; }
   .pie-texto { margin: 10px 0 0; font-size: 12px; line-height: 1.7; color: #8FD3DE; }
 </style></head>
 <body><div class="caja">
@@ -474,7 +481,7 @@ export function ModalReserva({
                   <div className="flex items-center gap-2">
                     <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all ${
                       pasoActual >= p.numero
-                        ? "bg-accent text-white"
+                        ? "bg-accent text-primary-ink"
                         : "bg-line text-muted"
                     }`}>
                       {pasoActual > p.numero ? <IconoCheck size={14} /> : p.numero}
@@ -629,8 +636,10 @@ export function ModalReserva({
                       onChange={(e) => setComentarios(e.target.value)}
                       placeholder="Ej: Necesito cama extra, llego tarde, piso alto..."
                       rows={3}
+                      maxLength={500}
                       className={`${claseCampo} mt-2 resize-none`}
                     />
+                    <p className="mt-1 text-right text-[11px] text-muted">{comentarios.length}/500</p>
                   </div>
 
                   <p className="mt-4 text-xs text-muted">
@@ -708,12 +717,12 @@ export function ModalReserva({
                 )}
                 {pasoActual < 3 ? (
                   <button onClick={siguientePaso}
-                    className="flex-1 rounded-lg bg-accent py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.98]">
+                    className="flex-1 rounded-lg bg-accent py-3.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.98]">
                     Siguiente
                   </button>
                 ) : (
                   <button onClick={confirmar} disabled={fase === "procesando"}
-                    className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-accent py-3.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.98] disabled:opacity-70">
+                    className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-accent py-3.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.98] disabled:opacity-70">
                     {fase === "procesando" ? (<><Spinner size={17} /> Procesando...</>) : (<><IconoLlave size={17} /> Confirmar reserva</>)}
                   </button>
                 )}

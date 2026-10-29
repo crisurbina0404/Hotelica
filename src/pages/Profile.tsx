@@ -314,7 +314,7 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                 <button
                   onClick={guardarCambios}
                   disabled={cargando}
-                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
                 >
                   {cargando ? (
                     <>
@@ -398,7 +398,7 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
               <div className="flex justify-end sm:col-span-2">
                 <button
                   type="submit"
-                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
+                  className="flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark active:scale-[0.97]"
                 >
                   <IconoCheck size={15} />
                   Cambiar contraseña

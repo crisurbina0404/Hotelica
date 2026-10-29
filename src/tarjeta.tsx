@@ -65,7 +65,7 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
         <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-ink/10" />
 
         {hotel.destacado && (
-          <span className="absolute left-3 top-4 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-md">
+          <span className="absolute left-3 top-4 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-primary-ink shadow-md">
             Destacado
           </span>
         )}

@@ -129,7 +129,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
           <div className="relative h-72 overflow-hidden sm:col-span-2 sm:h-[420px] sm:row-span-2">
             <img src={galeria[activa] ?? hotel.imagen} alt={hotel.nombre} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
             {hotel.destacado && (
-              <span className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-white shadow-md">Hotel destacado</span>
+              <span className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary-ink shadow-md">Hotel destacado</span>
             )}
           </div>
           {otrasFotos.map((o) => (
@@ -337,7 +337,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                       }}
                       className={`rounded-lg px-6 py-2.5 text-sm font-bold transition-all ${
                         sePuede
-                          ? "bg-accent text-white shadow-md hover:bg-accent-dark active:scale-95"
+                          ? "bg-accent text-primary-ink shadow-md hover:bg-accent-dark active:scale-95"
                           : "cursor-not-allowed bg-line text-muted"
                       }`}
                     >

@@ -162,7 +162,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             className={`nav-link flex items-center gap-1.5 text-sm font-medium transition-colors ${ruta.nombre === "favoritos" ? "active" : ""} ${clara ? "text-white" : "text-ink hover:text-primary"}`}
           >
             {t(idioma, "favoritos")}
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-white">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-primary-ink">
               {favoritos.length}
             </span>
           </button>
@@ -213,8 +213,8 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                 onClick={() => setLoginAbierto(true)}
                 className={`rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
                   clara
-                    ? "border-accent bg-accent text-white hover:bg-accent-dark"
-                    : "border-accent bg-accent text-white hover:bg-accent-dark hover:shadow-sm"
+                    ? "border-accent bg-accent text-primary-ink hover:bg-accent-dark"
+                    : "border-accent bg-accent text-primary-ink hover:bg-accent-dark hover:shadow-sm"
                 }`}
               >
                 {t(idioma, "iniciarSesion")}
@@ -269,7 +269,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                 <>
                   <button
                     onClick={() => { setLoginAbierto(true); setMenuMovil(false); }}
-                    className="rounded-lg bg-accent px-3 py-2.5 text-left text-sm font-bold text-white"
+                    className="rounded-lg bg-accent px-3 py-2.5 text-left text-sm font-bold text-primary-ink"
                   >
                     {t(idioma, "iniciarSesion")}
                   </button>
@@ -350,7 +350,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             <button
               type="submit"
               disabled={loginCargando}
-              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
+              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
             >
               {loginCargando ? "Iniciando..." : t(idioma, "loginBtn")}
             </button>
@@ -446,7 +446,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             <button
               type="submit"
               disabled={regCargando}
-              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-white shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
+              className="mt-1 w-full rounded-lg bg-accent px-6 py-2.5 text-sm font-bold text-primary-ink shadow-md transition-all hover:bg-accent-dark hover:shadow-lg active:scale-[0.97] disabled:opacity-50"
             >
               {regCargando ? "Creando cuenta..." : "Registrarse"}
             </button>
@@ -502,15 +502,18 @@ export function Footer({ navegar }: { navegar: Navegar }) {
       </svg>
       <div className="dot-texture-light pointer-events-none absolute inset-0 opacity-40" />
 
-      <div className="relative mx-auto grid max-w-7xl gap-8 px-4 pb-8 pt-10 sm:px-6 lg:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
-        <div>
+      {/* En el celular la marca y la última columna van a todo el ancho y los
+          enlaces emparejan; tablet queda 2×2 y escritorio en cuatro columnas:
+          una sola columna hasta `lg` dejaba el pie con media pantalla */}
+      <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 pb-8 pt-10 sm:px-6 lg:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
+        <div className="col-span-2 sm:col-span-1">
           <div className="flex flex-col items-start gap-1">
             <MarcaFooter />
           </div>
           <p className="mt-2 flex items-center gap-2 text-sm text-teal-200/90">
             <BanderaNI size={15} /> Donde Nicaragua te recibe
           </p>
-          <p className="mt-1 max-w-xs text-sm leading-relaxed text-teal-200/70">
+          <p className="mt-1 max-w-xs text-sm leading-relaxed text-pretty text-teal-200/70">
             Reserva hoteles pequeños y familiares: del patio colonial de Granada a la arena blanca de Corn Island.
           </p>
         </div>
@@ -538,7 +541,7 @@ export function Footer({ navegar }: { navegar: Navegar }) {
           </ul>
         </div>
 
-        <div>
+        <div className="col-span-2 sm:col-span-1">
           <h4 className="font-display text-sm font-bold uppercase tracking-wider text-white">Hotelica</h4>
           <ul className="mt-2 grid gap-1.5 text-sm text-teal-200/70">
             <li>Reservas en línea 24/7</li>

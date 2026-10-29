@@ -194,7 +194,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                       </button>
                     )}
                     {sePuedeCalificar(r) && (
-                      <button onClick={() => setPorCalificar(r)} className="flex items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-accent-dark active:scale-95">
+                      <button onClick={() => setPorCalificar(r)} className="flex items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-primary-ink shadow-sm transition-all hover:bg-accent-dark active:scale-95">
                         <IconoEstrella size={14} /> Calificar estadía
                       </button>
                     )}
@@ -402,7 +402,7 @@ function LineaTiempo({ estado }: { estado: EstadoReserva }) {
           const enCurso = i === actual;
           // Cada paso se pinta según esté hecho, en curso o pendiente
           const circulo = enCurso
-            ? "anim-pop border-accent-dark bg-accent text-white"
+            ? "anim-pop border-accent-dark bg-accent text-primary-ink"
             : hecho
               ? "border-[#86EFAC] bg-[#DCFCE7] text-[#166534]"
               : "border-line bg-white text-muted";
@@ -420,7 +420,7 @@ function LineaTiempo({ estado }: { estado: EstadoReserva }) {
                 <p className={`flex flex-wrap items-center gap-2 text-sm font-bold ${texto}`}>
                   {ETIQUETA_ESTADO[paso]}
                   {enCurso && (
-                    <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">Actual</span>
+                    <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary-ink">Actual</span>
                   )}
                 </p>
                 <p className="text-xs text-muted">{PASO_DESCRIPCION[paso]}</p>
@@ -484,9 +484,11 @@ function ModalCalificar({
           value={comentario}
           onChange={(e) => setComentario(e.target.value)}
           rows={3}
+          maxLength={500}
           placeholder="Cuéntanos sobre tu estadía (opcional)..."
           className="mt-5 w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
         />
+        <p className="mt-1 text-right text-[11px] text-muted">{comentario.length}/500</p>
 
         {error && <p role="alert" className="anim-pop mt-3 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2 text-sm font-semibold text-[#B91C1C]">{error}</p>}
 
