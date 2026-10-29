@@ -601,13 +601,11 @@ export type UsuarioPlataforma = {
   creadaEn: string; // fecha y hora de creación (ISO)
 };
 
-// Cuentas de ejemplo para que la consola muestre usuarios desde la primera visita;
-// las reales se suman solas al registrarse, al aprobarse un hotel y al entrar como admin
-export const USUARIOS_SEED: UsuarioPlataforma[] = [
-  { correo: "admin@hotelica.ni", nombre: "Administración", rol: "Admin", activo: true, creadaEn: "2026-09-01T09:00:00.000Z" },
-  { correo: "maria.fernandez@hotelica.ni", nombre: "María Fernández", rol: "Turista", activo: true, creadaEn: "2026-09-02T10:15:00.000Z" },
-  { correo: "jorge.pineda@hotelica.ni", nombre: "Jorge Pineda", rol: "Turista", activo: true, creadaEn: "2026-09-10T16:40:00.000Z" },
-];
+// No hay cuentas inventadas: lo que aparece en la consola son las cuentas
+// reales, que vienen de la tabla usuarios de la base y de los inicios de
+// sesión reales (el admin suma su cuenta al entrar, los hoteleros al aprobar
+// una inscripción). Así las cifras de la consola son exactas a la base
+export const USUARIOS_SEED: UsuarioPlataforma[] = [];
 
 // ----- Criterios de contraseña segura del hotelero (HU-040) -----
 

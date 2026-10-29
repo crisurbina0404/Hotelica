@@ -6,8 +6,26 @@
 import { test, expect, type Page } from "@playwright/test";
 import { nuevoControl, sinRedExterna, responderSupabase, iniciarSesion } from "./ayudas";
 
+// Dos reservas que "existen en la base": el test las devuelve simulando la
+// tabla para probar que las cifras del admin salen exactas del registro (HU-034).
+// Pertenecen a un hotel que existe en los datos, porque la validación
+// descarta las reservas de hoteles desconocidos
+const RESERVAS_DE_LA_BASE = [
+  { folio: "HC-7001", hotel_id: "h-sanjuan", habitacion_id: "hab-1", turista: "Clara Ríos",
+    correo: "clara@correo.ni", telefono: "5555-1001", comentarios: "", llegada: "2026-11-02",
+    salida: "2026-11-04", huespedes: 2, noches: 2, subtotal: 52.17, iva: 7.83,
+    total: 60, pago: "tarjeta", estado: "confirmada", creada: "2026-10-20T15:00:00.000Z",
+    calificada: false, motivo_rechazo: null, checkin_en: null, checkout_en: null },
+  { folio: "HC-7002", hotel_id: "h-sanjuan", habitacion_id: "hab-1", turista: "Leo Mairena",
+    correo: "leo@correo.ni", telefono: "5555-1002", comentarios: "", llegada: "2026-11-10",
+    salida: "2026-11-11", huespedes: 1, noches: 1, subtotal: 34.78, iva: 5.22,
+    total: 40, pago: "efectivo", estado: "pendiente", creada: "2026-10-22T09:30:00.000Z",
+    calificada: false, motivo_rechazo: null, checkin_en: null, checkout_en: null },
+];
+
 // Preparación común con la red cortada y las tablas vacías:
-// la consola queda trabajando con las semillas del navegador
+// la consola queda trabajando con las semillas del navegador,
+// salvo las reservas, que responden con las dos de la base
 async function abrirConsola(page: Page) {
   const control = nuevoControl();
   sinRedExterna(page);
@@ -17,6 +35,8 @@ async function abrirConsola(page: Page) {
   void page.route("**/rest/v1/hoteles*", (ruta) => ruta.fulfill({ json: [] }));
   void page.route("**/rest/v1/habitaciones*", (ruta) => ruta.fulfill({ json: [] }));
   void page.route("**/rest/v1/usuarios*", (ruta) => ruta.fulfill({ json: [] }));
+  // Las reservas sí llevan datos: acá es donde las cifras tienen que dibujar la base
+  void page.route("**/rest/v1/reservas*", (ruta) => ruta.fulfill({ json: RESERVAS_DE_LA_BASE }));
 
   await page.goto("/");
   await iniciarSesion(page, "admin@hotelica.ni", "secreta123", control);
@@ -41,10 +61,17 @@ test("la consola muestra las estadísticas globales con su desglose (HU-034)", a
   // El desglose del encabezado de la consola ya distingue aprobados y por aprobar
   await expect(page.getByText(/aprobado/).first()).toBeVisible();
 
-  // Escenario 3: la regla de ingresos queda explicada y el IVA a la vista
-  await expect(seccion.getByText(/Ingresos = Σ\(total de reservas NO canceladas\)/)).toBeVisible();
+  // Escenario 3: la regla de ingresos queda explicada en palabras (sin notación
+  // de fórmula, esa era la pulida del diseño) y el IVA a la vista
+  await expect(seccion.getByText(/Los ingresos suman los totales de las reservas no canceladas/)).toBeVisible();
   await expect(seccion.getByText("IVA incluido")).toBeVisible();
   await expect(seccion.getByText("Ticket promedio")).toBeVisible();
+
+  // Escenario 3.1: las cifras salen exactas de la base, no del navegador.
+  // Las dos reservas del mock suman C$ 100.00 (C$ 50.00 de promedio por
+  // estancia), sin importar cuántas reservas de demostración tenga este navegador
+  await expect(seccion.getByText("C$ 100.00")).toBeVisible();
+  await expect(seccion.getByText("C$ 50.00")).toBeVisible();
 
   // Escenario 5: la sección se calcula sola con los datos en vivo,
   // y mientras hay datos el botón de exportar queda activo
@@ -68,6 +95,7 @@ test("si la base no responde se muestra el aviso y se puede reintentar (HU-034)"
   void page.route("**/rest/v1/hoteles*", (ruta) => ruta.fulfill({ status: 500, json: { message: "la base de datos no respondió" } }));
   void page.route("**/rest/v1/habitaciones*", (ruta) => ruta.fulfill({ status: 500, json: { message: "la base de datos no respondió" } }));
   void page.route("**/rest/v1/usuarios*", (ruta) => ruta.fulfill({ status: 500, json: { message: "la base de datos no respondió" } }));
+  void page.route("**/rest/v1/reservas*", (ruta) => ruta.fulfill({ status: 500, json: { message: "la base de datos no respondió" } }));
 
   await page.goto("/");
   await iniciarSesion(page, "admin@hotelica.ni", "secreta123", control);

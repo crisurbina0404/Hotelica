@@ -18,7 +18,7 @@ import {
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion, UsuarioPlataforma } from "./data";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
-import { cargarHabitaciones, cargarHoteles, cargarResenas, fusionarHoteles, fusionarHabitaciones, fusionarPorId, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion, subirResena, cargarUsuarios, subirUsuario, fusionarUsuarios } from "./sync";
+import { cargarHabitaciones, cargarHoteles, cargarResenas, fusionarHoteles, fusionarHabitaciones, fusionarPorId, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion, subirResena, subirReserva, cargarReservas, cargarUsuarios, subirUsuario, fusionarUsuarios } from "./sync";
 
 // Datos del usuario autenticado (login simulado)
 export type Usuario = {
@@ -288,16 +288,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Cada tabla se mezcla en cuanto su propia carga responde: si usuarios
   // tarda o falla, que no frene el merge de hoteles y habitaciones.
-  // El nombre de la tabla va aparte porque reseñas y habitaciones también
+  // El nombre de la tabla va aparte porque reseñas, habitaciones y reservas
   // traen hotelId entre sus campos y adivinar por ahí se cruza.
-  type TablaSincronizada = "hoteles" | "habitaciones" | "usuarios" | "resenas";
+  type TablaSincronizada = "hoteles" | "habitaciones" | "usuarios" | "resenas" | "reservas";
   // Toda carga termina como una lista cualquiera + mensaje de error;
   // qué hacer con la lista lo decide el nombre de la tabla
   type RespuestaTabla = { datos: any[]; error: string | null };
   const mezclarTabla = (tabla: TablaSincronizada, r: RespuestaTabla | undefined) => {
-    if (!r || r.error || r.datos.length === 0) return;
+    if (!r || r.error) return;
     const { datos } = r;
     setDatos((d) => {
+      if (tabla === "reservas") {
+        // En reservas la base manda por completo, aunque venga vacía: así las
+        // cifras del admin son exactas al registro y no arrastran los
+        // datos de demostración de este navegador (HU-034)
+        return { ...d, reservas: datos as Reserva[] };
+      }
+      // Para el resto, si la base no trajo nada todavía nos quedamos con
+      // lo local para que el contenido demo siga vivo
+      if (datos.length === 0) return d;
       if (tabla === "usuarios") return { ...d, usuarios: fusionarUsuarios(d.usuarios, datos as UsuarioPlataforma[]) };
       if (tabla === "habitaciones") return { ...d, habitaciones: fusionarHabitaciones(d.habitaciones, datos as Habitacion[]) };
       if (tabla === "resenas") return { ...d, resenas: fusionarPorId(d.resenas, datos as Resena[]) };
@@ -315,6 +324,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       ["habitaciones", cargarHabitaciones()],
       ["usuarios", cargarUsuarios()],
       ["resenas", cargarResenas()],
+      ["reservas", cargarReservas()],
     ];
     // El merge arranca al vuelo, sin esperar a que respondan todas
     for (const [tabla, carga] of cargas) void carga.then((r) => mezclarTabla(tabla, r));
@@ -340,7 +350,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Al abrir o recargar la página volvemos a preguntar a la base quién es admin:
-  // un rol "admin" escrito a mano en el navegador no vuelve a servir (HU-042)
+  // un rol "admin" escrito a mano en el navegador no vuelve a servir (HU-042).
+  // De paso refrescamos los datos de la persona contra Supabase, porque lo que
+  // quedó guardado en el navegador puede quedarse viejo
   useEffect(() => {
     let vivo = true;
     (async () => {
@@ -357,6 +369,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const esAdmin = await esAdministrador(correo);
       if (!vivo) return;
       setRol((r) => (esAdmin ? "admin" : r === "admin" ? "turista" : r));
+
+      // Nombre, teléfono y dirección los pedimos frescos a la base (user_metadata)
+      const { data } = await supabase.auth.getUser();
+      if (!vivo || !data.user) return;
+      const meta = data.user.user_metadata ?? {};
+      const nombre = meta.nombre || meta.full_name || meta.name || correo.split("@")[0];
+      const telefono = meta.telefono || meta.phone || "";
+      const direccion = meta.direccion || "";
+      setUsuario((actual) => {
+        // La cuenta de hotelero (HU-021) manda: no la pisa la sesión guardada del navegador
+        if (actual?.rol === "Hotel") return actual;
+        const datosActuales = esAdmin ? "Admin" : "Turista";
+        if (actual?.correo === correo && actual?.nombre === nombre && actual?.rol === datosActuales) return actual;
+        return { nombre, rol: datosActuales, correo, telefono, direccion };
+      });
+      // La persona queda en la lista de la consola con sus datos de la base (HU-033)
+      asegurarUsuario(correo, nombre, esAdmin ? "Admin" : "Turista");
     })();
     return () => { vivo = false; };
   }, []);
@@ -450,6 +479,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  // Sube una reserva a la base tal como quedó. Si la base no la acepta,
+  // se lo decimos: la reserva no puede existir solo en este navegador si
+  // después las cifras del admin van a salir exactas de la base (HU-034)
+  const sincronizarReserva = (reserva: Reserva | undefined) => {
+    if (!reserva) return;
+    void subirReserva(reserva).then(({ error }) => {
+      if (error) {
+        avisar(`La reserva ${reserva.folio} se actualizó solo en este navegador: no se pudo subir a la base de datos (${error}).`, "error");
+      }
+    });
+  };
+
   // Crea una reserva nueva y le asigna el siguiente folio (HC-XXXX)
   const crearReserva: AppCtx["crearReserva"] = (r) => {
     // Leemos lo último guardado en el navegador: otra pestaña pudo haber reservado antes
@@ -488,6 +529,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ),
       };
     });
+    // La reserva nueva viaja a la base enseguida, pendiente y con su folio
+    sincronizarReserva(nueva);
     return nueva;
   };
 
@@ -495,6 +538,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const registrarPago: AppCtx["registrarPago"] = ({ folio, monto, metodo, referencia }) => {
     // En efectivo el turista paga en recepción: todo queda pendiente
     const pagado = metodo !== "efectivo";
+    const laReserva = datos.reservas.find((r) => r.folio === folio);
     const nuevo: Pago = {
       id: `p-${Date.now()}`,
       folio,
@@ -517,6 +561,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         "pago", `Pago con ${metodo} registrado para el folio ${folio}`
       ),
     }));
+    // Si el pago confirmó la reserva, el estado confirmado viaja a la base
+    if (pagado) sincronizarReserva(laReserva ? { ...laReserva, estado: "confirmada" } : undefined);
     return nuevo;
   };
 
@@ -578,6 +624,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Cambia el estado de una reserva (confirmar, check-in, check-out, cancelar)
   // El motivo solo se guarda cuando el hotel rechaza la reserva (HU-027)
   const cambiarEstadoReserva = (folio: string, estado: EstadoReserva, motivoRechazo?: string) => {
+    // La reserva antes del cambio la tengo en el estado actual; armamos
+    // la versión nueva para subirla a la base tal como queda
+    const laReserva = datos.reservas.find((r) => r.folio === folio);
+    const actualizada = laReserva
+      ? { ...laReserva, estado, ...(motivoRechazo ? { motivoRechazo } : {}) }
+      : undefined;
     setDatos((d) => {
       // Solo confirmar, cancelar y rechazar entran en la bitácora del admin (HU-035)
       const tipoEvento: TipoEvento | null =
@@ -607,12 +659,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
             : d.eventosAdmin,
       };
     });
+    // El estado de la reserva queda en la base (confirmada, cancelada o rechazada)
+    sincronizarReserva(actualizada);
   };
 
   // Registra la entrada del huésped: estado Check-in con la hora de este momento (HU-028)
   // Devuelve la marca de fecha y hora para poder avisar con ella en el panel
   const registrarCheckin = (folio: string) => {
     const marca = ahoraISO();
+    const laReserva = datos.reservas.find((r) => r.folio === folio);
     setDatos((d) => {
       const laReserva = d.reservas.find((r) => r.folio === folio);
       return {
@@ -627,6 +682,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : d.eventosAdmin,
       };
     });
+    // El check-in con su hora viaja a la base (HU-028)
+    sincronizarReserva(laReserva ? { ...laReserva, estado: "checkin", checkinEn: marca } : undefined);
     return marca;
   };
 
@@ -634,6 +691,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Devuelve la marca para que el panel avise con la hora exacta y descargue la factura
   const registrarCheckout = (folio: string) => {
     const marca = ahoraISO();
+    const laReserva = datos.reservas.find((r) => r.folio === folio);
     setDatos((d) => {
       const laReserva = d.reservas.find((r) => r.folio === folio);
       return {
@@ -648,6 +706,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
           : d.eventosAdmin,
       };
     });
+    // El check-out con su hora viaja a la base (HU-029)
+    sincronizarReserva(laReserva ? { ...laReserva, estado: "completada", checkoutEn: marca } : undefined);
     return marca;
   };
 
@@ -754,6 +814,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         avisar(`Tu calificación se guardó solo en este navegador: no se pudo subir a la base de datos (${r.error}).`, "error");
       }
     });
+
+    // La reserva queda marcada como calificada también en la base (HU-019 + HU-034)
+    sincronizarReserva({ ...reserva, calificada: true });
 
     // El comentario también viaja a la base para que lo lean desde
     // cualquier navegador; si es vacío ni siquiera se vuelve reseña

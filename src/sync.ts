@@ -5,7 +5,7 @@
 // sigue funcionando igual que antes con el guardado local.
 // ============================================================
 import { supabase } from "./lib/supabase";
-import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto, Resena, UsuarioPlataforma } from "./data";
+import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto, Resena, Reserva, EstadoReserva, UsuarioPlataforma } from "./data";
 
 // Así se llaman las columnas en la base (en la app usamos camelCase)
 type HotelFila = {
@@ -58,6 +58,30 @@ type ResenaFila = {
   rating: number;
   comentario: string | null; // el turista puede calificar sin escribir nada
   fecha: string | null;
+};
+
+type ReservaFila = {
+  folio: string;
+  hotel_id: string;
+  habitacion_id: string | null;
+  turista: string;
+  correo: string;
+  telefono: string | null;
+  comentarios: string | null;
+  llegada: string | null;
+  salida: string | null;
+  huespedes: number | null;
+  noches: number | null;
+  subtotal: number | null;
+  iva: number | null;
+  total: number | null;
+  pago: string | null;
+  estado: EstadoReserva;
+  creada: string | null;
+  calificada: boolean | null;
+  motivo_rechazo: string | null;
+  checkin_en: string | null;
+  checkout_en: string | null;
 };
 
 // ----- De la app hacia la base -----
@@ -119,6 +143,58 @@ function aFilaResena(r: Resena): ResenaFila {
     rating: r.rating,
     comentario: r.comentario || null,
     fecha: r.fecha || null,
+  };
+}
+
+function aFilaReserva(r: Reserva): ReservaFila {
+  return {
+    folio: r.folio,
+    hotel_id: r.hotelId,
+    habitacion_id: r.habitacionId ?? null,
+    turista: r.turista,
+    correo: r.correo,
+    telefono: r.telefono || null,
+    comentarios: r.comentarios || null,
+    llegada: r.llegada || null,
+    salida: r.salida || null,
+    huespedes: r.huespedes ?? null,
+    noches: r.noches ?? null,
+    subtotal: r.subtotal ?? null,
+    iva: r.iva ?? null,
+    total: r.total ?? null,
+    pago: r.pago ?? null,
+    estado: r.estado,
+    creada: r.creada || null,
+    calificada: r.calificada ?? false,
+    motivo_rechazo: r.motivoRechazo || null,
+    checkin_en: r.checkinEn || null,
+    checkout_en: r.checkoutEn || null,
+  };
+}
+
+function deFilaReserva(f: ReservaFila): Reserva {
+  return {
+    folio: f.folio,
+    hotelId: f.hotel_id,
+    habitacionId: f.habitacion_id ?? "",
+    turista: f.turista,
+    correo: f.correo,
+    telefono: f.telefono ?? "",
+    comentarios: f.comentarios ?? "",
+    llegada: f.llegada ?? "",
+    salida: f.salida ?? "",
+    huespedes: f.huespedes ?? 0,
+    noches: f.noches ?? 0,
+    subtotal: f.subtotal ?? 0,
+    iva: f.iva ?? 0,
+    total: f.total ?? 0,
+    pago: (f.pago ?? "efectivo") as Reserva["pago"],
+    estado: f.estado ?? "pendiente",
+    creada: f.creada ?? new Date().toISOString(),
+    calificada: f.calificada ?? false,
+    motivoRechazo: f.motivo_rechazo ?? undefined,
+    checkinEn: f.checkin_en ?? undefined,
+    checkoutEn: f.checkout_en ?? undefined,
   };
 }
 
@@ -238,6 +314,12 @@ export async function cargarResenas(): Promise<Carga<Resena>> {
   return cargarTabla("resenas", deFilaResena);
 }
 
+// Trae las reservas que existen de verdad en la base (HU-034):
+// de acá salen las cifras exactas de la consola del admin
+export async function cargarReservas(): Promise<Carga<Reserva>> {
+  return cargarTabla("reservas", deFilaReserva);
+}
+
 // Guarda una cuenta (inserta o actualiza por el correo): activo = TRUE/FALSE (HU-033)
 export async function subirUsuario(usuario: UsuarioPlataforma): Promise<{ error?: string }> {
   try {
@@ -280,6 +362,18 @@ export async function subirCalificacion(
 export async function subirResena(resena: Resena): Promise<{ error?: string }> {
   try {
     const { error } = await supabase.from("resenas").upsert(aFilaResena(resena), { onConflict: "id" });
+    return error ? { error: mensajeDeError(error) } : {};
+  } catch {
+    return { error: "no hay conexión con la base de datos" };
+  }
+}
+
+// Guarda la reserva con su estado al día (inserta o actualiza por folio):
+// cada cambio de estado (pago, confirmar, cancelar, check-in, check-out,
+// calificar) la llama para que la base siempre tenga el dato real (HU-034)
+export async function subirReserva(reserva: Reserva): Promise<{ error?: string }> {
+  try {
+    const { error } = await supabase.from("reservas").upsert(aFilaReserva(reserva), { onConflict: "folio" });
     return error ? { error: mensajeDeError(error) } : {};
   } catch {
     return { error: "no hay conexión con la base de datos" };

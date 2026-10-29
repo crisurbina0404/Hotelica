@@ -32,6 +32,8 @@ export function EstadisticasGlobales() {
   // Solo mostramos esqueletos cuando no hay ningún dato local que enseñar
   const cargando = sincronizando && !metricas.hayDatos;
 
+  // Los cuatro recuadros van del mismo índigo del rol: una sola familia, sin
+  // semáforo de colores que despiste (la guía de colores es solo para estados)
   const tarjetas = [
     {
       titulo: "Usuarios activos",
@@ -40,14 +42,14 @@ export function EstadisticasGlobales() {
         ? `${metricas.turistasActivos} turista${metricas.turistasActivos === 1 ? "" : "s"} · ${metricas.hotelerosActivos} hotelero${metricas.hotelerosActivos === 1 ? "" : "s"}`
         : "Sin actividad registrada",
       icono: <IconoUsuario size={19} />,
-      color: "bg-[#DBEAFE] text-[#1D4ED8]",
+      color: "bg-admin-soft text-admin",
     },
     {
       titulo: "Hoteles registrados",
       valor: metricas.hotelesRegistrados.toLocaleString("es-NI"),
       detalle: `${metricas.hotelesAprobados} aprobado${metricas.hotelesAprobados === 1 ? "" : "s"} · ${metricas.hotelesPendientes} por aprobar`,
       icono: <IconoHotel size={19} />,
-      color: "bg-[#DCFCE7] text-[#166534]",
+      color: "bg-admin-soft text-admin",
     },
     {
       titulo: "Total de reservas",
@@ -59,9 +61,9 @@ export function EstadisticasGlobales() {
     {
       titulo: "Ingresos totales",
       valor: fmtDinero(metricas.ingresosTotales),
-      detalle: "Σ de reservas no canceladas",
+      detalle: "Suma de las reservas no canceladas",
       icono: <IconoBillete size={19} />,
-      color: "bg-accent-light text-accent-dark",
+      color: "bg-admin-soft text-admin",
       compacto: true,
     },
   ];
@@ -219,7 +221,7 @@ export function EstadisticasGlobales() {
                 <p className="mt-1 font-display text-xl font-extrabold text-ink tabular-nums">{fmtDinero(metricas.ivaTotal)}</p>
               </div>
               <p className="text-[11px] leading-relaxed text-muted sm:col-span-3">
-                Ingresos = Σ(total de reservas NO canceladas). Se excluyen las reservas canceladas y los registros inválidos.
+                Los ingresos suman los totales de las reservas no canceladas. Las canceladas y los registros inválidos quedan fuera del cálculo.
               </p>
             </div>
           </Reveal>

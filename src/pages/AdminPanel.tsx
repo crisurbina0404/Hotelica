@@ -1,5 +1,7 @@
 // ============================================================
-// Hotelica — Consola de administración (HU-031: aprobar un hotel)
+// Hotelica — Consola de administración
+// Bandeja de hoteles (HU-031/032), usuarios (HU-033),
+// estadísticas globales (HU-034) y avisos de reservas (HU-035)
 // ============================================================
 import { useMemo } from "react";
 import { useApp } from "../store";
@@ -15,11 +17,12 @@ import {
 } from "../icons";
 import { useState } from "react";
 
-// Cómo se ve cada rol en la lista de usuarios (HU-033)
+// Cómo se ve cada rol en la lista de usuarios (HU-033).
+// Los tres van con los colores de rol de la guía de diseño: teal, ámbar e índigo
 const ETIQUETA_ROL: Record<UsuarioPlataforma["rol"], string> = { Turista: "Turista", Hotel: "Hotelero", Admin: "Admin" };
 const COLOR_ROL: Record<UsuarioPlataforma["rol"], string> = {
-  Turista: "bg-[#DBEAFE] text-[#1D4ED8]",
-  Hotel: "bg-accent-light text-accent-dark",
+  Turista: "bg-primary-light text-primary",
+  Hotel: "bg-hotel-soft text-hotel",
   Admin: "bg-admin-soft text-admin",
 };
 
@@ -181,10 +184,12 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
     </>
   );
 
+  // Los cuatro recuadros van del mismo índigo del rol: la variedad de color
+  // queda para las pastillas de estado, que ahí sí está codificando información
   const stats = [
-    { t: "Hoteles aprobados", v: aprobados.length, icono: <IconoHotel size={19} />, color: "bg-[#DCFCE7] text-[#166534]" },
-    { t: "Por aprobar", v: pendientes.length, icono: <IconoOjo size={19} />, color: "bg-accent-light text-accent-dark" },
-    { t: "Reservas totales", v: reservas.length, icono: <IconoCheck size={19} />, color: "bg-[#DBEAFE] text-[#1D4ED8]" },
+    { t: "Hoteles aprobados", v: aprobados.length, icono: <IconoHotel size={19} />, color: "bg-admin-soft text-admin" },
+    { t: "Por aprobar", v: pendientes.length, icono: <IconoOjo size={19} />, color: "bg-admin-soft text-admin" },
+    { t: "Reservas totales", v: reservas.length, icono: <IconoCheck size={19} />, color: "bg-admin-soft text-admin" },
     { t: "Ingresos plataforma", v: fmtDinero(ingresosPlataforma), icono: <IconoGrafica size={19} />, color: "bg-admin-soft text-admin", chico: true },
   ];
 
@@ -192,14 +197,16 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
     <main className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6">
       {/* Encabezado con identidad del rol admin */}
       <Reveal>
-        <div className="overflow-hidden rounded-2xl bg-gradient-to-r from-admin to-[#312E81] p-7 text-white shadow-lift sm:p-8">
+        {/* Índigo sólido con la textura de puntos de fondo: sin gradiente, la guía lo prohíbe */}
+        <div className="dot-texture-light overflow-hidden rounded-2xl bg-admin p-7 text-white shadow-lift sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-5">
             <div className="flex items-center gap-4">
               <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm"><IconoEscudo size={28} /></span>
               <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-200">Consola de administración · Rol Admin</p>
+                {/* El nombre y el rol salen de la sesión: son los datos de la base, no del navegador */}
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-admin-soft">Consola de administración · {usuario?.nombre ?? "Rol Admin"}</p>
                 <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Supervisión de la plataforma</h1>
-                <p className="mt-0.5 text-sm text-indigo-100/85">Solo los hoteles aprobados son visibles para los turistas</p>
+                <p className="mt-0.5 text-sm text-white/85">Solo los hoteles aprobados son visibles para los turistas</p>
               </div>
             </div>
             <button onClick={() => navegar({ nombre: "resultados" })} className="rounded-lg bg-white/12 px-5 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20">
@@ -328,7 +335,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
               <Reveal key={h.id} delay={i * 50}>
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-line bg-white px-4 py-3 shadow-card transition-transform hover:-translate-y-0.5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <img src={h.imagen} alt={h.nombre} className="h-10 w-13 rounded-md object-cover" style={{ width: 52 }} />
+                    <img src={h.imagen} alt={h.nombre} className="h-10 w-[52px] rounded-md object-cover" />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-ink">{h.nombre}</p>
                       {/* El motivo del rechazo queda a la vista en el historial (HU-032) */}
@@ -362,7 +369,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-canvas">
                     <div
-                      className="anim-grow h-full rounded-full bg-gradient-to-r from-admin to-primary"
+                      className="anim-grow h-full rounded-full bg-admin"
                       style={{ width: `${(p.cant / reporte.max) * 100}%`, animationDelay: `${i * 90}ms` }}
                     />
                   </div>
@@ -670,7 +677,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
               }}
               rows={3}
               placeholder="Ej: La descripción es muy corta y no tiene foto representativa"
-              className="mt-1.5 w-full resize-none rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-danger"
+              className="mt-1.5 w-full resize-none rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-all focus:border-danger focus:ring-2 focus:ring-danger/25"
             />
             {errorMotivo && <p className="mt-1.5 text-xs font-semibold text-danger">{errorMotivo}</p>}
             <div className="mt-5 flex gap-2.5">

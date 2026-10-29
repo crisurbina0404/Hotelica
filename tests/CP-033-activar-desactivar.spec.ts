@@ -17,9 +17,15 @@ async function abrirConsola(page: Page) {
   sinRedExterna(page);
   responderSupabase(page, control);
   // Se registra después de los cortes, así que atiende antes que ellos:
-  // el GET devuelve vacío (manda la semilla local) y guardamos cada subida
+  // la tabla usuarios responde con dos turistas reales (después de todo,
+  // la lista de la consola tiene que venir de la base, HU-033) y guardamos cada subida
   void page.route("**/rest/v1/usuarios*", (ruta) => {
-    if (ruta.request().method() === "GET") return void ruta.fulfill({ json: [] });
+    if (ruta.request().method() === "GET") {
+      return void ruta.fulfill({ json: [
+        { correo: "maria.fernandez@hotelica.ni", nombre: "María Fernández", rol: "Turista", activo: true, creado_en: "2026-09-02T10:15:00.000Z" },
+        { correo: "jorge.pineda@hotelica.ni", nombre: "Jorge Pineda", rol: "Turista", activo: true, creado_en: "2026-09-10T16:40:00.000Z" },
+      ] });
+    }
     subidas.push(ruta.request().postDataJSON() as Subida);
     return void ruta.fulfill({ json: [] });
   });

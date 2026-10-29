@@ -6,6 +6,60 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.76.0] — 2026-10-28 · Limpieza de archivos que no contribuían al proyecto
+
+### Retirado
+- **Vitest por completo** — `vitest.config.ts` se quedó configurado para pruebas unitarias que nunca se escribieron (con `passWithNoTests` el `npm test` "pasaba" sin probar nada) y la dependencia era peso muerto en `node_modules`. Hoy se desinstala `vitest` y se van los scripts `test` y `test:watch`; las pruebas reales se corren con `npm run test:e2e` (Playwright, 18 pruebas). El script `typecheck` queda a la vista explícito.
+- **Reporte de critique del agente de diseño** — `.impeccable/critique/2026-10-28T22-29-55Z__src-app-tsx.md` era un artefacto de sesión, no acompaña al producto.
+- **Doble formato del backlog** — `docs/Product_Backlog_Hotelica.csv` duplicaba el `Product_Backlog_Hotelica.md`; el md basta.
+
+### Verificación
+- `npx tsc --noEmit` sin errores; ninguna referencia residual a vitest en `package.json`.
+
+---
+
+## [v0.75.0] — 2026-10-28 · Las cifras del admin salen de la base: las reservas migran a Supabase
+
+### Corregido (módulo admin + reservas)
+- **Nueva tabla `reservas` en la base** — hasta hoy las reservas solo existían en el navegador: las cifras de la consola (reservas totales, ingresos, IVA, ticket promedio, reporte por departamento) contaban datos de demostración locales y no lo que de verdad está guardado. Migración nueva `20261028130000_hu034_reservas_en_base.sql` (aplicar desde el SQL Editor del Dashboard) con todos los campos del folio, RLS igual que hoteles y el comentario de propósito en la tabla.
+- **Cada cambio de reserva viaja a la base** — crear reserva, registrar pago, confirmar, cancelar, rechazar del hotel, check-in, check-out y calificar hacen su upsert por folio al momento (`subirReserva`); si la base no acepta el cambio, el aviso lo dice con el folio, porque una reserva que no está en la base no puede contar en los números.
+- **Al sincronizar, en reservas la base manda por completo** — aunque venga vacía: el estado local se reemplaza por el registro de la base, así las cifras son exactas y no arrastran las reservas de demostración de este navegador. Las demás tablas siguen mezclando y conservan el contenido demo cuando la base no trae nada.
+- **Fuera las turistas inventadas de la semilla** — `USUARIOS_SEED` quedó vacío: la consola lista únicamente las cuentas reales de la tabla `usuarios` más la cuenta del admin que inició sesión. El test CP-033 ahora simula la tabla de la base (como debe ser) para mostrar a las turistas.
+- **CP-034 elevado** — el test ahora devuelve dos reservas "de la base" y vela por que los ingresos y el ticket promedio salgan exactos de ese registro (C$ 100.00 / C$ 50.00), sin importar lo que tenga el navegador.
+
+### Pruebas
+- Suite E2E **18/18 verdes**; `npx tsc --noEmit` y `npm run build` sin errores.
+
+---
+
+## [v0.74.0] — 2026-10-28 · Consola: recuadros en un solo tono y datos del admin desde la base
+
+### Corregido (módulo admin)
+- **Recuadros de cifras en un solo color** — las cuatro cifras de la consola y las cuatro de estadísticas globales volaban entre verde, dorado, azul e índigo: un semáforo que no decía nada. Ahora todos van del índigo del rol (`admin-soft`/`admin`); la variedad de color queda donde sí informa: las pastillas de estado de HU-019/031/032 (§1.4).
+- **Fuera el administrador inventado** — la semilla traía la cuenta fantasma `admin@hotelica.ni / "Administración"` que nunca existió en la base: al entrar un admin real veía dos filas de administradores. Ahora la semilla solo trae turistas de ejemplo y las cuentas de admin son únicamente las reales que inician sesión.
+- **Datos del admin siempre frescos de la base** — al abrir o recargar, el store pide a Supabase `getUser()` y monta el usuario con los `user_metadata` de la base (nombre, teléfono, dirección), en vez de confiar en lo que quedó guardado en el navegador; `actualizarPerfil` ya subía sus cambios a la base, así que ahora lo que se muestra es exactamente lo que la base tiene. La fila "(tu cuenta)" de la lista de usuarios y el nombre del encabezado de la consola reflejan esos datos. La sesión de hotelero (HU-021) sigue mandando y no la pisa el refresco.
+
+### Pruebas
+- Suite E2E **18/18 verdes**; `npx tsc --noEmit` sin errores; `impeccable detect` sin hallazgos en los archivos del módulo.
+
+---
+
+## [v0.73.0] — 2026-10-28 · La guía de diseño entra a la consola de administración
+
+### Corregido (módulo admin: `AdminPanel.tsx` + `EstadisticasGlobales.tsx`)
+- **Encabezado sin gradiente** — el banner de la consola iba con gradiente índigo (`from-admin` a `#312E81`), un patrón prohibido por la guía (§1.7: nada de gradientes violeta como decoración) y con un hexadecimal fuera de la paleta. Ahora es índigo sólido con la textura de puntos de fondos oscuros (`dot-texture-light`), y los tonos inventados `text-indigo-200` / `text-indigo-100/85` salieron a favor de tokens (`text-admin-soft`, `text-white/85`).
+- **Colores de rol en su lugar (§1.3)** — en la lista de usuarios, la pastilla de Turista iba en azul pastel y la de Hotelero en dorado claro con `text-accent-dark`, que mide ~2.45:1 (muy por debajo del 4.5:1 de §10.4). Turista ahora es teal (`primary-light`/`primary`), Hotelero ámbar (`hotel-soft`/`hotel`) y Admin se queda en índigo; el mismo ajuste en la tarjeta de "Usuarios activos" de las estadísticas.
+- **Ingresos al dorado legible** — la tarjeta de "Ingresos totales" bajó de `text-accent-dark` sobre dorado claro (2.45:1) al ámbar oscuro `#92400E` de la familia de estados, que contraste bien.
+- **Barra del reporte sin gradiente** — la barra de "Reservas por departamento" iba de índigo a teal en gradiente; ahora índigo sólido.
+- **Foco visible en el motivo de rechazo** — el textarea tenía `focus:border-danger` solo; suma `ring-2 ring-danger/25`, igual que todos los campos del sitio (§10.4).
+- **Copy sin notación académica (§10.5)** — fuera el "Σ de reservas…" y el "Ingresos = Σ(total…)": la regla ahora se cuenta en palabras. El test CP-034 siguió el cambio.
+
+### Pruebas
+- Suite E2E **18/18 verdes**; `npx tsc --noEmit` y `npm run build` sin errores.
+- `impeccable detect` sobre los dos archivos del módulo: **0 hallazgos**.
+
+---
+
 ## [v0.72.0] — 2026-10-28 · Ronda de diseño: contraste del oro, portada en móvil y pulido del comprobante
 
 ### Corregido
