@@ -123,9 +123,9 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
   const [errorPass, setErrorPass] = useState("");
 
   // Cambia la contraseña temporal y desbloquea el resto del panel
-  const guardarPassword = (e: React.FormEvent) => {
+  const guardarPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const resultado = cambiarContrasenaHotelero(nuevaPass, confirmaPass);
+    const resultado = await cambiarContrasenaHotelero(nuevaPass, confirmaPass);
     if (resultado.error) {
       setErrorPass(resultado.error);
       return;
@@ -303,7 +303,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
       {r.estado === "pendiente" && (
         <>
           <Accion onClick={() => confirmar(r)} clase="bg-primary text-white hover:bg-primary-dark" icono={<IconoCheck size={13} />} texto="Confirmar" />
-          <Accion onClick={() => abrirRechazo(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Rechazar" />
+          <Accion onClick={() => abrirRechazo(r)} clase="border border-danger/35 text-[#B91C1C] hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Rechazar" />
         </>
       )}
       {r.estado === "confirmada" && (
@@ -315,7 +315,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
               Check-in el {fmtFecha(r.llegada)}
             </span>
           )}
-          <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-danger hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
+          <Accion onClick={() => cancelar(r)} clase="border border-danger/35 text-[#B91C1C] hover:bg-[#FEF2F2]" icono={<IconoX size={13} />} texto="Cancelar" />
         </>
       )}
       {r.estado === "checkin" && (
@@ -704,7 +704,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
   };
 
   const stats = [
-    { t: "Reservas pendientes", v: pendientes, icono: <IconoCalendario size={19} />, color: "bg-accent-light text-accent-dark" },
+    { t: "Reservas pendientes", v: pendientes, icono: <IconoCalendario size={19} />, color: "bg-accent-light text-[#92400E]" },
     { t: "Confirmadas", v: confirmadas, icono: <IconoCheck size={19} />, color: "bg-[#DBEAFE] text-[#1D4ED8]" },
     { t: "Check-ins por hacer", v: checkinsHoy, icono: <IconoEntrada size={19} />, color: "bg-primary-light text-primary" },
     { t: "Check-outs de hoy", v: checkoutsHoy, icono: <IconoSalida size={19} />, color: "bg-[#DCFCE7] text-[#166534]" },
@@ -1638,7 +1638,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
             <Reveal>
               <div className="mt-5 rounded-xl border border-line bg-white p-5 shadow-card">
                 <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-light text-accent-dark"><IconoBillete size={18} /></span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-light text-[#92400E]"><IconoBillete size={18} /></span>
                   <div>
                     <h3 className="font-display text-base font-bold text-ink">Ajuste por temporada</h3>
                     <p className="mt-0.5 text-xs leading-relaxed text-muted">
@@ -1864,7 +1864,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
                   <button
                     onClick={() => quitarFoto(i)}
                     disabled={edicionBloqueada}
-                    className="rounded-md border border-danger/35 px-2.5 py-1.5 text-[11px] font-bold text-danger transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-line disabled:text-muted"
+                    className="rounded-md border border-danger/35 px-2.5 py-1.5 text-[11px] font-bold text-[#B91C1C] transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-line disabled:text-muted"
                   >
                     Quitar
                   </button>
@@ -1882,7 +1882,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
       {/* Modal para rechazar una reserva: sin motivo no se envía (HU-027) */}
       <Modal abierto={!!porRechazar} alCerrar={() => setPorRechazar(null)} ancho="max-w-md">
         <div className="p-7">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE2E2] text-danger">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FEE2E2] text-[#B91C1C]">
             <IconoX size={26} />
           </span>
           <h3 className="mt-4 font-display text-xl font-bold text-ink">Rechazar la reserva {porRechazar?.folio}</h3>
@@ -1996,7 +1996,7 @@ function ContenidoPanelHotel({ hotel }: { hotel: Hotel }) {
                       <button
                         onClick={() => quitarFotoDeHabitacion(i)}
                         disabled={edicionBloqueada}
-                        className="rounded-md border border-danger/35 px-2.5 py-1.5 text-[11px] font-bold text-danger transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-line disabled:text-muted"
+                        className="rounded-md border border-danger/35 px-2.5 py-1.5 text-[11px] font-bold text-[#B91C1C] transition-colors hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:border-line disabled:text-muted"
                       >
                         Quitar
                       </button>

@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useApp } from "./store";
 import type { Ruta, Navegar } from "./rutas";
-import { DEPARTAMENTOS } from "./data";
+import { DEPARTAMENTOS, esCorreo, errorCriteriosContrasena } from "./data";
 import { t } from "./i18n";
 import {
   BanderaNI, IconoCorazon, IconoMenu, IconoX,
@@ -12,7 +12,7 @@ import {
   LogoGoogle,
 } from "./icons";
 import { IconoBuscar, IconoUsuario } from "./icons";
-import { Marca, Modal, MarcaFooter } from "./ui";
+import { Marca, Modal, MarcaFooter, ChecklistContrasena } from "./ui";
 // ----- Barra de navegación principal -----
 export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   const { favoritos, rol, usuario, idioma, login, registrar, loginSocial, logout, registroAbierto, abrirRegistro, cerrarRegistro } = useApp();
@@ -114,9 +114,15 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
       setRegError("Todos los campos son obligatorios");
       return;
     }
-    // Validación de contraseña mínima
-    if (regContrasena.length < 6) {
-      setRegError("La contraseña debe tener al menos 6 caracteres");
+    // El correo debe tener formato de correo de verdad (usuario@dominio.algo)
+    if (!esCorreo(regCorreo.trim())) {
+      setRegError("Revisá tu correo: le falta el @ o el dominio.");
+      return;
+    }
+    // Misma política de contraseña segura que el resto de la plataforma
+    const errorContrasena = errorCriteriosContrasena(regContrasena);
+    if (errorContrasena) {
+      setRegError(errorContrasena);
       return;
     }
     setRegError("");
@@ -138,7 +144,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
   const Enlace = ({ a, texto, activo }: { a: Ruta; texto: string; activo?: boolean }) => (
     <button
       onClick={() => { navegar(a); setMenuMovil(false); }}
-      className={`nav-link text-sm font-medium transition-colors ${activo ? "active" : ""} ${clara ? "text-white" : "text-ink hover:text-primary"}`}
+      className={`nav-link rounded-md py-2 text-sm font-medium transition-colors ${activo ? "active" : ""} ${clara ? "text-white" : "text-ink hover:text-primary"}`}
     >
       {texto}
     </button>
@@ -146,9 +152,22 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
 
   return (
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${clara ? "bg-transparent" : "bg-white/95 shadow-[0_2px_20px_rgba(15,23,42,0.07)] backdrop-blur"}`}>
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
+      {/* Velo sobre la foto del hero: el blanco de los enlaces caía a 3,4:1 en
+          el cielo claro. Con el degradado en primary-ink sube por encima de 4,5
+          y la barra sigue leyéndose como transparente sobre la imagen. */}
+      {clara && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 h-[104px] bg-gradient-to-b from-primary-ink/75 via-primary-ink/62 to-transparent"
+        />
+      )}
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-6 px-4 sm:px-6">
         {/* Marca: nunca se comprime, y en celular usa un tamaño más chico */}
-        <button onClick={() => navegar({ nombre: "inicio" })} className="flex shrink-0 items-center gap-2.5 self-center" aria-label="Ir al inicio">
+        <button
+          onClick={() => navegar({ nombre: "inicio" })}
+          className="flex min-h-11 shrink-0 items-center gap-2.5 self-center rounded-md px-1 py-1.5"
+          aria-label="Ir al inicio"
+        >
           <Marca tam="navbar" clara={clara} />
         </button>
 
@@ -159,7 +178,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
           <Enlace a={{ nombre: "reservas" }} texto={t(idioma, "reservas")} activo={ruta.nombre === "reservas"} />
           <button
             onClick={() => navegar({ nombre: "favoritos" })}
-            className={`nav-link flex items-center gap-1.5 text-sm font-medium transition-colors ${ruta.nombre === "favoritos" ? "active" : ""} ${clara ? "text-white" : "text-ink hover:text-primary"}`}
+            className={`nav-link flex items-center gap-1.5 rounded-md py-2 text-sm font-medium transition-colors ${ruta.nombre === "favoritos" ? "active" : ""} ${clara ? "text-white" : "text-ink hover:text-primary"}`}
           >
             {t(idioma, "favoritos")}
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[11px] font-bold text-primary-ink">
@@ -191,7 +210,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                 className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-all ${
                   clara
                     ? "border-white/35 bg-white/10 text-white hover:bg-white/20"
-                    : "border-line bg-white text-ink hover:border-danger hover:text-danger"
+                    : "border-line bg-white text-ink hover:border-danger hover:text-[#B91C1C]"
                 }`}
               >
                 {t(idioma, "cerrarSesion")}
@@ -224,7 +243,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
           {/* Botón hamburguesa (móvil) */}
           <button
             onClick={() => setMenuMovil((v) => !v)}
-            className={`rounded-lg p-2 lg:hidden ${clara ? "text-white" : "text-ink"}`}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg lg:hidden ${clara ? "text-white" : "text-ink"}`}
             aria-label={menuMovil ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={menuMovil}
             aria-controls="menu-movil"
@@ -261,7 +280,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
               {usuario ? (
                 <button
                   onClick={() => { logout(); setMenuMovil(false); }}
-                  className="rounded-lg border border-line px-3 py-2.5 text-left text-sm font-semibold text-ink transition-colors hover:border-danger hover:text-danger"
+                  className="rounded-lg border border-line px-3 py-2.5 text-left text-sm font-semibold text-ink transition-colors hover:border-danger hover:text-[#B91C1C]"
                 >
                   {t(idioma, "cerrarSesion")}
                 </button>
@@ -314,12 +333,12 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                   value={contrasena}
                   onChange={(e) => setContrasena(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
-                  className="w-full rounded-lg border border-line bg-white px-3 py-2.5 pr-10 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                  className="w-full rounded-lg border border-line bg-white px-3 py-2.5 pr-12 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
                 <button
                   type="button"
                   onClick={() => setVerContrasena(!verContrasena)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                  className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted transition-colors hover:bg-ink/5 hover:text-ink"
                   aria-label={verContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
                   {verContrasena ? (
@@ -332,7 +351,7 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
             </label>
 
             {loginError && (
-              <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-red-500">
+              <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C]">
                 {loginError}
               </p>
             )}
@@ -419,13 +438,13 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                   type={verRegContrasena ? "text" : "password"}
                   value={regContrasena}
                   onChange={(e) => setRegContrasena(e.target.value)}
-                  placeholder="Mínimo 6 caracteres"
-                  className="w-full rounded-lg border border-line bg-white px-3 py-2.5 pr-10 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
+                  placeholder="Mínimo 8, con número y símbolo"
+                  className="w-full rounded-lg border border-line bg-white px-3 py-2.5 pr-12 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25"
                 />
                 <button
                   type="button"
                   onClick={() => setVerRegContrasena(!verRegContrasena)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                  className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted transition-colors hover:bg-ink/5 hover:text-ink"
                   aria-label={verRegContrasena ? "Ocultar contraseña" : "Mostrar contraseña"}
                 >
                   {verRegContrasena ? (
@@ -435,10 +454,13 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
                   )}
                 </button>
               </div>
+
+              {/* Guía en vivo: el visitante ve qué le falta a su contraseña mientras escribe */}
+              {regContrasena && <ChecklistContrasena clave={regContrasena} />}
             </label>
 
             {regError && (
-              <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-red-500">
+              <p role="alert" className="rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C]">
                 {regError}
               </p>
             )}

@@ -340,7 +340,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                       <p className="truncate text-sm font-bold text-ink">{h.nombre}</p>
                       {/* El motivo del rechazo queda a la vista en el historial (HU-032) */}
                       {h.aprobado === "rechazado" && h.motivoRechazo && (
-                        <p className="truncate text-[11px] font-semibold text-danger">Motivo: {h.motivoRechazo}</p>
+                        <p className="truncate text-[11px] font-semibold text-[#B91C1C]">Motivo: {h.motivoRechazo}</p>
                       )}
                       <p className="flex items-center gap-1 text-[11px] text-muted">
                         <IconoPin size={11} /> {MUNICIPIOS.find((m) => m.id === h.municipioId)?.nombre}
@@ -402,7 +402,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
               <button
                 onClick={borrarEventosLeidos}
                 disabled={eventosLeidos === 0}
-                className="rounded-lg border border-line bg-white px-3.5 py-2 text-xs font-bold text-muted transition-colors hover:border-danger/50 hover:text-danger disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-line bg-white px-3.5 py-2 text-xs font-bold text-muted transition-colors hover:border-danger/50 hover:text-[#B91C1C] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Borrar las leídas
               </button>
@@ -480,7 +480,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                     <button
                       onClick={() => borrarEvento(e.id)}
                       aria-label={`Borrar la notificación del folio ${e.folio}`}
-                      className="rounded-md border border-transparent p-1.5 text-muted transition-colors hover:border-danger/40 hover:text-danger"
+                      className="rounded-md border border-transparent p-1.5 text-muted transition-colors hover:border-danger/40 hover:text-[#B91C1C]"
                     >
                       <IconoX size={14} />
                     </button>
@@ -547,7 +547,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
                       </span>
                       <span
                         className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
-                          u.activo ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#FEE2E2] text-danger"
+                          u.activo ? "bg-[#DCFCE7] text-[#166534]" : "bg-[#FEE2E2] text-[#B91C1C]"
                         }`}
                       >
                         {u.activo ? "Activo" : "Desactivado"}
@@ -585,12 +585,11 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
             <h3 className="mt-4 font-display text-xl font-bold text-ink">Cuenta de hotelero creada</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted">
               {enviandoCorreo
-                ? "Enviando el correo con las credenciales al dueño del hotel..."
-                : `Se envió un correo a ${cuentaCreada.correo} con estos datos. También podés enviárselos manualmente:`}
+                ? "Enviando el correo con el enlace de acceso al dueño del hotel..."
+                : `Se envió un correo a ${cuentaCreada.correo} con un enlace de un solo uso: con él el dueño define su propia contraseña y entra a su panel. No se envían contraseñas por correo.`}
             </p>
             <div className="mt-4 rounded-xl bg-canvas p-4 text-sm">
-              <p className="flex justify-between py-0.5"><span className="text-muted">Correo</span><b className="text-ink">{cuentaCreada.correo}</b></p>
-              <p className="flex justify-between py-0.5"><span className="text-muted">Contraseña</span><b className="font-mono text-ink">{cuentaCreada.contrasena}</b></p>
+              <p className="flex justify-between py-0.5"><span className="text-muted">Correo del dueño</span><b className="text-ink">{cuentaCreada.correo}</b></p>
             </div>
             <button
               onClick={() => setCuentaCreada(null)}
@@ -649,7 +648,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
       <Modal abierto={!!rechazando} alCerrar={() => setRechazando(null)} ancho="max-w-md">
         {rechazando && (
           <div className="p-7">
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FEE2E2] text-danger"><IconoX size={22} /></span>
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#FEE2E2] text-[#B91C1C]"><IconoX size={22} /></span>
             <h3 className="mt-4 font-display text-xl font-bold text-ink">Rechazar "{rechazando.nombre}"</h3>
             <p className="mt-2 text-sm leading-relaxed text-muted">
               El hotel saldrá de la bandeja y no aparecerá en las búsquedas. El motivo queda registrado y el hotelero lo verá en sus avisos.
@@ -657,7 +656,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
             {/* Lo que le falta al hotel, como apoyo para escribir el motivo (HU-032) */}
             {requisitosIncompletos(rechazando).length > 0 && (
               <div className="mt-4 rounded-xl bg-[#FEF2F2] p-4 text-sm">
-                <p className="font-bold text-danger">Requisitos incumplidos</p>
+                <p className="font-bold text-[#B91C1C]">Requisitos incumplidos</p>
                 <ul className="mt-1.5 list-inside list-disc text-muted">
                   {requisitosIncompletos(rechazando).map((f) => (
                     <li key={f}>{f}</li>
@@ -679,7 +678,7 @@ export function PanelAdmin({ navegar }: { navegar: Navegar }) {
               placeholder="Ej: La descripción es muy corta y no tiene foto representativa"
               className="mt-1.5 w-full resize-none rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-all focus:border-danger focus:ring-2 focus:ring-danger/25"
             />
-            {errorMotivo && <p className="mt-1.5 text-xs font-semibold text-danger">{errorMotivo}</p>}
+            {errorMotivo && <p className="mt-1.5 text-xs font-semibold text-[#B91C1C]">{errorMotivo}</p>}
             <div className="mt-5 flex gap-2.5">
               <button
                 onClick={() => setRechazando(null)}

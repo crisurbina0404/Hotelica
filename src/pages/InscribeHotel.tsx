@@ -9,6 +9,7 @@ import {
   DEPARTAMENTOS, MUNICIPIOS, validarRegistroHotel, validarImagenHotel, soloDigitosTelefono, esCorreo,
 } from "../data";
 import type { DatosRegistroHotel, ErroresRegistroHotel, Hotel } from "../data";
+import { optimizarFoto } from "../imagen";
 import { Reveal } from "../ui";
 import { MapaHotel } from "../mapa";
 import { IconoCheck, IconoPin } from "../icons";
@@ -75,8 +76,9 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
     setErrores((e) => ({ ...e, municipioId: undefined, ubicacion: undefined }));
   };
 
-  // Lee la foto elegida y la deja como imagen representativa
-  const elegirImagen = (archivo: File | undefined) => {
+  // Lee la foto elegida, la valida y la optimiza antes de dejarla en el formulario.
+  // Va al canvas igual que las fotos del panel: salida más liviana y sin metadatos raros
+  const elegirImagen = async (archivo: File | undefined) => {
     if (!archivo) return;
     const errorImagen = validarImagenHotel(archivo);
     if (errorImagen) {
@@ -85,13 +87,15 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
       if (inputImagen.current) inputImagen.current.value = "";
       return;
     }
-    const lector = new FileReader();
-    lector.onload = () => {
-      setRegistro((r) => ({ ...r, imagen: String(lector.result) }));
-      setErrores((e) => ({ ...e, imagen: undefined }));
-    };
-    lector.onerror = () => setErrores((e) => ({ ...e, imagen: "No se pudo leer la imagen: probá con otra." }));
-    lector.readAsDataURL(archivo);
+    const resultado = await optimizarFoto(archivo);
+    if (resultado.error || !resultado.foto) {
+      setErrores((e) => ({ ...e, imagen: resultado.error ?? "No se pudo leer la imagen: probá con otra." }));
+      setRegistro((r) => ({ ...r, imagen: "" }));
+      if (inputImagen.current) inputImagen.current.value = "";
+      return;
+    }
+    setRegistro((r) => ({ ...r, imagen: resultado.foto! }));
+    setErrores((e) => ({ ...e, imagen: undefined }));
   };
 
   // Envía la solicitud solo si todos los campos pasan las validaciones

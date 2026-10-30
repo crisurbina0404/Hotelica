@@ -400,7 +400,7 @@ export function ModalReserva({
   ] as const;
 
   return (
-    <Modal abierto alCerrar={fase === "procesando" ? () => {} : alCerrar} ancho="max-w-3xl">
+    <Modal abierto alCerrar={fase === "procesando" ? () => {} : alCerrar} ancho="max-w-3xl" etiqueta="Reserva">
       {fase === "exito" ? (
         /* ===== Pantalla de éxito ===== */
         <div className="flex flex-col items-center px-6 py-12 text-center sm:px-12">
@@ -428,7 +428,7 @@ export function ModalReserva({
             </div>
           )}
 
-          <p className="mt-5 rounded-xl border-2 border-dashed border-accent bg-accent-light px-8 py-3 font-display text-3xl font-extrabold tracking-wider text-accent-dark">
+          <p className="mt-5 rounded-xl border-2 border-dashed border-accent bg-accent-light px-8 py-3 font-display text-3xl font-extrabold tracking-wider text-[#92400E]">
             {reserva?.folio}
           </p>
 
@@ -698,7 +698,7 @@ export function ModalReserva({
                 <p className="flex justify-between text-muted"><span>Noches</span><b className="text-ink">{noches > 0 ? noches : "—"}</b></p>
                 <p className="flex justify-between text-muted"><span>Subtotal</span><b className="text-ink">{fmtDinero(subtotal)}</b></p>
                 <p className="flex justify-between text-muted"><span>IVA ({TASA_IVA_PCT * 100}%)</span><b className="text-ink">{fmtDinero(iva)}</b></p>
-                <p className="flex justify-between text-muted"><span>Disponibles</span><b className={disponibles > 0 ? "text-success" : "text-danger"}>{disponibles}</b></p>
+                <p className="flex justify-between text-muted"><span>Disponibles</span><b className={disponibles > 0 ? "text-[#166534]" : "text-[#B91C1C]"}>{disponibles}</b></p>
               </div>
 
               <div className="mt-4 rounded-xl bg-primary-deep p-4 text-white">

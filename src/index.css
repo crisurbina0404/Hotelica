@@ -65,6 +65,15 @@ h1, h2, h3, h4 {
   border-radius: 50% 50% 12px 12px / 20px 20px 12px 12px;
 }
 
+/* Foco visible para quien navega con teclado: dos anillos, uno oscuro pegado
+   al borde y otro dorado por fuera, para que se distinga tanto sobre el crema
+   de las páginas como sobre las fotos oscuras del hero. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-primary-ink);
+}
+
 /* Selección de texto con la marca */
 ::selection {
   background: var(--color-accent);
@@ -253,7 +262,7 @@ input[type="date"] { color-scheme: light; }
   color: var(--color-muted);
   font-size: 10px;
 }
-.leaflet-control-attribution a { color: var(--color-primary); }
+.leaflet-control-attribution a { color: var(--color-primary-dark); }
 /* Controles de zoom con el mismo juego de colores del sitio */
 .leaflet-bar a {
   background: var(--color-canvas);

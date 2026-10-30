@@ -18,6 +18,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Vacía los caracteres peligrosos para que un nombre o motivo malvado
+// no pueda meter HTML ni código dentro del correo
+function escaparHtml(texto: string): string {
+  return String(texto)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 serve(async (req) => {
   // Manejar preflight de CORS
   if (req.method === "OPTIONS") {
@@ -33,9 +44,11 @@ serve(async (req) => {
       );
     }
 
-    // Obtener y validar datos del cuerpo
+    // Obtener y validar datos del cuerpo; llegan limpios para el HTML
     const body = await req.json();
-    const { dueno, correo, hotelNombre, motivo } = body;
+    const { correo, hotelNombre } = body;
+    const dueno = escaparHtml(String(body.dueno ?? "").trim());
+    const motivo = escaparHtml(String(body.motivo ?? "").trim());
 
     // Validar datos requeridos: sin motivo no se manda el correo (HU-032)
     if (!dueno || !correo || !hotelNombre || !motivo) {
@@ -152,7 +165,7 @@ serve(async (req) => {
           <div class="contenido">
             <p class="ceja">Inscripción de hotel</p>
             <h1 class="titulo">Tu hotel no fue aprobado</h1>
-            <p class="saludo">Hola <strong>${dueno}</strong>, revisamos la solicitud de <strong>${hotelNombre}</strong> y lamentamos informarte que no fue aprobada por ahora. A continuación te contamos el motivo de la decisión.</p>
+            <p class="saludo">Hola <strong>${dueno}</strong>, revisamos la solicitud de <strong>${escaparHtml(hotelNombre)}</strong> y lamentamos informarte que no fue aprobada por ahora. A continuación te contamos el motivo de la decisión.</p>
 
             <div class="motivo">
               <p class="motivo-titulo">Motivo del rechazo</p>
@@ -202,7 +215,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         sender: { email: REMITENTE_CORREO, name: "Hotelica" },
-        to: [{ email: correo, name: dueno }],
+        to: [{ email: correo, name: body.dueno }],
         subject: `Tu hotel ${hotelNombre} no fue aprobado — Hotelica`,
         htmlContent: htmlCorreo,
       }),

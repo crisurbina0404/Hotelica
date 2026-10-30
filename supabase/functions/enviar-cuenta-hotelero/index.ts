@@ -2,8 +2,14 @@
 // Hotelica — Edge Function: enviar cuenta de hotelero al aprobar
 // Usa la API de Brevo para enviar correos transaccionales
 // Se llama cuando el admin aprueba una inscripción de hotel (HU-021)
+//
+// Desde el 2026-10-29 el correo ya no lleva contraseña: nadie debería
+// recibir credenciales por correo. La función crea el usuario de
+// Supabase Auth y manda un ENLACE de un solo uso para que el dueño
+// defina su propia contraseña dentro de Hotelica.
 // ============================================================
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // El logo vive en el repositorio porque los clientes de correo no muestran
 // imágenes embebidas en data URI
@@ -12,11 +18,29 @@ const LOGO_URL = "https://raw.githubusercontent.com/crisurbina0404/Hotelica/main
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 const REMITENTE_CORREO = Deno.env.get("BREVO_SENDER_EMAIL") ?? "";
 
+// Supabase injecta estas dos en cada Edge Function (rol de servicio)
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+// Adónde regresa el enlace: la propia app, que trae la página para definir contraseña
+const ORIGEN_APP = Deno.env.get("ORIGEN_APP") ?? "https://hotelica.vercel.app";
+
 // Headers CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Vacía los caracteres peligrosos para que un nombre o motivo malvado
+// no pueda meter HTML ni código dentro del correo
+function escaparHtml(texto: string): string {
+  return String(texto)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
 
 serve(async (req) => {
   // Manejar preflight de CORS
@@ -33,12 +57,47 @@ serve(async (req) => {
       );
     }
 
-    // Obtener y validar datos del cuerpo
+    // Solo un administrador con sesión puede pedir este correo:
+    // sin esta guardia, cualquier usuario con sesión podría pedir
+    // invitaciones para cualquier correo (correo molesto / suplantación)
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(
+        JSON.stringify({ error: "El servidor no tiene permisos de servicio configurados" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    const token = (req.headers.get("Authorization") ?? "").replace("Bearer ", "").trim();
+    const { data: { user }, error: errorToken } = await supabase.auth.getUser(token);
+    if (errorToken || !user) {
+      return new Response(
+        JSON.stringify({ error: "Necesitas iniciar sesión para pedir este correo" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const correoAdmin = (user.email ?? "").trim().toLowerCase();
+    const { data: filaAdmin } = await supabase
+      .from("administradores")
+      .select("correo")
+      .eq("correo", correoAdmin)
+      .maybeSingle();
+    if (!filaAdmin) {
+      return new Response(
+        JSON.stringify({ error: "Solo un administrador puede enviar esta invitación" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Obtener y validar datos del cuerpo (ya no viaja ninguna contraseña)
     const body = await req.json();
-    const { nombre, correo, contrasena, hotelNombre } = body;
+    const { nombre, correo, hotelNombre } = body;
 
     // Validar datos requeridos
-    if (!nombre || !correo || !contrasena || !hotelNombre) {
+    if (!nombre || !correo || !hotelNombre) {
       return new Response(
         JSON.stringify({ error: "Faltan datos requeridos para enviar el correo" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -62,7 +121,43 @@ serve(async (req) => {
       );
     }
 
-    // HTML del correo con las credenciales de la cuenta de hotelero
+    // 1) El usuario de auth del dueño debe existir para que pueda poner
+    //    su contraseña y entrar después. Lo creamos con una contraseña
+    //    inventada (nadie la conoce ni la recibe): el dueño la define
+    //    ahora mismo con el enlace de un solo uso que va en el correo
+    const { error: errorCreando } = await supabase.auth.admin.createUser({
+      email: correo.trim().toLowerCase(),
+      email_confirm: true,
+      password: `H${crypto.randomUUID()}${crypto.randomUUID()}`,
+    });
+
+    const mensajeError = String(errorCreando?.message ?? "");
+    if (errorCreando && !mensajeError.includes("already registered")) {
+      console.error("No se pudo crear el usuario de auth:", errorCreando);
+      return new Response(
+        JSON.stringify({ error: "No se pudo crear la cuenta de hotelero en la autenticación", detalles: mensajeError }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 2) Enlace de un solo uso (tipo recovery): al abrirlo, la app cae
+    //    directo en la pantalla "Restablecer contraseña" del sitio
+    const { data: enlaceGenerado, error: errorEnlace } = await supabase.auth.admin.generateLink({
+      type: "recovery",
+      email: correo.trim().toLowerCase(),
+      options: { redirectTo: ORIGEN_APP },
+    });
+    const enlaceAcceso = enlaceGenerado?.properties?.link;
+    if (errorEnlace || !enlaceAcceso) {
+      console.error("No se pudo generar el enlace:", errorEnlace);
+      return new Response(
+        JSON.stringify({ error: "No se pudo generar el enlace de acceso", detalles: String(errorEnlace?.message ?? "") }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // HTML del correo: el dueño define su contraseña con el botón,
+    // y el enlace es de un solo uso
     const htmlCorreo = `
       <!DOCTYPE html>
       <html lang="es">
@@ -92,14 +187,11 @@ serve(async (req) => {
           .etiqueta { color: #5D6E73; font-weight: 500; }
           .valor { text-align: right; font-weight: 700; color: #1C2B30; }
 
-          .credenciales { margin: 24px 0 0; padding: 22px 20px; background: #FDF0D7; border: 2px dashed #F7A81B; border-radius: 12px; }
-          .credenciales-titulo { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #D98A0B; }
-          .credenciales-nota { margin: 0 0 14px; font-size: 13px; color: #5D6E73; }
-          .credenciales-datos { width: 100%; border-collapse: collapse; }
-          .credenciales-datos td { padding: 12px 2px; font-size: 15px; border-bottom: 1px dashed #E4DFD2; }
-          .credenciales-datos tr:last-child td { border-bottom: none; }
-          .credenciales-etiqueta { color: #92400E; font-weight: 600; }
-          .credenciales-valor { text-align: right; font-weight: 800; color: #0B3540; font-family: 'Courier New', monospace; font-size: 16px; }
+          .acceso { margin: 24px 0 0; padding: 22px 20px; background: #FDF0D7; border: 2px dashed #F7A81B; border-radius: 12px; text-align: center; }
+          .acceso-titulo { margin: 0 0 4px; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #D98A0B; }
+          .acceso-nota { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: #5D6E73; }
+          .boton { display: inline-block; padding: 14px 30px; background: #F7A81B; color: #1C2B30; border-radius: 999px; font-size: 15px; font-weight: 800; text-decoration: none; }
+          .acceso-alternativo { margin: 14px 0 0; font-size: 12px; line-height: 1.6; color: #92400E; word-break: break-all; }
 
           .nota { margin: 22px 0 0; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: #5D6E73; background: #EFF5F6; border-left: 3px solid #177E8C; border-radius: 8px; }
 
@@ -118,9 +210,10 @@ serve(async (req) => {
             .contenido { padding: 20px 16px 18px; }
             .titulo { font-size: 23px; }
             .saludo { font-size: 14px; }
-            .credenciales { padding: 16px 14px; }
+            .acceso { padding: 16px 14px; }
+            .boton { display: block; text-align: center; }
             .bloque { padding: 6px 14px 12px; }
-            .datos td, .credenciales-datos td {
+            .datos td {
               display: block;
               width: 100%;
               text-align: left !important;
@@ -128,20 +221,19 @@ serve(async (req) => {
               padding: 3px 0;
               word-break: break-word;
             }
-            .datos tr, .credenciales-datos tr {
+            .datos tr {
               display: block;
               padding: 9px 0;
               border-bottom: 1px solid #E4DFD2;
             }
-            .credenciales-datos tr { border-bottom: 1px dashed #E4DFD2; }
-            .datos tr:last-child, .credenciales-datos tr:last-child { border-bottom: none; }
-            .etiqueta, .credenciales-etiqueta {
+            .datos tr:last-child { border-bottom: none; }
+            .etiqueta {
               font-size: 10px;
               letter-spacing: 1.5px;
               text-transform: uppercase;
               padding-bottom: 1px;
             }
-            .valor, .credenciales-valor { font-size: 15px; padding-top: 1px; }
+            .valor { font-size: 15px; padding-top: 1px; }
             .pie { padding: 18px 14px; }
           }
         </style>
@@ -156,42 +248,34 @@ serve(async (req) => {
           <div class="contenido">
             <p class="ceja">Cuenta de hotelero</p>
             <h1 class="titulo">¡Tu hotel fue aprobado!</h1>
-            <p class="saludo">Hola <strong>${nombre}</strong>, nos complace informarte que la solicitud de <strong>${hotelNombre}</strong> fue aprobada. Tu hotel ya aparece en las búsquedas de Hotelica. A continuación encontrarás los datos de tu cuenta de hotelero para acceder a tu panel.</p>
+            <p class="saludo">Hola <strong>${escaparHtml(nombre)}</strong>, nos complace informarte que la solicitud de <strong>${escaparHtml(hotelNombre)}</strong> fue aprobada. Tu hotel ya aparece en las búsquedas de Hotelica. Con el botón de abajo eliges la contraseña de tu cuenta de hotelero.</p>
 
-            <div class="credenciales">
-              <p class="credenciales-titulo">Tus credenciales de acceso</p>
-              <p class="credenciales-nota">Guarda estos datos en un lugar seguro. Con ellos podrás iniciar sesión en Hotelica y gestionar tu hotel.</p>
-              <table class="credenciales-datos" role="presentation">
-                <tr>
-                  <td class="credenciales-etiqueta" align="left">Correo</td>
-                  <td class="credenciales-valor" align="right">${correo}</td>
-                </tr>
-                <tr>
-                  <td class="credenciales-etiqueta" align="left">Contraseña</td>
-                  <td class="credenciales-valor" align="right">${contrasena}</td>
-                </tr>
-              </table>
+            <div class="acceso">
+              <p class="acceso-titulo">Activa tu cuenta</p>
+              <p class="acceso-nota">Pulsa el botón, elige tu contraseña y ya podrás entrar a tu panel con tu correo (${escaparHtml(correo)}) y la contraseña que elijas. El enlace es de un solo uso.</p>
+              <a class="boton" href="${escaparHtml(enlaceAcceso)}">Definir mi contraseña</a>
+              <p class="acceso-alternativo">Si el botón no funciona, copia y pega este enlace en tu navegador:<br>${escaparHtml(enlaceAcceso)}</p>
             </div>
 
             <div class="bloque">
               <p class="bloque-titulo">Cómo usar tu cuenta</p>
               <table class="datos" role="presentation">
                 <tr>
-                  <td class="etiqueta" align="left">1. Ingresa a</td>
-                  <td class="valor" align="right"><a class="enlace" href="https://hotelica.vercel.app">hotelica.vercel.app</a></td>
+                  <td class="etiqueta" align="left">1. Define tu contraseña</td>
+                  <td class="valor" align="right">Con el botón de arriba</td>
                 </tr>
                 <tr>
-                  <td class="etiqueta" align="left">2. Pulsa</td>
-                  <td class="valor" align="right">Iniciar sesión</td>
+                  <td class="etiqueta" align="left">2. Ingresa a</td>
+                  <td class="valor" align="right"><a class="enlace" href="${ORIGEN_APP}">hotelica.vercel.app</a></td>
                 </tr>
                 <tr>
-                  <td class="etiqueta" align="left">3. Usa tu correo y contraseña</td>
-                  <td class="valor" align="right">Los de arriba</td>
+                  <td class="etiqueta" align="left">3. Entra con</td>
+                  <td class="valor" align="right">Tu correo y la contraseña que elegiste</td>
                 </tr>
               </table>
             </div>
 
-            <p class="nota">Una vez dentro, podrás consultar y confirmar reservas, registrar check-ins y check-outs, ver reportes de ocupación y mucho más. Si tienes alguna pregunta, contáctanos respondiendo a este correo.</p>
+            <p class="nota">Una vez dentro, podrás consultar y confirmar reservas, registrar check-ins y check-outs, ver reportes de ocupación y mucho más. Si el enlace ya no funciona, responde a este correo para pedir uno nuevo. Por seguridad, nunca te pediremos tu contraseña por correo ni por teléfono.</p>
           </div>
 
           <div class="pie">

@@ -162,7 +162,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                       <h3 className="font-display text-lg font-bold text-ink">{h?.nombre}</h3>
                       <BadgeEstado estado={r.estado} />
                       {cambiaron.includes(r.folio) && (
-                        <span className="anim-pop rounded-full bg-accent-light px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-accent-dark">
+                        <span className="anim-pop rounded-full bg-accent-light px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-[#92400E]">
                           Estado actualizado
                         </span>
                       )}
@@ -189,7 +189,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
                       <IconoOjo size={14} /> Ver detalle
                     </button>
                     {sePuedeCancelar(r, hoy) && (
-                      <button onClick={() => setPorCancelar(r)} className="flex items-center justify-center gap-1.5 rounded-lg border border-danger/30 px-4 py-2 text-xs font-bold text-danger transition-colors hover:bg-[#FEF2F2]">
+                      <button onClick={() => setPorCancelar(r)} className="flex items-center justify-center gap-1.5 rounded-lg border border-danger/30 px-4 py-2 text-xs font-bold text-[#B91C1C] transition-colors hover:bg-[#FEF2F2]">
                         <IconoX size={14} /> Cancelar reserva
                       </button>
                     )}
@@ -212,7 +212,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
       )}
 
       {/* Modal de detalle de la reserva (HU-017): busca por folio y avisa si ya no existe */}
-      <Modal abierto={!!folioDetalle} alCerrar={() => setFolioDetalle(null)} ancho="max-w-md">
+      <Modal abierto={!!folioDetalle} alCerrar={() => setFolioDetalle(null)} ancho="max-w-md" etiqueta="Detalle de la reserva">
         {detalle ? (
           <DetalleReserva r={detalle} alCerrar={() => setFolioDetalle(null)} />
         ) : (
@@ -223,7 +223,7 @@ export function MisReservas({ navegar }: { navegar: Navegar }) {
       {/* Modal de confirmación de cancelación (texto oficial del proyecto) */}
       <Modal abierto={!!porCancelar} alCerrar={() => setPorCancelar(null)} ancho="max-w-md">
         <div className="p-7 text-center">
-          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FEE2E2] text-danger"><IconoX size={28} /></span>
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FEE2E2] text-[#B91C1C]"><IconoX size={28} /></span>
           <h3 className="mt-4 font-display text-xl font-bold text-ink">¿Cancelar la reserva {porCancelar?.folio}?</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             ¿Seguro que deseas cancelar esta reserva? Esta acción no se puede deshacer.
@@ -476,7 +476,7 @@ function ModalCalificar({
         <div className="mt-6 flex justify-center">
           <EstrellasInput valor={estrellas} alCambiar={(v) => { setEstrellas(v); setError(""); }} />
         </div>
-        <p className="mt-2 text-center text-sm font-semibold text-accent-dark">
+        <p className="mt-2 text-center text-sm font-semibold text-[#92400E]">
           {estrellas > 0 ? `${estrellas} de 5 estrellas` : "Toca las estrellas para calificar"}
         </p>
 
@@ -519,7 +519,7 @@ export function Favoritos({ navegar }: { navegar: Navegar }) {
     <main className="mx-auto max-w-7xl px-4 pb-8 pt-24 sm:px-6">
       <Reveal>
         <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FEF2F2] text-danger"><IconoCorazon size={20} lleno /></span>
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FEF2F2] text-[#B91C1C]"><IconoCorazon size={20} lleno /></span>
           <div>
             <TituloSeccion ceja="Guardados con cariño" titulo="Mis favoritos" />
           </div>

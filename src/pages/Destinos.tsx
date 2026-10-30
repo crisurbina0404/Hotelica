@@ -8,17 +8,18 @@ import {
   DEPARTAMENTOS, DESTINOS_TURISTICOS, ETIQUETA_CATEGORIA, ETIQUETA_DIFICULTAD, fmtDinero,
 } from "../data";
 import type { CategoriaActividad } from "../data";
-import { Reveal, TituloSeccion } from "../ui";
+import { Modal, Reveal, TituloSeccion } from "../ui";
 import {
   IconoPin, IconoPalmera, IconoSendero, IconoOjo, IconoCafe,
 } from "../icons";
 
-// Colores para cada categoría de actividad
+// Colores para cada categoría de actividad: los cuatro pares pastel oficiales
+// de la guía (pendiente, check-in, completada y confirmada), sin colores nuevos
 const COLORES_CATEGORIA: Record<CategoriaActividad, string> = {
-  aventura: "bg-[#F97316]/10 text-[#EA580C] border-[#F97316]/30",
-  cultura: "bg-[#8B5CF6]/10 text-[#7C3AED] border-[#8B5CF6]/30",
-  naturaleza: "bg-[#22C55E]/10 text-[#16A34A] border-[#22C55E]/30",
-  playa: "bg-[#0EA5E9]/10 text-[#0284C7] border-[#0EA5E9]/30",
+  aventura: "bg-accent-light text-[#92400E] border-[#FCD34D]",
+  cultura: "bg-primary-light text-primary border-[#5EEAD4]",
+  naturaleza: "bg-[#DCFCE7] text-[#166534] border-[#86EFAC]",
+  playa: "bg-[#DBEAFE] text-[#1D4ED8] border-[#93C5FD]",
 };
 
 // Iconos para cada categoría
@@ -65,7 +66,7 @@ export function Destinos({ navegar }: { navegar: Navegar }) {
       <Reveal>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Explora Nicaragua</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Explora Nicaragua</p>
             <h1 className="mt-1.5 font-display text-3xl font-bold text-ink sm:text-4xl">Destinos y actividades turísticas</h1>
             <p className="mt-2 max-w-xl text-sm text-muted">
               Descubre los mejores destinos de cada departamento y las actividades que puedes realizar en cada lugar.
@@ -166,7 +167,7 @@ export function Destinos({ navegar }: { navegar: Navegar }) {
                     </span>
                   ))}
                   {destino.actividades.length > 3 && (
-                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">
+                    <span className="inline-flex items-center rounded-full bg-primary-soft px-2 py-0.5 text-[10px] font-bold text-primary">
                       +{destino.actividades.length - 3}
                     </span>
                   )}
@@ -198,28 +199,20 @@ export function Destinos({ navegar }: { navegar: Navegar }) {
         </Reveal>
       )}
 
-      {/* ============ MODAL DE DETALLE DEL DESTINO ============ */}
-      {destinoDetalle && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
-          onClick={() => setDestinoSeleccionado(null)}
-        >
-          <Reveal>
-            <div
-              className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-line bg-white shadow-lift"
-              onClick={(e) => e.stopPropagation()}
-            >
+      {/* ============ MODAL DE DETALLE DEL DESTINO (primitiva compartida) ============ */}
+      <Modal
+        abierto={!!destinoDetalle}
+        alCerrar={() => setDestinoSeleccionado(null)}
+        ancho="max-w-2xl"
+        etiqueta={destinoDetalle?.nombre}
+        cerrarClaro
+      >
+        {destinoDetalle && (
+          <div>
               {/* Imagen */}
               <div className="relative h-56 overflow-hidden sm:h-64">
                 <img src={destinoDetalle.imagen} alt={destinoDetalle.nombre} className="h-full w-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <button
-                  onClick={() => setDestinoSeleccionado(null)}
-                  className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
-                  aria-label="Cerrar"
-                >
-                  ✕
-                </button>
                 <div className="absolute bottom-4 left-4 right-4">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-ink backdrop-blur-sm">
                     <IconoPin size={12} className="text-primary" />
@@ -276,10 +269,9 @@ export function Destinos({ navegar }: { navegar: Navegar }) {
                   </div>
                 </div>
               </div>
-            </div>
-          </Reveal>
-        </div>
-      )}
+          </div>
+        )}
+      </Modal>
     </main>
   );
 }

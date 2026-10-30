@@ -6,7 +6,8 @@
 import { useState } from "react";
 import { useApp } from "../store";
 import type { Navegar } from "../rutas";
-import { Reveal } from "../ui";
+import { Reveal, ChecklistContrasena } from "../ui";
+import { errorCriteriosContrasena } from "../data";
 import { IconoFlechaAtras } from "../icons";
 
 export function RestablecerContrasena({ navegar }: { navegar: Navegar }) {
@@ -25,8 +26,10 @@ export function RestablecerContrasena({ navegar }: { navegar: Navegar }) {
     e.preventDefault();
     setError("");
 
-    if (!nuevaContrasena || nuevaContrasena.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    // Misma política segura que en el registro: largo, minúscula, número y símbolo
+    const errorContrasena = errorCriteriosContrasena(nuevaContrasena);
+    if (errorContrasena) {
+      setError(errorContrasena);
       return;
     }
 
@@ -77,9 +80,9 @@ export function RestablecerContrasena({ navegar }: { navegar: Navegar }) {
 
   // Formulario: nueva contraseña
   const claseCampo =
-    "w-full rounded-lg border border-line bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
+    "w-full rounded-lg border border-line bg-white px-3.5 py-2.5 pr-12 text-sm font-medium text-ink outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/25";
   const claseCampoError =
-    "w-full rounded-lg border border-[#FCA5A5] bg-white px-3.5 py-2.5 pr-10 text-sm font-medium text-ink outline-none transition-all focus:border-[#EF4444] focus:ring-2 focus:ring-[#EF4444]/25";
+    "w-full rounded-lg border border-[#FCA5A5] bg-white px-3.5 py-2.5 pr-12 text-sm font-medium text-ink outline-none transition-all focus:border-[#EF4444] focus:ring-2 focus:ring-[#EF4444]/25";
 
   return (
     <main className="mx-auto max-w-lg px-4 pb-12 pt-24 sm:px-6">
@@ -114,14 +117,14 @@ export function RestablecerContrasena({ navegar }: { navegar: Navegar }) {
                     type={verNueva ? "text" : "password"}
                     value={nuevaContrasena}
                     onChange={(e) => { setNuevaContrasena(e.target.value); setError(""); }}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 8, con número y símbolo"
                     autoFocus
                     className={error ? claseCampoError : claseCampo}
                   />
                   <button
                     type="button"
                     onClick={() => setVerNueva(!verNueva)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                    className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted transition-colors hover:bg-ink/5 hover:text-ink"
                     aria-label={verNueva ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
                     {verNueva ? (
@@ -131,6 +134,9 @@ export function RestablecerContrasena({ navegar }: { navegar: Navegar }) {
                     )}
                   </button>
                 </div>
+
+                {/* Guía en vivo igual que en el registro y el panel del hotelero */}
+                {nuevaContrasena && <ChecklistContrasena clave={nuevaContrasena} />}
               </label>
 
               <label className="block">
@@ -148,7 +154,7 @@ export function RestablecerContrasena({ navegar }: { navegar: Navegar }) {
                   <button
                     type="button"
                     onClick={() => setVerConfirmar(!verConfirmar)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
+                    className="absolute right-1.5 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-md text-muted transition-colors hover:bg-ink/5 hover:text-ink"
                     aria-label={verConfirmar ? "Ocultar contraseña" : "Mostrar contraseña"}
                   >
                     {verConfirmar ? (

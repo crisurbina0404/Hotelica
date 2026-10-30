@@ -21,6 +21,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Vacía los caracteres peligrosos para que un dato malvado no logre
+// meter HTML ni código dentro del correo
+function escaparHtml(texto: string): string {
+  return String(texto)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+// Números que llegan del navegador: si no vienen numéricos, cambiamos a null
+function numeroLimpio(valor: unknown): number | null {
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero : null;
+}
+
 serve(async (req) => {
   // Manejar preflight de CORS
   if (req.method === "OPTIONS") {
@@ -36,14 +53,26 @@ serve(async (req) => {
       );
     }
 
-    // Obtener y validar datos del cuerpo
+    // Obtener y validar datos del cuerpo. Todo lo que después va al HTML
+    // del correo llega limpio (sin HTML ni código entre medio), y los
+    // montos solo cuentan si son números de verdad
     const body = await req.json();
-    const {
-      folio, hotelNombre, turista, correo, llegada, salida, noches, huespedes, total,
-      // Datos extra del comprobante (Fase 1 llegan desde el navegador)
-      habitacion = "", subtotal = null, iva = null, pago = "", estadoPago = "",
-      referencia = "", estado = "",
-    } = body;
+    const folio = escaparHtml(String(body.folio ?? "").trim());
+    const hotelNombre = escaparHtml(String(body.hotelNombre ?? "").trim());
+    const turista = escaparHtml(String(body.turista ?? "").trim());
+    const correo = String(body.correo ?? "").trim();
+    const llegada = String(body.llegada ?? "").trim();
+    const salida = String(body.salida ?? "").trim();
+    const total = numeroLimpio(body.total);
+    const habitacion = escaparHtml(String(body.habitacion ?? "").trim());
+    const subtotal = numeroLimpio(body.subtotal);
+    const iva = numeroLimpio(body.iva);
+    const noches = numeroLimpio(body.noches);
+    const huespedes = numeroLimpio(body.huespedes);
+    const pago = escaparHtml(String(body.pago ?? "").trim());
+    const estadoPago = escaparHtml(String(body.estadoPago ?? "").trim());
+    const referencia = escaparHtml(String(body.referencia ?? "").trim());
+    const estado = escaparHtml(String(body.estado ?? "").trim());
 
     // Validar datos requeridos
     if (!folio || !hotelNombre || !turista || !correo || !llegada || !salida || !total) {
@@ -209,8 +238,8 @@ serve(async (req) => {
                 ${habitacion ? fila("Habitación", habitacion) : ""}
                 ${fila("Llegada", llegadaFormateada)}
                 ${fila("Salida", salidaFormateada)}
-                ${fila("Noches", String(noches))}
-                ${fila("Huéspedes", String(huespedes))}
+                ${noches !== null ? fila("Noches", String(noches)) : ""}
+                ${huespedes !== null ? fila("Huéspedes", String(huespedes)) : ""}
                 ${estado ? fila("Estado", chip(estado, ETIQUETA_ESTADO[estado] ?? estado)) : ""}
               </table>
             </div>

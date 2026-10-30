@@ -84,9 +84,9 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
   const [errorPass, setErrorPass] = useState("");
 
   // Guarda la nueva contraseña del hotelero; pide la actual por seguridad (HU-040)
-  const guardarPassword = (e: React.FormEvent) => {
+  const guardarPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    const resultado = cambiarContrasenaHotelero(nuevaPass, confirmaPass, actualPass);
+    const resultado = await cambiarContrasenaHotelero(nuevaPass, confirmaPass, actualPass);
     if (resultado.error) {
       setErrorPass(resultado.error);
       return;

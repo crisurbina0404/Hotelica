@@ -119,7 +119,7 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
 
         {/* Disponibilidad para las fechas seleccionadas */}
         {hayFechas && (
-          <p className={`mt-2.5 text-xs font-bold ${disponibles === 0 ? "text-danger" : disponibles <= 5 ? "text-accent-dark" : "text-success"}`}>
+          <p className={`mt-2.5 text-xs font-bold ${disponibles === 0 ? "text-[#B91C1C]" : disponibles <= 5 ? "text-[#92400E]" : "text-[#166534]"}`}>
             {disponibles === 0
               ? "Sin disponibilidad"
               : disponibles <= 5

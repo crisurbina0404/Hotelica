@@ -20,8 +20,8 @@
 - ENTONCES se muestra un formulario para ingresar la nueva contraseña
 
 ### DADO QUE el usuario ingresa la nueva contraseña
-- CUANDO la contraseña tiene menos de 6 caracteres
-- ENTONCES aparece un error "La contraseña debe tener al menos 6 caracteres"
+- CUANDO la contraseña no cumple la política segura (mínimo 8 caracteres, con minúscula, número y símbolo)
+- ENTONCES aparece el error del criterio que falta, y mientras escribe se ve la checklist en vivo de la contraseña
 
 ### DADO QUE el usuario confirma la contraseña
 - CUANDO las contraseñas no coinciden

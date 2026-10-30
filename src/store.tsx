@@ -9,7 +9,8 @@ import {
   nuevoPromedio, hoyISO, ahoraISO, seTraslapan, sePuedeCalificar, validarCalificacion,
   claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel, validarEdicionHotel,
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
-  errorDePrecio, errorDeAjuste, ajustarPrecio,
+  errorDePrecio, errorDeAjuste, ajustarPrecio, esCorreo,
+  sumarDias, calcularNoches, calcularTotales,
   cupoDeFotos, errorDeGaleria, conPortada,
   errorDeGaleriaHabitacion,
   errorCriteriosContrasena,
@@ -237,7 +238,7 @@ type AppCtx = {
   agregarFotosHabitacion: (habitacionId: string, fotos: string[]) => { error?: string; cantidad?: number };
   ponerPortadaHabitacion: (habitacionId: string, indice: number) => { error?: string };
   quitarFotoHabitacion: (habitacionId: string, indice: number) => { error?: string };
-  cambiarContrasenaHotelero: (nueva: string, confirmar: string, actual?: string) => { error?: string };
+  cambiarContrasenaHotelero: (nueva: string, confirmar: string, actual?: string) => Promise<{ error?: string }>;
   disponiblesDe: (habitacionId: string, llegada: string, salida: string) => number;
 };
 
@@ -368,7 +369,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const esAdmin = await esAdministrador(correo);
       if (!vivo) return;
-      setRol((r) => (esAdmin ? "admin" : r === "admin" ? "turista" : r));
+      // Con sesión de Supabase el rol decidido en la base manda: admin,
+      // hotelero con su cuenta definida por el enlace, o turista
+      const rolBase = esAdmin ? "Admin" : await rolDeLaBase(correo);
+      const rolGuardado = rolBase ?? (esAdmin ? "Admin" : "Turista");
+      setRol((r) =>
+        rolGuardado === "Admin"
+          ? "admin"
+          : rolGuardado === "Hotel"
+            ? "hotel"
+            : r === "admin" ? "turista" : r
+      );
 
       // Nombre, teléfono y dirección los pedimos frescos a la base (user_metadata)
       const { data } = await supabase.auth.getUser();
@@ -380,12 +391,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUsuario((actual) => {
         // La cuenta de hotelero (HU-021) manda: no la pisa la sesión guardada del navegador
         if (actual?.rol === "Hotel") return actual;
-        const datosActuales = esAdmin ? "Admin" : "Turista";
+        const datosActuales = rolGuardado;
         if (actual?.correo === correo && actual?.nombre === nombre && actual?.rol === datosActuales) return actual;
         return { nombre, rol: datosActuales, correo, telefono, direccion };
       });
       // La persona queda en la lista de la consola con sus datos de la base (HU-033)
-      asegurarUsuario(correo, nombre, esAdmin ? "Admin" : "Turista");
+      asegurarUsuario(correo, nombre, rolGuardado);
     })();
     return () => { vivo = false; };
   }, []);
@@ -493,14 +504,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Crea una reserva nueva y le asigna el siguiente folio (HC-XXXX)
   const crearReserva: AppCtx["crearReserva"] = (r) => {
+    // La interfaz ya validó, pero la reserva va directo a la base: aquí la
+    // revisamos una vez más para que nunca se guarde una fila rota
+    const habitacion = datos.habitaciones.find((h) => h.id === r.habitacionId);
+
+    // La llegada no puede ser en el pasado; hoy como reserva mínima
+    const hoy = hoyISO();
+    const llegada = r.llegada >= hoy ? r.llegada : hoy;
+
+    // La salida siempre es al menos una noche después de la llegada
+    const salida = r.salida > llegada ? r.salida : sumarDias(llegada, 1);
+
+    // Las noches salen de las fechas corregidas, no de lo que venga del formulario
+    const nochesReales = calcularNoches(llegada, salida);
+
+    // Los huéspedes van entre 1 y la capacidad de la habitación elegida
+    const huespedes = Math.min(Math.max(Math.round(r.huespedes) || 1, 1), habitacion?.capacidad ?? 1);
+
+    // Recalculamos los montos con el precio real de la habitación (HU-014)
+    const montos = calcularTotales(habitacion?.precio ?? 0, nochesReales);
+
     // Leemos lo último guardado en el navegador: otra pestaña pudo haber reservado antes
     const guardado = leerGuardado();
     const folio = `HC-${(guardado?.folio ?? datos.folio) + 1}`;
     const nueva: Reserva = {
       ...r,
+      llegada,
+      salida,
+      huespedes,
+      noches: nochesReales,
+      ...montos,
       // Los comentarios entran limpios: sin espacios de sobra y con tope,
       // igual que el resto de los campos de texto del sitio
       comentarios: (r.comentarios ?? "").trim().slice(0, 500),
+      turista: (r.turista ?? "").trim() || "Turista",
       folio,
       estado: "pendiente",
       creada: hoyISO(),
@@ -513,7 +550,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rr.habitacionId === r.habitacionId &&
           rr.estado !== "cancelada" &&
           rr.estado !== "completada" &&
-          seTraslapan(r.llegada, r.salida, rr.llegada, rr.salida)
+          seTraslapan(llegada, salida, rr.llegada, rr.salida)
       ).length;
       // Las unidades salen del inventario que tenemos en memoria
       const unidades = d.habitaciones.find((h) => h.id === r.habitacionId)?.unidades ?? 0;
@@ -525,7 +562,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // La reserva nueva queda en la bitácora del admin (HU-035)
         eventosAdmin: agregarEventoEn(
           d.eventosAdmin, nueva.folio, r.hotelId, "nueva",
-          `${r.turista} reservó del ${r.llegada} al ${r.salida}`
+          `${nueva.turista} reservó del ${llegada} al ${salida}`
         ),
       };
     });
@@ -875,8 +912,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return cuentaCreada;
   };
 
-  // Envía el correo con las credenciales de la cuenta creada al hotelero (HU-021)
-  // Usa la Edge Function enviar-cuenta-hotelero (Brevo) igual que el correo de reservas
+  // Envía el correo de invitación al hotelero aprobado (HU-021).
+  // La contraseña ya no viaja: el correo lleva un enlace de un solo uso
+  // con el que el dueño define su propia contraseña en Hotelica
   const enviarCuentaHotelero = async (cuenta: CuentaHotelero, hotelNombre: string): Promise<{ ok?: boolean; error?: string }> => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -899,7 +937,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({
           nombre: cuenta.nombre,
           correo: cuenta.correo,
-          contrasena: cuenta.contrasena,
           hotelNombre,
         }),
       });
@@ -1210,7 +1247,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // El hotelero cambia la contraseña temporal que le dio el admin (debe hacerlo en 48h, HU-040)
-  const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = (nueva, confirmar, actual) => {
+  const cambiarContrasenaHotelero: AppCtx["cambiarContrasenaHotelero"] = async (nueva, confirmar, actual) => {
     if (!usuario?.correo) return { error: "No hay sesión de hotelero activa" };
 
     const limpia = nueva.trim();
@@ -1225,7 +1262,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const laCuenta = datos.cuentasHotelero.find(
       (c) => c.correo === usuario.correo.trim().toLowerCase()
     );
-    if (!laCuenta) return { error: "No encontramos tu cuenta de hotelero." };
+    // Y si la cuenta no está en este navegador, puede que sea una cuenta
+    // real de Supabase (el hotelero definió su contraseña con el enlace):
+    // en ese caso el cambio se hace en la autenticación, no en lo local
+    if (!laCuenta) {
+      const { data: { session }, error: errorSession } = await supabase.auth.getSession();
+      const sesionCorreo = (session?.user?.email ?? "").trim().toLowerCase();
+      if (errorSession || !session || sesionCorreo !== usuario.correo.trim().toLowerCase()) {
+        return { error: "No encontramos tu cuenta de hotelero." };
+      }
+
+      // La contraseña actual se comprueba de verdad contra la autenticación:
+      // volvemos a entrar con ella antes de permitir el cambio
+      if (actual !== undefined) {
+        const { error: errorEnterAhora } = await supabase.auth.signInWithPassword({
+          email: sesionCorreo,
+          password: actual.trim(),
+        });
+        if (errorEnterAhora) {
+          return { error: "La contraseña actual no es correcta." };
+        }
+      }
+
+      const { error: errorAuth } = await supabase.auth.updateUser({ password: limpia });
+      if (errorAuth) {
+        return { error: "No se pudo cambiar tu contraseña. Intenta de nuevo en un rato." };
+      }
+      return {};
+    }
 
     // Solo exige la actual cuando el formulario la envía
     if (actual !== undefined && laCuenta.contrasena !== actual.trim()) {
@@ -1318,10 +1382,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Busca el rol que la base de datos le asignó a un correo (HU-033):
+  // les sirve al login y a la recarga para no inventar el rol en el navegador
+  const rolDeLaBase = async (correo: string): Promise<"Admin" | "Hotel" | "Turista" | null> => {
+    const limpio = correo.trim().toLowerCase();
+    const { data } = await supabase
+      .from("usuarios")
+      .select("rol")
+      .eq("correo", limpio)
+      .maybeSingle();
+    const rol = data?.rol as "Admin" | "Hotel" | "Turista" | undefined;
+    return rol ?? null;
+  };
+
   // Login con Supabase Auth (HU-002) o con una cuenta de hotelero creada por el admin (HU-021)
   const login = async (correo: string, contrasena: string): Promise<{ error?: string; rol?: "Hotel" | "Turista" | "Admin" }> => {
     if (!correo.trim() || !contrasena.trim()) {
       return { error: "Correo y contraseña son obligatorios" };
+    }
+
+    // Un correo sin formato no tiene caso mandarlo a Supabase: avisamos al punto
+    if (!esCorreo(correo.trim())) {
+      return { error: "Revisá tu correo: le falta el @ o el dominio." };
     }
 
     // Primero miramos si es una cuenta de hotelero creada al aprobar una inscripción
@@ -1372,13 +1454,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { error: "Tu cuenta está desactivada. Contactá al administrador de Hotelica para reactivarla." };
       }
 
+      // El rol sale de la base: administrador, hotelero con su cuenta activada
+      // por enlace, o turista de toda la vida
       const esAdmin = await esAdministrador(correo);
-      setUsuario({ nombre, rol: esAdmin ? "Admin" : "Turista", correo, telefono, direccion });
-      setRol(esAdmin ? "admin" : "turista"); // un turista nunca debe quedar con el rol del demo anterior
-      // La cuenta queda registrada en la plataforma por si el admin necesita administrarla (HU-033)
-      asegurarUsuario(correo, nombre, esAdmin ? "Admin" : "Turista");
-      avisar(esAdmin ? `Bienvenido, ${nombre} — consola de administración` : `Bienvenido, ${nombre}`, "ok");
-      return { rol: esAdmin ? "Admin" : "Turista" };
+      const rolBase = esAdmin ? "Admin" : await rolDeLaBase(correo);
+      const rolUsuario: "Admin" | "Hotel" | "Turista" = rolBase ?? (esAdmin ? "Admin" : "Turista");
+
+      setUsuario({ nombre, rol: rolUsuario, correo, telefono, direccion });
+      setRol(esAdmin ? "admin" : rolUsuario === "Hotel" ? "hotel" : "turista");
+      // La cuenta queda registrada en la plataforma por si el admin necesita administrarla (HU-033).
+      // Para el hotelero su fila ya existe (se crea al aprobar su hotel): asegurar no la toca
+      asegurarUsuario(correo, nombre, rolUsuario);
+      avisar(
+        esAdmin
+          ? `Bienvenido, ${nombre} — consola de administración`
+          : rolUsuario === "Hotel"
+            ? `Bienvenido, ${nombre} — ya puedes gestionar tu hotel`
+            : `Bienvenido, ${nombre}`,
+        "ok"
+      );
+      return { rol: rolUsuario };
     }
 
     return { rol: "Turista" };
@@ -1386,8 +1481,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Registro real con Supabase Auth (HU-001)
   const registrar = async (correo: string, contrasena: string, nombre: string) => {
+    // Re-validamos aquí aunque la ventana ya revise: la cuenta se crea de verdad
+    const correoLimpio = correo.trim();
+    if (!nombre.trim()) {
+      return { error: "El nombre es obligatorio" };
+    }
+    if (!esCorreo(correoLimpio)) {
+      return { error: "Revisá tu correo: le falta el @ o el dominio." };
+    }
+    const errorContrasena = errorCriteriosContrasena(contrasena.trim());
+    if (errorContrasena) {
+      return { error: errorContrasena };
+    }
+
     const { data, error } = await supabase.auth.signUp({
-      email: correo,
+      email: correoLimpio,
       password: contrasena,
       options: { data: { nombre } },
     });
@@ -1398,7 +1506,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return { error: "Este correo ya está registrado" };
       }
       if (error.message.includes("password")) {
-        return { error: "La contraseña debe tener al menos 6 caracteres" };
+        return { error: errorCriteriosContrasena(contrasena.trim()) || "La contraseña no cumple los requisitos" };
       }
       return { error: error.message };
     }
@@ -1513,8 +1621,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Restablecer contraseña con el token del email (HU-004)
   const restablecerContrasena = async (nuevaContrasena: string) => {
-    if (!nuevaContrasena || nuevaContrasena.length < 6) {
-      return { error: "La contraseña debe tener al menos 6 caracteres" };
+    // Misma política que en el registro: los cuatro criterios, no solo el largo
+    const errorContrasena = errorCriteriosContrasena(nuevaContrasena.trim());
+    if (errorContrasena) {
+      return { error: errorContrasena };
     }
 
     const { error } = await supabase.auth.updateUser({

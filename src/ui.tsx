@@ -3,10 +3,11 @@
 // ============================================================
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import type { CSSProperties, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, ReactNode } from "react";
 import type { EstadoHabitacion, EstadoHotel, EstadoReserva } from "./data";
 import { ETIQUETA_ESTADO, ETIQUETA_HABITACION, criteriosDeContrasena } from "./data";
 import { IconoEstrella, IconoMaleta, IconoX, IconoCheck } from "./icons";
+import logoBlanco from "./assets/Logo-blanco.svg";
 
 // ----- Aparición suave al hacer scroll (firma visual del sitio) -----
 export function Reveal({
@@ -91,21 +92,61 @@ export function Marca({
     objectPosition: "left center",
   };
 
+  // Sobre el hero (barra transparente) va la versión clara oficial del logo:
+  // el teal oscuro se perdía sobre la fotografía. Las dos versiones se apilan
+  // y se cruzan con opacidad para que el cambio no dependa de una descarga.
+  const sombraClara = "drop-shadow(0 1px 3px rgba(5,27,33,0.45))";
+
+  // Geometría real de los SVG oficiales: el lienzo mide 2000x2000 y la tinta
+  // (nombre + frase) ocupa x 124–1800, y 727–1219. En la barra superior se
+  // recorta ese aire transparente: el logo se ve igual, pero el área de clic
+  // deja de ocupar 288 px de ancho vacío y empujar el menú fuera de pantalla.
+  const TINTA = { x: 124 / 2000, y: 727 / 2000, w: 1677 / 2000, h: 493 / 2000 };
+  const estiloRecorte: CSSProperties = {
+    position: "absolute",
+    left: `${-(TINTA.x / TINTA.w) * 100}%`,
+    top: `${-(TINTA.y / TINTA.h) * 100}%`,
+    width: `${(1 / TINTA.w) * 100}%`,
+    maxWidth: "none",
+  };
+
+  if (tam === "navbar") {
+    return (
+      <span
+        className={`relative inline-block h-[2.19rem] overflow-hidden lg:h-[3.69rem] ${className}`.trim()}
+        style={{ aspectRatio: `${TINTA.w} / ${TINTA.h}` }}
+      >
+        <img
+          src={LOGOS.completo}
+          alt="Hotelica - Tu destino en Nicaragua"
+          className={`transition-opacity duration-300 ${clara ? "opacity-0" : "opacity-100"}`}
+          style={estiloRecorte}
+        />
+        <img
+          src={logoBlanco}
+          alt=""
+          aria-hidden="true"
+          className={`transition-opacity duration-300 ${clara ? "opacity-100" : "opacity-0"}`}
+          style={estiloRecorte}
+        />
+      </span>
+    );
+  }
+
   return (
-    // Un solo logo: el de la marca. Sobre la fotografía del hero se le suma un
-    // contorno claro fino (borde blando) para que se lea sin cambiar de versión
     <span className={`relative inline-block ${cls}`}>
       <img
         src={LOGOS.completo}
         alt="Hotelica - Tu destino en Nicaragua"
-        className={cls}
-        style={{
-          ...estiloLogo,
-          filter: clara
-            ? "drop-shadow(0 0 1px rgba(255,255,255,0.95)) drop-shadow(0 0 4px rgba(255,255,255,0.6)) drop-shadow(0 1px 5px rgba(5,27,33,0.35))"
-            : undefined,
-          transition: "filter 300ms ease",
-        }}
+        className={`${cls} block transition-opacity duration-300 ${clara ? "opacity-0" : "opacity-100"}`}
+        style={estiloLogo}
+      />
+      <img
+        src={logoBlanco}
+        alt=""
+        aria-hidden="true"
+        className={`${cls} absolute left-0 top-0 transition-opacity duration-300 ${clara ? "opacity-100" : "opacity-0"}`}
+        style={{ ...estiloLogo, filter: clara ? sombraClara : undefined }}
       />
     </span>
   );
@@ -209,19 +250,30 @@ export function BadgeHabitacion({ estado }: { estado: EstadoHabitacion }) {
 }
 
 // ----- Ventana modal con fondo oscurecido -----
+// El fondo (#root) queda inerte mientras haya una ventana abierta; el contador
+// evita reactivarlo si se encadenan dos modales.
+let modalesAbiertos = 0;
+let contadorTitulos = 0;
+
 export function Modal({
   abierto,
   alCerrar,
   children,
   ancho = "max-w-2xl",
+  etiqueta,
+  cerrarClaro = false,
 }: {
   abierto: boolean;
   alCerrar: () => void;
   children: ReactNode;
   ancho?: string;
+  etiqueta?: string; // nombre accesible cuando el contenido no trae título
+  cerrarClaro?: boolean; // botón de cierre legible sobre foto o fondo oscuro
 }) {
   const [visible, setVisible] = useState(false);
   const [cerrando, setCerrando] = useState(false);
+  const [tituloId, setTituloId] = useState<string | null>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
   // Sincronizar apertura/cierre con animación
   useEffect(() => {
@@ -264,17 +316,92 @@ export function Modal({
     return () => window.removeEventListener("keydown", teclado);
   }, [abierto, alCerrar]);
 
+  // Al abrir: el fondo deja de responder y el foco entra en la ventana.
+  // Al cerrar se devuelve el foco a donde estaba (accesibilidad de teclado).
+  useEffect(() => {
+    if (!visible) return;
+    const raiz = document.getElementById("root");
+    const focoPrevio = document.activeElement as HTMLElement | null;
+    modalesAbiertos += 1;
+    raiz?.setAttribute("inert", "");
+    const timer = setTimeout(() => panel.current?.focus(), 30);
+    return () => {
+      clearTimeout(timer);
+      modalesAbiertos = Math.max(0, modalesAbiertos - 1);
+      if (modalesAbiertos === 0) raiz?.removeAttribute("inert");
+      focoPrevio?.focus?.();
+    };
+  }, [visible]);
+
+  // El nombre accesible sale del primer título del contenido; si el modal
+  // cambia de paso, el efecto vuelve a apuntar al título nuevo.
+  useEffect(() => {
+    if (!visible) return;
+    const titulo = panel.current?.querySelector<HTMLElement>("h1, h2, h3, h4, h5, h6");
+    if (!titulo) {
+      setTituloId(null);
+      return;
+    }
+    if (!titulo.id) titulo.id = `modal-titulo-${(contadorTitulos += 1)}`;
+    setTituloId(titulo.id);
+  });
+
+  // Tab y Shift+Tab dan la vuelta dentro de la ventana, sin escaparse al fondo
+  const atraparFoco = (e: ReactKeyboardEvent) => {
+    if (e.key !== "Tab" || !panel.current) return;
+    const controles = [...panel.current.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      // tabIndex >= 0 deja fuera el fondo del modal, que se marca con -1
+    )].filter((el) => el.offsetParent !== null && el.tabIndex >= 0 && !el.hasAttribute("aria-hidden"));
+    if (controles.length === 0) {
+      e.preventDefault();
+      panel.current.focus();
+      return;
+    }
+    const primero = controles[0];
+    const ultimo = controles[controles.length - 1];
+    const activo = document.activeElement;
+    if (e.shiftKey && (activo === primero || activo === panel.current)) {
+      e.preventDefault();
+      ultimo.focus();
+    } else if (!e.shiftKey && activo === ultimo) {
+      e.preventDefault();
+      primero.focus();
+    }
+  };
+
   if (!visible) return null;
   // Portal al body: el header usa backdrop-blur, y eso convertiría al header en
   // el contenedor de los elementos fixed, recortando la ventana flotante (HU-038)
   return createPortal(
-    <div className={`fixed inset-0 z-[100] flex items-end justify-center p-0 transition-opacity duration-200 sm:items-center sm:p-6 ${cerrando ? "opacity-0" : "opacity-100"}`} role="dialog" aria-modal="true">
-      <button className="absolute inset-0 bg-primary-ink/70 backdrop-blur-[3px]" onClick={alCerrar} aria-label="Cerrar" />
-      <div className={`relative w-full ${ancho} max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white shadow-lift sm:rounded-2xl ${cerrando ? "scale-95 transition-transform duration-200" : "anim-pop"}`}>
+    <div
+      className={`fixed inset-0 z-[100] flex items-end justify-center p-0 transition-opacity duration-200 sm:items-center sm:p-6 ${cerrando ? "opacity-0" : "opacity-100"}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={tituloId ?? undefined}
+      aria-label={!tituloId ? etiqueta ?? "Ventana de Hotelica" : undefined}
+      onKeyDown={atraparFoco}
+    >
+      {/* El fondo cierra con el mouse, pero no entra en el orden de tabulación */}
+      <button
+        className="absolute inset-0 bg-primary-ink/70 backdrop-blur-[3px]"
+        onClick={alCerrar}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+      <div
+        ref={panel}
+        tabIndex={-1}
+        className={`relative w-full ${ancho} max-h-[92vh] overflow-y-auto rounded-t-2xl bg-white shadow-lift outline-none sm:rounded-2xl ${cerrando ? "scale-95 transition-transform duration-200" : "anim-pop"}`}
+      >
         <button
           onClick={alCerrar}
           aria-label="Cerrar ventana"
-          className="absolute right-3.5 top-3.5 z-10 rounded-full bg-ink/5 p-2 text-muted transition-colors hover:bg-ink/10 hover:text-ink"
+          className={`absolute right-3.5 top-3.5 z-10 flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+            cerrarClaro
+              ? "bg-black/40 text-white backdrop-blur-sm hover:bg-black/60"
+              : "bg-ink/5 text-muted hover:bg-ink/10 hover:text-ink"
+          }`}
         >
           <IconoX size={16} />
         </button>

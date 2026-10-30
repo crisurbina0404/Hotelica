@@ -53,27 +53,27 @@ Al guardar, el hotel **no aparece en las búsquedas todavía**: se registra con 
 ### Escenario 7: El admin aprueba y crea la cuenta del hotelero
 **Dado** que el administrador revisó la solicitud aprobada  
 **Cuando** pulsa "Aprobar"  
-**Entonces** el hotel pasa a `Aprobado` y se crea la cuenta de hotelero (correo + contraseña temporal) que se muestra al admin para enviársela al dueño
+**Entonces** el hotel pasa a `Aprobado` y se crea la cuenta de hotelero en la plataforma; al dueño se le envía un correo con un enlace de un solo uso para definir su propia contraseña (la contraseña nunca viaja por correo)
 
 ### Escenario 8: El hotelero entra con su cuenta creada
-**Dado** que el hotelero recibió su correo y contraseña  
-**Cuando** inicia sesión con esos datos  
+**Dado** que el hotelero definió su contraseña con el enlace del correo  
+**Cuando** inicia sesión con su correo y la contraseña que eligió  
 **Entonces** queda dirigido a su panel del hotel, donde ve la información de su establecimiento
 
-### Escenario 9: El hotelero recibe un correo con sus credenciales
+### Escenario 9: El hotelero recibe el correo de acceso
 **Dado** que el administrador aprobó la solicitud y creó la cuenta  
 **Cuando** el sistema procesa la aprobación  
-**Entonces** envía un correo automático al dueño con su correo, contraseña y instrucciones para entrar a su panel
+**Entonces** envía un correo automático al dueño con su correo, un botón de "Definir mi contraseña" (enlace de un solo uso) e instrucciones para entrar a su panel; si alguien lo presiona a pedir su contraseña, debe negarse
 
 ### Escenario 10: Consultar el estado de la solicitud sin cuenta
 **Dado** que el hotelero inscribió su hotel y quiere saber el estado  
 **Cuando** ingresa su correo en la consulta pública del Inicio  
-**Entonces** el sistema le muestra si su solicitud está Pendiente, Aprobada o Rechazada; si está aprobada, también le muestra sus credenciales de acceso
+**Entonces** el sistema le muestra si su solicitud está Pendiente, Aprobada o Rechazada; si está aprobada, le muestra el correo con el que entra (nunca contraseñas)
 
 ## MoSCoW
 
 - **Must Have:** ✅ formulario público con nombre del hotel, ubicación, descripción, teléfono y departamento; ✅ validación de campos obligatorios antes de enviar; ✅ registro en BD con `estado_hotel = 'Pendiente'`; ✅ aviso de que será revisado por un administrador; ✅ el admin crea la cuenta de hotelero al aprobar.
-- **Should Have:** ✅ carga de al menos una imagen representativa; ✅ mensajes de error claros campo por campo; ✅ prellenado de nombre y correo si el usuario ya tiene sesión; ✅ correo automático con credenciales al aprobar; ✅ consulta pública de estado por correo.
+- **Should Have:** ✅ carga de al menos una imagen representativa; ✅ mensajes de error claros campo por campo; ✅ prellenado de nombre y correo si el usuario ya tiene sesión; ✅ correo automático con el enlace de acceso al aprobar (sin contraseñas); ✅ consulta pública de estado por correo.
 - **Could Have:** vista previa de la foto antes de enviar, autocompletar el departamento con la silueta de Nicaragua, guardar un borrador si recarga la página.
 - **Won't Have:** edición de los datos (es la HU-022), rechazo del hotel (HU-032), subida de galería completa (es la HU-025), alta masiva de varios hoteles.
 
@@ -85,10 +85,10 @@ Al guardar, el hotel **no aparece en las búsquedas todavía**: se registra con 
 - **Guardado:** `registrarHotel()` en `src/store.tsx` guarda el hotel con `aprobado: "pendiente"` y `correoDueno` (subtareao HOTELICA-202).
 - **Aviso:** mensaje "Tu hotel será revisado por un administrador" con badge Pendiente apenas se envía (subtareao HOTELICA-203).
 - **Imagen:** `validarImagenHotel()` acepta JPG/PNG/WEBP de hasta 5 MB y el formulario exige al menos una (subtareao HOTELICA-204).
-- **Aprobación y cuenta:** `decidirHotel()` en `src/store.tsx`, al aprobar, crea una `CuentaHotelero` (correo, contraseña temporal, nombre del dueño, hotelId) y la devuelve; `PanelAdmin` la muestra en un modal para que el admin se la envíe al hotelero.
-- **Correo automático:** `enviarCuentaHotelero()` en `src/store.tsx` llama a la Edge Function `supabase/functions/enviar-cuenta-hotelero/index.ts` (Brevo API) que envía un correo real al dueño con sus credenciales e instrucciones. Se ejecuta automáticamente cuando el admin aprueba. Ajuste del 2026-10-19: el paso 1 "Ingresa a" ahora es un enlace real a `https://hotelica.vercel.app` (antes decía "hotelica.com" sin enlace) y el HTML suma un `@media` para celular donde las filas de las tablas se apilan y no se aplastan.
-- **Consulta pública:** en `src/pages/InscribeHotel.tsx` hay un formulario "¿Ya inscribiste tu hotel? Consulta el estado" donde el dueño ingresa su correo y ve el estado (Pendiente/Aprobada/Rechazada); si está aprobada, muestra las credenciales.
-- **Login del hotelero:** `login()` en `src/store.tsx` primero revisa `cuentasHotelero` (cuentas creadas por el admin); si coinciden correo y contraseña, inicia sesión con rol Hotel y activa el enlace "Panel del hotel".
+- **Aprobación y cuenta:** `decidirHotel()` en `src/store.tsx`, al aprobar, registra la cuenta del hotelero en la tabla `usuarios` de la base (rol Hotel) y devuelve los datos de contacto; `PanelAdmin` muestra un modal confirmando que el correo de acceso se envió (sin contraseñas a la vista).
+- **Correo automático:** `enviarCuentaHotelero()` en `src/store.tsx` llama a la Edge Function `supabase/functions/enviar-cuenta-hotelero/index.ts` (Brevo API). La función crea el usuario en Supabase Auth con una contraseña inventada que nadie recibe y manda un **enlace de un solo uso** con el que el dueño define su propia contraseña en la pantalla "Restablecer contraseña" del sitio. Se ejecuta automáticamente cuando el admin aprueba. Ajuste del 2026-10-19: el paso 1 "Ingresa a" ahora es un enlace real a `https://hotelica.vercel.app` (antes decía "hotelica.com" sin enlace) y el HTML suma un `@media` para celular donde las filas de las tablas se apilan y no se aplastan. Ajuste del 2026-10-29: la contraseña ya no viaja en el correo (antes quedaba legible en la bandeja del dueño) y la función solo responde a administradores con sesión.
+- **Consulta pública:** en `src/pages/InscribeHotel.tsx` hay un formulario "¿Ya inscribiste tu hotel? Consulta el estado" donde el dueño ingresa su correo y ve el estado (Pendiente/Aprobada/Rechazada); si está aprobada muestra el correo de acceso, nunca contraseñas.
+- **Login del hotelero:** `login()` en `src/store.tsx` primero revisa `cuentasHotelero` (cuentas locales de demo, creadas por el admin); si no coincide, entra por Supabase Auth y el rol Hotel lo confirma la tabla `usuarios` de la base (`rolDeLaBase()`), así el dueño que definió su contraseña con el enlace entra a su panel igual de cualquier navegador.
 - **Panel del hotel:** `HotelPanel.tsx` muestra el hotel cuyo `correoDueno` coincide con el usuario logueado. Ya no hay hotel de demostración: sin una cuenta de hotelero, el panel no se abre (`App.tsx` exige sesión con rol Hotel).
 - **Pruebas:** 13 unitarias nuevas en `src/__tests__/data.test.ts` (89 en total pasan) y prueba E2E `tests/CP-002-registro-hotel.spec.ts` (esta última no corrió en la máquina por una política de seguridad sobre el navegador).
 - **Regla de negocio cumplida:** solo los hoteles con `estado_hotel = 'Aprobado'` aparecen en las búsquedas del turista.

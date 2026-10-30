@@ -6,6 +6,39 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.78.0] — 2026-10-29 · Las credenciales dejan de viajar por correo (Edge Functions seguras)
+
+### Corregido (seguridad, módulo aprobación de hoteles)
+- **La contraseña temporal ya no va en el correo del hotelero (HU-021)** — el correo de aprobación incluía la contraseña en texto plano: quedaba legible para siempre en la bandeja del dueño y en el correo de Brevo. Ahora la función `enviar-cuenta-hotelero` crea el usuario real del hotelero en Supabase Auth (con una contraseña inventada que nadie recibe) y manda un **enlace de un solo uso** para que el dueño defina su propia contraseña en la pantalla "Restablecer contraseña" que ya existía. El email pasa a ser un botón "Definir mi contraseña" con instrucciones.
+- **La Edge Function solo responde a administradores con sesión** — antes cualquiera con sesión (o sin ella, según la config) podía pedir invitaciones para cualquier correo. Ahora valida el token contra la tabla `administradores` con el rol de servicio y rechaza con 401/403 a quien no lo sea.
+- **Espejo en la app** — `enviarCuentaHotelero` ya no manda `contrasena` en el cuerpo; el modal del panel del admin ya no muestra ninguna contraseña ("No se envían contraseñas por correo"); el login y la recarga de página deciden el rol Hotel con la tabla `usuarios` de la base (`rolDeLaBase`), para que el dueño que definió su contraseña desde otro navegador entre a su panel; y `cambiarContrasenaHotelero` ahora sabe cambiar contraseñas de cuentas reales de Supabase (verifica la actual volviendo a entrar antes de actualizar). Las cuentas locales de demo del admin siguen funcionando igual que antes.
+- **Inyección de HTML en los 3 correos** — nombre del dueño, nombre del hotel, folio, huéspedes, montos, referencia, motivo del rechazo y compañía se interpolan ahora con `escaparHtml()`: un hotel "falso" con `<script>` dentro del nombre ya no puede disfrazarse de correo legítimo de Hotelica. En el correo de reservas los montos y números además solo cuentan si son números de verdad.
+
+### Pruebas
+- `npx tsc --noEmit` sin errores; HU-021 actualizada (escenarios 7–10 y notas) para describir el flujo con enlace.
+
+### Pendiente de desplegar
+- `supabase functions deploy enviar-cuenta-hotelero` (y si se quiere, las otras dos); el `ORIGEN_APP` es opcional: por defecto regresa a `https://hotelica.vercel.app`.
+
+---
+
+## [v0.77.0] — 2026-10-29 · Validaciones más estrictas y sincronización sin huecos
+
+### Corregido (módulo autenticación + reservas + inscripción)
+- **La reserva se revalida en el store (HU-013/HU-014)** — `crearReserva` ahora rechaza fechas al pasado, fuerza al menos una noche, limita los huéspedes a la capacidad de la habitación y recalcula noches/subtotal/IVA/total con el precio real de la base. Antes confiaba ciegamente en lo que venía del modal de reserva; así ninguna fila rota llega a la tabla `reservas` de Supabase aunque alguien se salte la interfaz.
+- **El turista nace con contraseña segura (HU-001/HU-004)** — el registro pide la misma política que el hotelero (mínimo 8 caracteres con minúscula, número y símbolo) en vez de solo 6; el correo se valida con formato (`esCorreo`) en registro, login y recuperación. Mientras se escribe la contraseña aparece la checklist en vivo (`ChecklistContrasena`) en el registro y en restablecer contraseña, igual que en el panel del hotelero. Criterios BDD de HU-001 y HU-004 actualizados.
+- **La imagen de inscripción pública pasa por el canvas (HU-021)** — `elegirImagen` usa `optimizarFoto` como el panel del hotel: sale reescalada a 1280 px de ancho, en JPEG liviano y sin metadatos del archivo original, antes de irse como data URL a la columna `imagen` de `hoteles`.
+
+### Corregido (base de datos)
+- **Faltaba la política de UPDATE en `usuarios`** — la tabla de HU-033 solo tenía políticas de lectura y de alta, así que activar o desactivar una cuenta desde la consola (o renovar su nombre al iniciar sesión) fallaba con row-level security: el upsert de `subirUsuario` no podía actualizar una fila existente. Nueva migración `20261029110000_usuarios_actualizacion_rls.sql` (aplicarla desde el SQL Editor del Dashboard); el disparador `control_activo_usuario` sigue mandando: solo un admin puede cambiar quién entra.
+- **Las tablas reales de `usuarios` y `reservas` estaban incompletas (verificación en vivo contra la base)** — aplicada la migración anterior, los upserts seguían fallando y la causa era otra: en el Dashboard esas dos tablas ya existían de antes con menos columnas, y como las migraciones usan `create table if not exists`, nunca las completaron con lo que la app escribe. En `usuarios` faltaba `nombre` (la base lo tiene como `nombres`) y `rol`; en `reservas` faltaban `correo`, `telefono`, `comentarios`, `motivo_rechazo`, `checkin_en` y `checkout_en`. Cada `subirReserva` fallaba por eso y la tabla estaba vacía aunque el flujo de reservas funcionara en pantalla. Nueva migración `20261029120000_ajuste_usuarios_reservas_columnas.sql` con los `alter table add column if not exists` y el respaldo de `nombres` → `nombre`. Verificación columna a columna de las 6 tablas contra la base real por PostgREST: `hoteles` (19), `habitaciones` (9), `resenas` (7) y `administradores` (2) completas.
+
+### Verificación
+- `npx tsc --noEmit` sin errores; revisión campo a campo de los mapeos de `src/sync.ts` contra las 7 migraciones de `supabase/migrations/` sin diferencias.
+- **Verificación en vivo tras aplicar las dos migraciones nuevas:** las 8 columnas antes faltantes (`usuarios.nombre`, `usuarios.rol`, `reservas.correo/telefono/comentarios/motivo_rechazo/checkin_en/checkout_en`) ya existen en la base; las demás tablas siguen completas. Las políticas RLS respondieron como se diseñó al probarlas sin tocar datos: sin sesión el alta de cuentas se rechaza (42501) y la actualización de reservas abre la puerta del upsert (204 sin filas).
+
+---
+
 ## [v0.76.0] — 2026-10-28 · Limpieza de archivos que no contribuían al proyecto
 
 ### Retirado

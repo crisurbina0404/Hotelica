@@ -179,7 +179,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                   avisar(esFavorito ? "Se quitó de tus favoritos" : "Guardado en tus favoritos", esFavorito ? "info" : "ok");
                 }}
                 className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition-all active:scale-95 ${
-                  esFavorito ? "border-danger/30 bg-[#FEF2F2] text-danger" : "border-line text-muted hover:border-danger/40 hover:text-danger"
+                  esFavorito ? "border-danger/30 bg-[#FEF2F2] text-[#B91C1C]" : "border-line text-muted hover:border-danger/40 hover:text-[#B91C1C]"
                 }`}
               >
                 <IconoCorazon size={16} lleno={esFavorito} />
@@ -213,7 +213,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
           <aside className="h-fit rounded-xl border border-line bg-white p-6 shadow-card lg:sticky lg:top-24">
             <p className="text-xs font-bold uppercase tracking-wider text-muted">Atendido por su dueño</p>
             <p className="mt-1.5 flex items-center gap-2 font-display text-lg font-bold text-ink">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-light text-sm font-bold text-accent-dark">{hotel.dueno.charAt(0)}</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-light text-sm font-bold text-[#92400E]">{hotel.dueno.charAt(0)}</span>
               {hotel.dueno}
             </p>
             <div className="mt-4 grid gap-2.5 border-t border-line pt-4 text-sm text-muted">

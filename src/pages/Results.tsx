@@ -8,7 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../store";
 import type { Ruta, Navegar } from "../rutas";
 import {
-  DEPARTAMENTOS, MUNICIPIOS, fmtFecha, hoyISO, sumarDias,
+  DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO, sumarDias,
 } from "../data";
 import { Reveal, Spinner, EstadoVacio, Estrellas } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
@@ -144,7 +144,12 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
 
           <div className="mt-5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Ordenar por</p>
-            <select value={orden} onChange={(e) => setOrden(e.target.value as typeof orden)} className={`${claseCampo} mt-2`}>
+            <select
+              value={orden}
+              onChange={(e) => setOrden(e.target.value as typeof orden)}
+              className={`${claseCampo} mt-2`}
+              aria-label="Ordenar por"
+            >
               <option value="destacados">Destacados primero</option>
               <option value="precio_asc">Precio: menor a mayor</option>
               <option value="precio_desc">Precio: mayor a menor</option>
@@ -155,7 +160,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
           <div className="mt-5">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Precio máximo</p>
-              <span className="rounded-md bg-accent-light px-2 py-0.5 text-xs font-bold text-accent-dark">C$ {precioMax.toLocaleString()}</span>
+              <span className="rounded-md bg-accent-light px-2 py-0.5 text-xs font-bold text-primary">{fmtDinero(precioMax)}</span>
             </div>
             <input
               type="range" min={800} max={3500} step={100} value={precioMax}
@@ -232,7 +237,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             <span className="text-sm font-semibold text-ink">Solo destacados</span>
           </label>
 
-          <button onClick={limpiar} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-line py-2.5 text-xs font-bold text-muted transition-colors hover:border-danger/40 hover:text-danger">
+          <button onClick={limpiar} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-line py-2.5 text-xs font-bold text-muted transition-colors hover:border-danger/40 hover:text-[#B91C1C]">
             <IconoX size={13} /> Limpiar filtros
           </button>
         </aside>
