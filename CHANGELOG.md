@@ -6,6 +6,64 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.82.0] — 2026-11-01 · Mensajes de correo más claros y en texto plano
+
+### Cambiado (copy de los correos)
+- **Asuntos con el dato que importa** — pasan de “Reserva HTL-… — Hotelica” y “¡Tu hotel X fue aprobado!” a `Reserva HTL-… en <hotel>`, `<hotel> ya está en Hotelica · activá tu cuenta` y `Sobre la inscripción de <hotel> en Hotelica`. El nombre del hotel y el folio quedan en la línea que se ve en la bandeja.
+- **Títulos sin promesas que el estado no respalda** — “¡Reserva confirmada!” se vuelve “Tu reserva quedó registrada”, porque la reserva también puede entrar como pendiente; el estado real sigue en la pastilla del detalle.
+- **Textos de vista previa (preheader)** — ahora resumen la reserva (hotel, folio y total), la activación de la cuenta y lo que falta para publicar el hotel, en vez de repetir el asunto.
+- **Saludos y notas accionables** — la reserva explica horarios de check-in, qué identificación llevar y dónde cancelar; la aprobación dice que el hotel ya recibe reservas y qué se puede hacer en el panel; el rechazo evita el tono de sentencia (“todavía no podemos publicar tu hotel”) y ofrece revisar el caso respondiendo el correo.
+- **Pie coherente** — el mismo texto en los tres correos invita a responder en lugar de cerrar con “no respondas a este mensaje”, que contradecía al correo de rechazo.
+- **Versión en texto plano (`textContent`)** — cada envío por Brevo lleva ahora su alternativa sin HTML, con folio, fechas y total en el comprobante, y el enlace de activación en el de hotelero. Mejora la entregabilidad y sirve para lectores sin HTML.
+
+### Pruebas
+- `npx tsc` sobre el módulo compartido sin errores y revisión de que los asuntos y los textos nuevos son los que viajan en cada función.
+
+---
+
+## [v0.81.0] — 2026-11-01 · Las habitaciones dejan de mostrarse sin foto
+
+### Agregado (catálogo, HU-041)
+- **Seis fotos de cuarto en `public/habitaciones/`** — antes los 21 tipos de habitación del catálogo tenían `galeria: []` y la ficha del hotel mostraba solo el ícono de cama en cada tarjeta. Ahora cada cuarto entra con su portada y sus créditos quedan en `public/habitaciones/CREDITOS.md`.
+- **Mapa `FOTOS_HABITACION` en `src/fotos.ts`** — asigna la foto por id de habitación. Las fotos se reutilizan entre hoteles distintos, pero **nunca dentro del mismo hotel**, así dos cuartos de la misma ficha no se ven iguales.
+- **Aplicación sin tocar la base** — `HABITACIONES_SEED` completa la galería cuando viene vacía y `sync.ts` prefiere la foto curada sobre la guardada en la base, respetando las que subió el hotelero (llegan como data URL).
+
+### Pruebas
+- `npx tsc --noEmit` sin errores; las seis imágenes responden 200 desde el dev server y la ficha del hotel pinta la foto en cada tarjeta de habitación.
+
+---
+
+## [v0.80.0] — 2026-11-01 · Los correos comparten una sola retícula y la paleta oficial
+
+### Cambiado (diseño, correos transaccionales)
+- **Plantilla única en `supabase/functions/_shared/correo.ts`** — los tres correos (cuenta de hotelero, comprobante de reserva y rechazo) salen del mismo documento: 600 px de ancho, cabecera teal con el logo y filete dorado, pie profundo y bloques cada 24 px. Antes cada función repetía su propio `<style>` y los tres se habían desincronizado.
+- **Ritmo vertical simétrico** — todos los bloques usan el mismo margen (24 px), relleno (22 px laterales), borde de 1 px `#E4DFD2` y radio de 12 px; las tablas de datos tienen filas de 12 px y el último renglón pierde el filete. Nada de bloques con alto o sangría distinta.
+- **Parejas de dos columnas iguales** — llegada/salida y noches/huéspedes van en dos celdas del 50 % separadas por un filete, en vez de una lista de filas desparejas. En móvil se apilan.
+- **Colores inventados fuera** — el bloque del rechazo usaba `#C0392B` y `#FDECEC`; ahora usa el estado "cancelada" de la paleta (`#FEE2E2` de fondo, `#FCA5A5` de borde, `#B91C1C` de tinta). También se corrigió el texto del botón dorado, que pasa de `#1C2B30` a `#051B21` como pide la skill, y el correo de rechazo tomó el mismo bloque realzado que los otros dos.
+- **Botones dentro de la retícula** — el de la activación de la cuenta, el de "Entrar a Hotelica" y el de volver a inscribir el hotel comparten tamaño, radio y tipografía; los enlaces largos de activación quedan en un párrafo aparte con `word-break`.
+- **Vista previa y modo claro** — cada correo lleva su texto de preheader oculto y las metas `color-scheme`/`supported-color-schemes` para que el modo oscuro del cliente no invierta la marca.
+
+### Pruebas
+- Render local de los tres correos con datos de ejemplo y revisión en el navegador: mismo ancho de contenido, bloques alineados y paleta sin hex ajenos a `src/index.css`.
+
+---
+
+## [v0.79.0] — 2026-10-30 · El cuerpo de letra pasa a Plus Jakarta Sans (HU-043)
+
+### Cambiado (diseño, identidad tipográfica)
+- **`--font-body` deja Outfit y toma Plus Jakarta Sans** — a 13–15 px, en las tablas del panel del hotel y en las etiquetas de formulario, Outfit apretaba mayúsculas y cifras. Plus Jakarta Sans mantiene el tono cálido de la marca y gana altura de x y claridad en los montos y las fechas. El cambio vive en el token (`src/index.css`), así que ningún componente se tocó: las utilidades `font-body` de Tailwind leen la variable.
+- **Una sola petición a Google Fonts (`index.html`)** — la URL cambia `Outfit` por `Plus+Jakarta+Sans:wght@400..800` y sigue trayendo las tres familias juntas con `display=swap`. El respaldo `Segoe UI` queda igual, para que nunca caiga en una serif.
+- **Comprobante y correos alineados** — el HTML descargable de `src/pages/BookingModal.tsx` declara su propio `--font-body` (es un documento aparte y no hereda `index.css`) y ahora nombra la misma familia; los tres correos (`enviar-correo-reserva`, `enviar-cuenta-hotelero`, `enviar-rechazo-hotelero`) cambian la pila del `body`. En los correos la familia solo aplica si el sistema la tiene, porque los clientes no cargan fuentes web: el respaldo `Segoe UI, Arial` hace el trabajo.
+- **Fraunces y Libre Baskerville no se movieron** — los títulos y los números grandes siguen en Fraunces; el nombre HOTELICA sigue exclusivamente en Libre Baskerville.
+
+### Documentación
+- **HU-043** con sus cinco escenarios BDD y la skill `hotelica-design` actualizada: la familia del cuerpo pasa a Plus Jakarta Sans en la tabla de tipografía, la escala y el checklist.
+
+### Pruebas
+- `npx tsc --noEmit` sin errores; revisión en el dev server a 1280 px y 390 px con Playwright, comprobando la familia computada del `body` y de los `h1`, y que la petición de fuentes de `index.html` ya no pida Outfit.
+
+---
+
 ## [v0.78.0] — 2026-10-29 · Las credenciales dejan de viajar por correo (Edge Functions seguras)
 
 ### Corregido (seguridad, módulo aprobación de hoteles)

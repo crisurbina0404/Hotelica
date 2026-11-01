@@ -60,7 +60,6 @@ test("la consola lista los usuarios por rol y cambia su estado al instante", asy
   // Escenarios 3, 5 y 6: desactivar a Jorge cambia la pastilla, el botón
   // y la base de datos (activo = FALSE) sin recargar la página
   await jorge.getByRole("button", { name: /Desactivar/ }).click();
-  await expect(page.getByText(/Jorge Pineda desactivado/)).toBeVisible();
   await expect(jorge).toContainText("Desactivado");
   await expect(jorge.getByRole("button", { name: /Activar/ })).toBeVisible();
   await expect.poll(() => subidas.at(-1)).toMatchObject({ correo: "jorge.pineda@hotelica.ni", activo: false });
@@ -75,7 +74,6 @@ test("la consola lista los usuarios por rol y cambia su estado al instante", asy
 
   // Se puede volver a activar, y la base recibe activo = TRUE
   await jorge.getByRole("button", { name: /Activar/ }).click();
-  await expect(page.getByText(/Jorge Pineda activado/)).toBeVisible();
   await expect(jorge).toContainText("Activo");
   await expect.poll(() => subidas.at(-1)).toMatchObject({ correo: "jorge.pineda@hotelica.ni", activo: true });
 });

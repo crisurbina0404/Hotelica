@@ -9,6 +9,7 @@ import { useApp } from "../store";
 import type { Ruta, Navegar } from "../rutas";
 import {
   DEPARTAMENTOS, MUNICIPIOS, fmtDinero, fmtFecha, hoyISO, sumarDias,
+  acotarNumero, fechasDeEstadiaValidas,
 } from "../data";
 import { Reveal, Spinner, EstadoVacio, Estrellas } from "../ui";
 import { TarjetaHotel } from "../tarjeta";
@@ -25,6 +26,11 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
   const [adultos, setAdultos] = useState(ruta.huespedes ?? 2);
   const [ninos, setNinos] = useState(0);
   const huespedes = adultos + ninos;
+
+  // Aviso de la búsqueda rápida: un rango de fechas inválido no puede
+  // quedarse en silencio mientras la lista afirma que hay disponibilidad
+  const [aviso, setAviso] = useState("");
+  const fechasValidas = fechasDeEstadiaValidas(llegada, salida);
 
   // Si llega una nueva búsqueda desde otra pantalla, sincronizamos los campos
   useEffect(() => {
@@ -108,31 +114,47 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Resultados de búsqueda</p>
             <h1 className="mt-1.5 font-display text-3xl font-bold text-ink sm:text-4xl">{titulo}</h1>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-muted">
-              <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-primary-dark"><IconoCalendario size={13} /> {fmtFecha(llegada)} → {fmtFecha(salida)}</span>
+              <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-primary-dark"><IconoCalendario size={13} /> {fechasValidas ? `${fmtFecha(llegada)} → ${fmtFecha(salida)}` : "Elegí tus fechas"}</span>
               <span className="flex items-center gap-1.5 rounded-full bg-primary-soft px-3 py-1 text-primary-dark"><IconoHuespedes size={13} /> {adultos} adulto{adultos > 1 ? "s" : ""}{ninos > 0 ? `, ${ninos} niño${ninos > 1 ? "s" : ""}` : ""}</span>
             </div>
           </div>
 
           {/* Búsqueda rápida editable */}
           <form
-            onSubmit={(e) => { e.preventDefault(); if (salida <= llegada) return; }}
-            className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-2.5 shadow-card lg:w-auto"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!llegada || !salida) {
+                setAviso("Elegí la fecha de llegada y la de salida para buscar.");
+                return;
+              }
+              if (salida <= llegada) {
+                setAviso("La fecha de salida debe ser posterior a la fecha de llegada.");
+                return;
+              }
+              setAviso("");
+            }}
+            className="grid w-full grid-cols-2 gap-2 rounded-xl border border-line bg-white p-2.5 shadow-card lg:w-auto lg:grid-cols-[10rem_9rem_9rem_5rem_5rem_auto] lg:items-center"
+            noValidate
           >
-            <select value={depto} onChange={(e) => { setDepto(e.target.value); setMuni(""); }} className={`${claseCampo} lg:w-40`} aria-label="Departamento">
+            <select value={depto} onChange={(e) => { setDepto(e.target.value); setMuni(""); }} className={`${claseCampo} col-span-2 lg:col-span-1`} aria-label="Departamento">
               <option value="">Toda Nicaragua</option>
               {DEPARTAMENTOS.map((d) => <option key={d.id} value={d.id}>{d.nombre}</option>)}
             </select>
-            <input type="date" value={llegada} min={hoyISO()} onChange={(e) => setLlegada(e.target.value)} className={`${claseCampo} lg:w-36`} aria-label="Fecha de llegada" />
-            <input type="date" value={salida} min={llegada} onChange={(e) => setSalida(e.target.value)} className={`${claseCampo} lg:w-36`} aria-label="Fecha de salida" />
-            <div className="flex items-center gap-1">
-              <input type="number" min={1} max={10} value={adultos} onChange={(e) => setAdultos(Number(e.target.value))} className={`${claseCampo} lg:w-16`} aria-label="Adultos" placeholder="Adultos" />
-              <input type="number" min={0} max={8} value={ninos} onChange={(e) => setNinos(Number(e.target.value))} className={`${claseCampo} lg:w-16`} aria-label="Niños" placeholder="Niños" />
-            </div>
-            <button type="submit" className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-dark" >
+            <input type="date" value={llegada} min={hoyISO()} onChange={(e) => { setLlegada(e.target.value); setAviso(""); }} className={claseCampo} aria-label="Fecha de llegada" />
+            <input type="date" value={salida} min={llegada} onChange={(e) => { setSalida(e.target.value); setAviso(""); }} className={claseCampo} aria-label="Fecha de salida" />
+            <input type="number" min={1} max={10} value={adultos} onChange={(e) => setAdultos(acotarNumero(e.target.value, 1, 10))} className={claseCampo} aria-label="Adultos" placeholder="Adultos" />
+            <input type="number" min={0} max={8} value={ninos} onChange={(e) => setNinos(acotarNumero(e.target.value, 0, 8))} className={claseCampo} aria-label="Niños" placeholder="Niños" />
+            <button type="submit" className="col-span-2 flex h-full items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-primary-dark lg:col-span-1" >
               <IconoBuscar size={15} /> Buscar
             </button>
           </form>
         </div>
+
+        {aviso && (
+          <p role="alert" className="mt-3 rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C]">
+            {aviso}
+          </p>
+        )}
       </Reveal>
 
       <div className="mt-10 grid gap-8 lg:grid-cols-[260px_1fr]">
@@ -142,7 +164,7 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             <IconoFiltro size={16} className="text-primary" /> Filtrar resultados
           </p>
 
-          <div className="mt-5">
+          <div className="mt-5 border-t border-line pt-5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Ordenar por</p>
             <select
               value={orden}
@@ -155,9 +177,12 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
               <option value="precio_desc">Precio: mayor a menor</option>
               <option value="rating">Mejor calificados</option>
             </select>
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              Destacados son los que eligió el equipo de Hotelica; las otras opciones ordenan por precio por noche o por el promedio de reseñas reales.
+            </p>
           </div>
 
-          <div className="mt-5">
+          <div className="mt-5 border-t border-line pt-5">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Precio máximo</p>
               <span className="rounded-md bg-accent-light px-2 py-0.5 text-xs font-bold text-primary">{fmtDinero(precioMax)}</span>
@@ -169,16 +194,20 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
               aria-label="Precio máximo por noche"
             />
             <div className="flex justify-between text-[10px] font-semibold text-muted"><span>C$ 800</span><span>C$ 3,500</span></div>
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              Solo aparecen hoteles con alguna habitación por debajo de ese precio por noche, sin contar el IVA.
+            </p>
           </div>
 
-          <div className="mt-5">
+          <div className="mt-5 border-t border-line pt-5">
             <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Calificación mínima</p>
-            <div className="mt-2 flex gap-1.5">
+            {/* Cuatro botones del mismo ancho: los bordes caen alineados con el resto de los controles */}
+            <div className="mt-2 grid grid-cols-4 gap-1.5">
               {[0, 4, 4.5, 4.8].map((r) => (
                 <button
                   key={r}
                   onClick={() => setRatingMin(r)}
-                  className={`flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition-all ${
+                  className={`flex items-center justify-center gap-1 rounded-lg border px-1 py-1.5 text-xs font-bold transition-all ${
                     ratingMin === r ? "border-primary bg-primary text-white" : "border-line bg-white text-muted hover:border-primary/50"
                   }`}
                 >
@@ -186,56 +215,55 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
                 </button>
               ))}
             </div>
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              Filtra por el promedio de las reseñas escritas por quienes ya se hospedaron. "Todas" no filtra nada.
+            </p>
           </div>
 
-          <div className="mt-5">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Adultos</p>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                onClick={() => setAdultos(Math.max(1, adultos - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
-                aria-label="Reducir adultos"
-              >
-                −
-              </button>
-              <span className="w-8 text-center font-display text-lg font-bold text-ink">{adultos}</span>
-              <button
-                onClick={() => setAdultos(Math.min(10, adultos + 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
-                aria-label="Aumentar adultos"
-              >
-                +
-              </button>
+          {/* Los dos contadores comparten retícula: mismo alto y mismo ancho, así el
+              bloque de huéspedes no queda desparejo con el resto del filtro */}
+          <div className="mt-5 border-t border-line pt-5">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { etiqueta: "Adultos", valor: adultos, menos: () => setAdultos(Math.max(1, adultos - 1)), mas: () => setAdultos(Math.min(10, adultos + 1)), reducir: "Reducir adultos", aumentar: "Aumentar adultos" },
+                { etiqueta: "Niños", valor: ninos, menos: () => setNinos(Math.max(0, ninos - 1)), mas: () => setNinos(Math.min(8, ninos + 1)), reducir: "Reducir niños", aumentar: "Aumentar niños" },
+              ].map((contador) => (
+                <div key={contador.etiqueta}>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted">{contador.etiqueta}</p>
+                  <div className="mt-2 flex items-center justify-between rounded-lg border border-line px-1.5 py-1">
+                    <button
+                      onClick={contador.menos}
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-lg font-bold leading-none text-muted transition-colors hover:bg-canvas hover:text-primary"
+                      aria-label={contador.reducir}
+                    >
+                      −
+                    </button>
+                    <span className="font-display text-base font-bold tabular-nums text-ink">{contador.valor}</span>
+                    <button
+                      onClick={contador.mas}
+                      className="flex h-7 w-7 items-center justify-center rounded-md text-lg font-bold leading-none text-muted transition-colors hover:bg-canvas hover:text-primary"
+                      aria-label={contador.aumentar}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
-            <p className="mt-1 text-[10px] text-muted">1 a 10 adultos</p>
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              Cuántas personas se hospedan: de 1 a 10 adultos y de 0 a 8 niños. Los niños también cuentan para la capacidad.
+            </p>
           </div>
 
-          <div className="mt-5">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted">Niños</p>
-            <div className="mt-2 flex items-center gap-2">
-              <button
-                onClick={() => setNinos(Math.max(0, ninos - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
-                aria-label="Reducir niños"
-              >
-                −
-              </button>
-              <span className="w-8 text-center font-display text-lg font-bold text-ink">{ninos}</span>
-              <button
-                onClick={() => setNinos(Math.min(8, ninos + 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-lg font-bold text-muted transition-colors hover:border-primary hover:text-primary"
-                aria-label="Aumentar niños"
-              >
-                +
-              </button>
-            </div>
-            <p className="mt-1 text-[10px] text-muted">0 a 8 niños</p>
+          <div className="mt-5 border-t border-line pt-5">
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-line px-3 py-2.5 transition-colors hover:border-primary/40">
+              <input type="checkbox" checked={soloDestacados} onChange={(e) => setSoloDestacados(e.target.checked)} className="h-4 w-4 accent-[#0B3540]" />
+              <span className="text-sm font-semibold text-ink">Solo destacados</span>
+            </label>
+            <p className="mt-1.5 text-[11px] leading-snug text-muted">
+              Deja únicamente los hoteles que el equipo de Hotelica marcó como destacados.
+            </p>
           </div>
-
-          <label className="mt-5 flex cursor-pointer items-center gap-2.5 rounded-lg border border-line px-3 py-2.5 transition-colors hover:border-primary/40">
-            <input type="checkbox" checked={soloDestacados} onChange={(e) => setSoloDestacados(e.target.checked)} className="h-4 w-4 accent-[#0B3540]" />
-            <span className="text-sm font-semibold text-ink">Solo destacados</span>
-          </label>
 
           <button onClick={limpiar} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-line py-2.5 text-xs font-bold text-muted transition-colors hover:border-danger/40 hover:text-[#B91C1C]">
             <IconoX size={13} /> Limpiar filtros
@@ -244,7 +272,16 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
 
         {/* ===== Lista de resultados ===== */}
         <div>
-          {cargando ? (
+          {!fechasValidas ? (
+            // Sin fechas válidas no se afirma disponibilidad: la lista se reemplaza
+            // por el pedido de fechas en lugar de mostrar "hoteles disponibles"
+            <div className="rounded-xl border border-line bg-white px-5 py-10 text-center">
+              <p className="font-display text-base font-bold text-ink">Elegí tus fechas</p>
+              <p className="mx-auto mt-1 max-w-md text-sm text-muted">
+                Necesitamos una llegada y una salida válidas para mostrarte la disponibilidad real de cada hotel.
+              </p>
+            </div>
+          ) : cargando ? (
             // Estado de carga solicitado en la guía
             <div className="flex flex-col items-center rounded-xl border border-line bg-white/70 py-24">
               <Spinner size={38} className="text-primary" />
@@ -268,9 +305,14 @@ export function Resultados({ ruta, navegar }: { ruta: Extract<Ruta, { nombre: "r
             />
           ) : (
             <>
-              <p className="mb-5 text-sm font-semibold text-muted">
-                <b className="text-primary">{resultados.length}</b> hotel{resultados.length !== 1 && "es"} con disponibilidad para tus fechas
-              </p>
+              <div className="mb-5">
+                <p className="text-sm font-semibold text-muted">
+                  <b className="text-primary">{resultados.length}</b> hotel{resultados.length !== 1 && "es"} con disponibilidad para tus fechas
+                </p>
+                <p className="mt-1 text-[11px] leading-snug text-muted">
+                  Solo aparecen hoteles aprobados por el equipo de Hotelica; el precio es por noche y el IVA se suma al reservar.
+                </p>
+              </div>
               <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {resultados.map((h, i) => (
                   <Reveal key={h.id} delay={(i % 3) * 90}>

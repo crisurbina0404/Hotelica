@@ -10,6 +10,7 @@ import type { Navegar } from "../rutas";
 import {
   AMENIDADES, DEPARTAMENTOS, MUNICIPIOS, ETIQUETA_HABITACION,
   fmtDinero, fmtFecha, hoyISO, sumarDias, calcularNoches, sugerirFechasAlternativas,
+  acotarNumero, fechasDeEstadiaValidas,
 } from "../data";
 import type { Habitacion, Hotel } from "../data";
 import { CalendarioDisponibilidad } from "./CalendarioDisponibilidad";
@@ -43,6 +44,10 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
   const [huespedes, setHuespedes] = useState(2);
   const [habitacion, setHabitacion] = useState<Habitacion | null>(null);
   const [mostrarCalendario, setMostrarCalendario] = useState(false);
+
+  // Sin fechas completas no se puede afirmar disponibilidad (se borraban a mano
+  // y la ficha seguía diciendo "4 disponibles")
+  const fechasValidas = fechasDeEstadiaValidas(llegada, salida);
   const [vistaComparativa, setVistaComparativa] = useState(false);
   const [fotoActiva, setFotoActiva] = useState(0);
   // Qué foto de cada habitación se está viendo en su tarjeta (HU-041)
@@ -125,8 +130,11 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
 
       {/* ===== Galería principal: se navega entre las fotos del hotel (HU-025) ===== */}
       <Reveal delay={80}>
-        <div className="mt-5 grid gap-2.5 overflow-hidden rounded-2xl sm:grid-cols-3 sm:grid-rows-2">
-          <div className="relative h-72 overflow-hidden sm:col-span-2 sm:h-[420px] sm:row-span-2">
+        {/* El alto total lo fija el mosaico: la foto grande ocupa dos filas y
+            las dos laterales una cada una. Antes la grande tenía 420 px fijos y
+            las laterales se estiraban a 616, así que el mosaico quedaba torcido */}
+        <div className="mt-5 grid gap-2.5 overflow-hidden rounded-2xl sm:h-[420px] sm:auto-rows-fr sm:grid-cols-3">
+          <div className="relative h-72 overflow-hidden sm:col-span-2 sm:row-span-2 sm:h-full">
             <img src={galeria[activa] ?? hotel.imagen} alt={hotel.nombre} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
             {hotel.destacado && (
               <span className="absolute left-4 top-4 rounded-full bg-accent px-3 py-1 text-xs font-bold uppercase tracking-wide text-primary-ink shadow-md">Hotel destacado</span>
@@ -174,10 +182,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                 </p>
               </div>
               <button
-                onClick={() => {
-                  alternarFavorito(hotel.id);
-                  avisar(esFavorito ? "Se quitó de tus favoritos" : "Guardado en tus favoritos", esFavorito ? "info" : "ok");
-                }}
+                onClick={() => alternarFavorito(hotel.id)}
                 className={`flex items-center gap-2 rounded-full border-2 px-4 py-2 text-sm font-bold transition-all active:scale-95 ${
                   esFavorito ? "border-danger/30 bg-[#FEF2F2] text-[#B91C1C]" : "border-line text-muted hover:border-danger/40 hover:text-[#B91C1C]"
                 }`}
@@ -187,16 +192,23 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
               </button>
             </div>
 
-            <div className="mt-3 flex items-center gap-3">
-              <Estrellas valor={hotel.rating} size={17} />
-              <span className="font-display text-lg font-bold text-ink">{hotel.rating.toFixed(1)}</span>
-              <span className="text-sm text-muted">· {hotel.totalResenas} reseñas de viajeros</span>
-            </div>
+            {hotel.totalResenas > 0 ? (
+              <div className="mt-3 flex items-center gap-3">
+                <Estrellas valor={hotel.rating} size={17} />
+                <span className="font-display text-lg font-bold text-ink">{hotel.rating.toFixed(1)}</span>
+                <span className="text-sm text-muted">· {hotel.totalResenas} reseña{hotel.totalResenas === 1 ? "" : "s"} de viajeros</span>
+              </div>
+            ) : (
+              <p className="mt-3 text-sm font-medium text-muted">Todavía sin reseñas de viajeros.</p>
+            )}
 
             <p className="mt-5 max-w-2xl text-[15px] leading-relaxed text-muted">{hotel.descripcion}</p>
 
             <div className="mt-6">
               <p className="text-xs font-bold uppercase tracking-wider text-muted">Lo que ofrece</p>
+              <p className="mt-1.5 text-[11px] leading-snug text-muted">
+                Servicios que el hotelero declaró al registrar el hotel. Si algo no aparece, conviene preguntarle antes de reservar.
+              </p>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {hotel.amenidades.map((a) => (
                   <span key={a} className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary-soft px-3 py-1.5 text-xs font-semibold text-primary-dark">
@@ -238,7 +250,12 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
       <section id="habitaciones" className="mt-16 scroll-mt-24">
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-5">
-            <TituloSeccion ceja="Disponibilidad en tiempo real" titulo="Elige tu habitación" />
+            <div>
+              <TituloSeccion ceja="Disponibilidad en tiempo real" titulo="Elige tu habitación" />
+              <p className="mt-2 max-w-md text-[11px] leading-snug text-muted">
+                Los precios son por noche, sin el IVA del 15%. La disponibilidad se recalcula con tus fechas y huéspedes.
+              </p>
+            </div>
             <div className="flex flex-wrap items-center gap-2.5">
               <label className="flex items-center gap-2 text-xs font-bold text-muted">
                 Llegada <input type="date" value={llegada} min={hoyISO()} onChange={(e) => setLlegada(e.target.value)} className={claseCampo} />
@@ -247,7 +264,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                 Salida <input type="date" value={salida} min={llegada} onChange={(e) => setSalida(e.target.value)} className={claseCampo} />
               </label>
               <label className="flex items-center gap-2 text-xs font-bold text-muted">
-                Huéspedes <input type="number" min={1} max={10} value={huespedes} onChange={(e) => setHuespedes(Number(e.target.value))} className={`${claseCampo} w-20`} />
+                Huéspedes <input type="number" min={1} max={10} value={huespedes} onChange={(e) => setHuespedes(acotarNumero(e.target.value, 1, 10))} className={`${claseCampo} w-20`} />
               </label>
               <button
                 onClick={() => setVistaComparativa(!vistaComparativa)}
@@ -260,7 +277,11 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
         </Reveal>
 
         <div className={`mt-7 ${vistaComparativa ? "grid gap-4 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-4"}`}>
-          {rooms.every((r) => r.estado !== "disponible" || disponiblesDe(r.id, llegada, salida) === 0 || r.capacidad < huespedes) && (
+          {!fechasValidas ? (
+            <p className="rounded-xl border border-line bg-canvas px-5 py-4 text-sm font-semibold text-muted sm:col-span-2 lg:col-span-3">
+              Elegí tu fecha de llegada y la de salida para ver la disponibilidad real de cada habitación.
+            </p>
+          ) : rooms.every((r) => r.estado !== "disponible" || disponiblesDe(r.id, llegada, salida) === 0 || r.capacidad < huespedes) && (
             <p className="rounded-xl border border-[#FCD34D] bg-accent-light px-5 py-4 text-sm font-semibold text-[#92400E] sm:col-span-2 lg:col-span-3">
               Por ahora este hotel no tiene habitaciones disponibles para las fechas seleccionadas. Prueba con otras fechas.
             </p>
@@ -306,9 +327,15 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
                       <h3 className="font-display text-base font-bold text-ink">{r.tipo}</h3>
                       <BadgeHabitacion estado={r.estado} />
                       {r.estado === "disponible" && (
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${disponibles > 0 ? "bg-primary-light text-primary-dark" : "bg-[#FEE2E2] text-[#B91C1C]"}`}>
-                          {disponibles > 0 ? `${disponibles} disponible${disponibles > 1 ? "s" : ""}` : "Agotado"}
-                        </span>
+                        fechasValidas ? (
+                          <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${disponibles > 0 ? "bg-primary-light text-primary-dark" : "bg-[#FEE2E2] text-[#B91C1C]"}`}>
+                            {disponibles > 0 ? `${disponibles} disponible${disponibles > 1 ? "s" : ""}` : "Agotado"}
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-canvas px-2 py-0.5 text-[11px] font-bold text-muted">
+                            Elegí tus fechas
+                          </span>
+                        )
                       )}
                     </div>
                     <p className="mt-1 text-sm text-muted">{r.detalle}</p>
@@ -467,9 +494,18 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
         <div className="mt-7 grid gap-6 lg:grid-cols-[300px_1fr]">
           <Reveal>
             <div className="h-fit rounded-xl border border-line bg-white p-6 text-center shadow-card">
-              <p className="font-display text-5xl font-extrabold text-primary">{hotel.rating.toFixed(1)}</p>
-              <div className="mt-2 flex justify-center"><Estrellas valor={hotel.rating} size={18} /></div>
-              <p className="mt-1.5 text-sm text-muted">{hotel.totalResenas} reseñas verificadas</p>
+              {resenasHotel.length > 0 ? (
+                <>
+                  <p className="font-display text-5xl font-extrabold text-primary">{hotel.rating.toFixed(1)}</p>
+                  <div className="mt-2 flex justify-center"><Estrellas valor={hotel.rating} size={18} /></div>
+                  <p className="mt-1.5 text-sm text-muted">{hotel.totalResenas} reseña{hotel.totalResenas === 1 ? "" : "s"} verificada{hotel.totalResenas === 1 ? "" : "s"}</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-display text-lg font-bold text-ink">Sin calificaciones todavía</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">El promedio aparece cuando alguien se hospeda, termina su estadía y la califica.</p>
+                </>
+              )}
               <div className="mt-5 grid gap-1.5">
                 {distro.map((d) => (
                   <div key={d.n} className="flex items-center gap-2 text-xs font-semibold text-muted">
@@ -489,7 +525,7 @@ export function DetalleHotel({ id, navegar }: { id: string; navegar: Navegar }) 
           <div className="grid gap-4 sm:grid-cols-2">
             {resenasHotel.length === 0 && (
               <p className="rounded-xl border border-line bg-white p-6 text-sm text-muted sm:col-span-2">
-                Aún no hay reseñas escritas para este hotel. ¡Sé la primera persona en calificar tu estadía!
+                Aún no hay reseñas escritas para este hotel. Las primeras aparecerán cuando alguien termine su estadía y la califique.
               </p>
             )}
             {resenasHotel.map((r, i) => (

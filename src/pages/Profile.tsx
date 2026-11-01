@@ -70,11 +70,14 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
 
   // Si el usuario es hotelero, mostramos su hotel y su sección de contraseña
   const esHotelero = rol === "hotel" && usuario?.rol === "Hotel";
-  const miHotel = esHotelero && usuario?.correo
-    ? hoteles.find((h) => h.correoDueno?.toLowerCase() === usuario.correo.trim().toLowerCase())
-    : undefined;
   const cuentaMia = esHotelero && usuario?.correo
     ? cuentasHotelero.find((c) => c.correo === usuario.correo.trim().toLowerCase())
+    : undefined;
+  // El hotel del hotelero sale del correo del dueño o, si la ficha no lo trae,
+  // del hotel que tiene enlazado su cuenta: así nunca queda sin identificar
+  const miHotel = esHotelero
+    ? hoteles.find((h) => h.correoDueno?.toLowerCase() === usuario?.correo?.trim().toLowerCase()) ??
+      hoteles.find((h) => h.id === cuentaMia?.hotelId)
     : undefined;
 
   // Formulario para cambiar la contraseña (solo hotelero)
@@ -82,6 +85,8 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
   const [nuevaPass, setNuevaPass] = useState("");
   const [confirmaPass, setConfirmaPass] = useState("");
   const [errorPass, setErrorPass] = useState("");
+  // Confirmación en la propia tarjeta: ya no hay avisos flotantes de éxito
+  const [exitoPass, setExitoPass] = useState("");
 
   // Guarda la nueva contraseña del hotelero; pide la actual por seguridad (HU-040)
   const guardarPassword = async (e: React.FormEvent) => {
@@ -89,13 +94,14 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
     const resultado = await cambiarContrasenaHotelero(nuevaPass, confirmaPass, actualPass);
     if (resultado.error) {
       setErrorPass(resultado.error);
+      setExitoPass("");
       return;
     }
     setErrorPass("");
     setActualPass("");
     setNuevaPass("");
     setConfirmaPass("");
-    avisar("Contraseña actualizada correctamente.", "ok");
+    setExitoPass("Contraseña actualizada correctamente.");
   };
 
   // Si no hay usuario autenticado, no debería llegar aquí (ruta protegida)
@@ -392,6 +398,9 @@ export function Perfil({ navegar }: { navegar: Navegar }) {
                 />
               </label>
               <ChecklistContrasena clave={nuevaPass} />
+              {exitoPass && (
+                <p role="status" className="text-xs font-semibold text-[#15803D] sm:col-span-2">{exitoPass}</p>
+              )}
               {errorPass && (
                 <p role="alert" className="anim-pop text-xs font-semibold text-[#B91C1C] sm:col-span-2">{errorPass}</p>
               )}

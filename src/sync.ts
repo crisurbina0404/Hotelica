@@ -5,6 +5,7 @@
 // sigue funcionando igual que antes con el guardado local.
 // ============================================================
 import { supabase } from "./lib/supabase";
+import { fotosDeHabitacion, fotosDeHotel } from "./fotos";
 import type { EstadoHabitacion, EstadoHotel, Habitacion, Hotel, Punto, Resena, Reserva, EstadoReserva, UsuarioPlataforma } from "./data";
 
 // Así se llaman las columnas en la base (en la app usamos camelCase)
@@ -408,10 +409,15 @@ export function fusionarPorId<T extends { id: string }>(local: T[], base: T[]): 
 // las filas semilla no traen fotos, ubicación ni correo del dueño y
 // borrarlas en el navegador sería peor que no sincronizar
 function completarHotelDesdeLocal(bd: Hotel, local: Hotel): Hotel {
+  // Las fichas del catálogo tienen fotos curadas dentro del proyecto y esas
+  // mandan sobre la foto vieja que quedó guardada en la base. La excepción es
+  // una foto subida por el hotelero: viaja como data URL y se respeta.
+  const curadas = fotosDeHotel(bd.id);
+  const fotoSubida = !!bd.imagen?.startsWith("data:");
   return {
     ...bd,
-    imagen: bd.imagen || local.imagen,
-    galeria: bd.galeria?.length ? bd.galeria : local.galeria,
+    imagen: curadas && !fotoSubida ? curadas[0] : bd.imagen || local.imagen,
+    galeria: curadas && !fotoSubida ? curadas : bd.galeria?.length ? bd.galeria : local.galeria,
     amenidades: bd.amenidades?.length ? bd.amenidades : local.amenidades,
     descripcion: bd.descripcion || local.descripcion,
     ubicacion: bd.ubicacion ?? local.ubicacion,
@@ -434,9 +440,15 @@ export function fusionarHoteles(local: Hotel[], base: Hotel[]): Hotel[] {
 // Lo mismo para habitaciones: si la BD aún no tiene la columna galeria
 // (o viene vacía), no borramos las fotos que estaban en el navegador (HU-041)
 function completarHabitacionDesdeLocal(bd: Habitacion, local: Habitacion): Habitacion {
+  // Las fotos curadas del catálogo mandan sobre lo que quedó guardado en la
+  // base, salvo que el hotelero haya subido una propia (viaja como data URL)
+  const curadas = fotosDeHabitacion(bd.id);
+  const fotoSubida = (bd.galeria ?? []).some((f) => f.startsWith("data:"));
   return {
     ...bd,
-    galeria: bd.galeria?.length ? bd.galeria : local.galeria ?? [],
+    galeria: fotoSubida
+      ? bd.galeria
+      : curadas ?? (bd.galeria?.length ? bd.galeria : local.galeria ?? []),
   };
 }
 

@@ -114,6 +114,11 @@ export function Navbar({ ruta, navegar }: { ruta: Ruta; navegar: Navegar }) {
       setRegError("Todos los campos son obligatorios");
       return;
     }
+    // Un nombre solo con números o signos no identifica a nadie
+    if (!/[a-záéíóúüñ]/i.test(regNombre.trim())) {
+      setRegError("Escribí tu nombre real: debe incluir al menos una letra.");
+      return;
+    }
     // El correo debe tener formato de correo de verdad (usuario@dominio.algo)
     if (!esCorreo(regCorreo.trim())) {
       setRegError("Revisá tu correo: le falta el @ o el dominio.");
@@ -578,7 +583,7 @@ export function Footer({ navegar }: { navegar: Navegar }) {
 
       <div className="relative border-t border-teal-800/60 py-2">
         <p className="mx-auto max-w-7xl px-4 text-center text-xs text-teal-300/60 sm:px-6">
-          © 2026 Hotelica — Reservación hotelera de Nicaragua · Cálculos: noches × precio + IVA 15%
+          © 2026 Hotelica — Reservación hotelera de Nicaragua
         </p>
       </div>
     </footer>

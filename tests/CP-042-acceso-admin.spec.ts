@@ -39,7 +39,7 @@ test("solo un correo de administrador entra a la consola y al cerrar sesión se 
   // Escenario 2: el login lo reconoce como admin y lo deja en la consola
   await expect(page.getByText("Hoteles pendientes de aprobación (2)")).toBeVisible();
   await expect(page.getByRole("button", { name: "Consola admin" })).toBeVisible();
-  await expect(page.getByText(/Bienvenido, admin/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cerrar sesión" })).toBeVisible();
 
   // Escenario 5: cerrar sesión borra el acceso a la consola
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
@@ -57,7 +57,7 @@ test("un turista que inicia sesión nunca ve la consola", async ({ page }) => {
   await iniciarSesion(page, "ana@hotelica.ni", "secreta123", control);
 
   // Escenario 3: entra como turista y no aparece la consola
-  await expect(page.getByText(/Bienvenido, ana/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cerrar sesión" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Consola admin" })).toHaveCount(0);
   await expect(page.getByText("Hoteles pendientes de aprobación")).toHaveCount(0);
 });

@@ -5,7 +5,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
-  HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED, HABITACIONES_SEED,
+  HOTELES_SEED, RESERVAS_SEED, RESENAS_SEED, RESENAS_RETIRADAS, HABITACIONES_SEED,
   nuevoPromedio, hoyISO, ahoraISO, seTraslapan, sePuedeCalificar, validarCalificacion,
   claveDeFavoritos, favoritosDe, alternarFavoritoDe, validarRegistroHotel, validarEdicionHotel,
   generarContrasenaHotelero, contrasenaTemporalVencida, validarHabitacion,
@@ -88,6 +88,9 @@ function cargar(): Persistido {
           : (viejos as Record<string, string[]> | undefined) ?? {};
         const respuestaDeCarga: Persistido = {
           ...d, favoritos,
+          // Las reseñas de demostración de las versiones anteriores se descartan:
+          // ahora una reseña solo existe si viene de una estadía calificada
+          resenas: (d.resenas ?? []).filter((r) => !RESENAS_RETIRADAS.includes(r.id)),
           // Los guardados viejos no traían habitaciones: usamos las semillas (HU-023)
           habitaciones: d.habitaciones ?? HABITACIONES_SEED,
           notificaciones: d.notificaciones ?? [],
@@ -114,7 +117,8 @@ function cargar(): Persistido {
     hoteles: HOTELES_SEED,
     reservas: RESERVAS_SEED,
     resenas: RESENAS_SEED,
-    favoritos: { invitado: ["h-ometepe", "h-granada"] },
+    // Nadie arranca con favoritos regalados: la lista se llena a mano
+    favoritos: { invitado: [] },
     notificaciones: [],
     pagos: [],
     calificaciones: [],
@@ -457,10 +461,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Muestra un aviso y lo retira automáticamente a los 3.5 segundos
+  // Solo los errores se muestran como aviso flotante: las acciones que salen
+  // bien ya se ven en pantalla (la reserva aparece, el hotel cambia de estado),
+  // así que una alerta encima solo estorba. La firma se mantiene para que las
+  // llamadas existentes sigan funcionando.
   const avisar = (texto: string, tono: Toast["tono"] = "ok") => {
+    if (tono !== "error") return;
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, texto, tono }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 6000);
   };
 
   // Fase 2: sube un hotel a la base de datos sin frenar la app;
@@ -1483,8 +1492,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const registrar = async (correo: string, contrasena: string, nombre: string) => {
     // Re-validamos aquí aunque la ventana ya revise: la cuenta se crea de verdad
     const correoLimpio = correo.trim();
-    if (!nombre.trim()) {
+    const nombreLimpio = nombre.trim();
+    if (!nombreLimpio) {
       return { error: "El nombre es obligatorio" };
+    }
+    // Un nombre tiene que tener letras: "123" no es una persona
+    if (!/[a-záéíóúüñ]/i.test(nombreLimpio)) {
+      return { error: "Escribí tu nombre real: debe incluir al menos una letra." };
     }
     if (!esCorreo(correoLimpio)) {
       return { error: "Revisá tu correo: le falta el @ o el dominio." };
@@ -1589,19 +1603,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Enviar email de recuperación de contraseña (HU-004)
   const olvidarContrasena = async (correo: string) => {
-    if (!correo.trim()) {
+    const correoLimpio = correo.trim();
+    if (!correoLimpio) {
       return { error: "Ingresa tu correo electrónico" };
+    }
+    // Sin este chequeo se pedía el enlace a "ana@correo" y la pantalla decía
+    // que el correo había salido: la validación va antes de tocar la red
+    if (!esCorreo(correoLimpio)) {
+      return { error: "Revisá tu correo: le falta el @ o el dominio." };
     }
 
     // redirectTo: el enlace del correo regresa a la misma dirección donde pidió el cambio
-    let { error } = await supabase.auth.resetPasswordForEmail(correo, {
+    let { error } = await supabase.auth.resetPasswordForEmail(correoLimpio, {
       redirectTo: window.location.origin,
     });
 
     // Si Supabase rechazó la redirección (URL no autorizada), reintentamos sin ella
     if (error && (error.message.toLowerCase().includes("redirect") || error.message.toLowerCase().includes("allow"))) {
       console.warn("Redirect rechazado, reintentando sin redirectTo:", error.message);
-      ({ error } = await supabase.auth.resetPasswordForEmail(correo));
+      ({ error } = await supabase.auth.resetPasswordForEmail(correoLimpio));
     }
 
     if (error) {

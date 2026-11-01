@@ -95,7 +95,7 @@ Tres familias, cada una con **un solo trabajo**. Nunca mezclarlas en el mismo ro
 | Familia | Carga | Rol | Dónde |
 |---|---|---|---|
 | **Fraunces** (display) | variable, opsz 9–144, wght 500–900 | Títulos y números grandes | `h1–h3`, precios, folios, porcentajes |
-| **Outfit** (cuerpo) | 400–800 | Todo el texto de interfaz | Párrafos, botones, labels, tablas |
+| **Plus Jakarta Sans** (cuerpo) | 400–800 | Todo el texto de interfaz | Párrafos, botones, labels, tablas |
 | **Libre Baskerville** (marca) | 400, 700 | **Exclusivo del nombre HOTELICA** | Bloque `.brand` (header, footer, login, splash, éxito) |
 
 ### 2.1 Escala tipográfica
@@ -105,17 +105,17 @@ Tres familias, cada una con **un solo trabajo**. Nunca mezclarlas en el mismo ro
 | Hero | Fraunces | `3.6rem` (móvil `2.25rem`) | 800 |
 | Título de sección | Fraunces | `1.9rem` | 700 |
 | Título de tarjeta | Fraunces | `1.05rem` | 700 |
-| Ceja de sección | Outfit | `12px`, `uppercase`, `tracking 0.18em` | 700 |
-| Cuerpo | Outfit | `15–16px` | 400/500 |
-| Etiquetas de campo | Outfit | `11px`, `uppercase`, `tracking wider` | 700 |
-| Badges / folios tabla | Outfit / mono | `11–12px` | 700 |
+| Ceja de sección | Plus Jakarta Sans | `12px`, `uppercase`, `tracking 0.18em` | 700 |
+| Cuerpo | Plus Jakarta Sans | `15–16px` | 400/500 |
+| Etiquetas de campo | Plus Jakarta Sans | `11px`, `uppercase`, `tracking wider` | 700 |
+| Badges / folios tabla | Plus Jakarta Sans / mono | `11–12px` | 700 |
 
 ### 2.2 El bloque de marca `.brand` (no negociable)
 
 Estructura exacta: nombre arriba, frase debajo con guiones dorados. - Variantes de tamaño: `.chica` (1.02rem), base (1.25rem), `.grande` (2rem), `.enorme` (2.9rem, solo splash).
 - Sobre fondos oscuros (navbar transparente en el hero, footer): variante
   `.brand.oscura` → nombre `#F8F6F0`, frase `#8FD3DE`, **guiones dorados iguales**.
-- El nombre **jamás** se renderiza con Fraunces ni Outfit: solo Libre Baskerville.
+- El nombre **jamás** se renderiza con Fraunces ni Plus Jakarta Sans: solo Libre Baskerville.
 
 ---
 
@@ -184,8 +184,8 @@ bucles decorativos): consumen CPU/GPU/batería y ya fueron retiradas en v0.5.0.
 | ✅ Sí | ❌ No |
 |---|---|
 | Teal `#0B3540` + dorado `#F7A81B` + coral + crema | Otros teales/azules heredados (`#0F766E`) |
-| Fraunces en títulos, Outfit en cuerpo | Una sola familia para todo |
-| Nombre HOTELICA solo en Libre Baskerville | Nombre en Fraunces/Outfit u otra serif |
+| Fraunces en títulos, Plus Jakarta Sans en cuerpo | Una sola familia para todo |
+| Nombre HOTELICA solo en Libre Baskerville | Nombre en Fraunces/Plus Jakarta Sans u otra serif |
 | SVG inline con `currentColor` | Librerías de iconos, imágenes raster para UI |
 | Animaciones finitas + reduced-motion | Marquesinas, loops infinitos, parallax pesado |
 | Estados visibles en cada pantalla | Pantallas sin vacío/error/carga pensados |
@@ -197,7 +197,7 @@ bucles decorativos): consumen CPU/GPU/batería y ya fueron retiradas en v0.5.0.
 ## 8. Checklist antes de dar por terminado un cambio visual
 
 - [ ] Solo usé tokens de la paleta oficial (§1).
-- [ ] Títulos en Fraunces, cuerpo en Outfit, marca en Libre Baskerville.
+- [ ] Títulos en Fraunces, cuerpo en Plus Jakarta Sans, marca en Libre Baskerville.
 - [ ] Si toqué el nombre HOTELICA, es el bloque `.brand` completo.
 - [ ] Iconos/siluetas son SVG inline accesibles.
 - [ ] No quedó ninguna animación infinita; `prefers-reduced-motion` cubierto.

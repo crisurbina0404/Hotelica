@@ -218,7 +218,7 @@ export function InscribeHotel({ enVentana = false }: { enVentana?: boolean }) {
               </div>
             </div>
           ) : (
-            <form onSubmit={enviarSolicitud} noValidate className="grid gap-5 p-7 sm:grid-cols-2 sm:p-10">
+            <form onSubmit={enviarSolicitud} noValidate className="grid gap-5 p-6 sm:grid-cols-2 sm:p-8">
               {/* Aviso general cuando se intentó enviar con errores */}
               {hayErrores && (
                 <p role="alert" className="anim-pop rounded-lg border border-[#FCA5A5] bg-[#FEF2F2] px-3.5 py-2.5 text-sm font-semibold text-[#B91C1C] sm:col-span-2">

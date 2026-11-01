@@ -14,7 +14,7 @@ import { Estrellas } from "./ui";
 import { IconoCorazon, IconoPin } from "./icons";
 
 export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, huespedes = 2, variante = "columna" }: { hotel: Hotel; navegar: Navegar; retraso?: number; llegada?: string; salida?: string; huespedes?: number; variante?: "columna" | "grande" }) {
-  const { favoritos, alternarFavorito, avisar } = useApp();
+  const { favoritos, alternarFavorito } = useApp();
   const [latido, setLatido] = useState(false);
   const esFavorito = favoritos.includes(hotel.id);
 
@@ -38,29 +38,30 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
     alternarFavorito(hotel.id);
     setLatido(true);
     setTimeout(() => setLatido(false), 450);
-    avisar(esFavorito ? "Se quitó de tus favoritos" : "Guardado en tus favoritos", esFavorito ? "info" : "ok");
   };
 
   return (
     <article
-      className={`group cursor-pointer overflow-hidden border border-line bg-white shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-lift ${
+      className={`group flex h-full cursor-pointer flex-col overflow-hidden border border-line bg-white shadow-card transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/25 hover:shadow-lift ${
         // La tarjeta grande se queda con esquinas normales; las de columna llevan el arco
-        variante === "grande" ? "flex flex-col rounded-xl sm:flex-row" : "arco"
+        variante === "grande" ? "rounded-xl sm:flex-row" : "arco"
       }`}
       onClick={() => navegar({ nombre: "hotel", id: hotel.id })}
       style={{ animationDelay: `${retraso}ms` }}
     >
-      {/* Fotografía con zoom suave al pasar el cursor */}
+      {/* Fotografía con zoom suave al pasar el cursor. Todas las tarjetas usan
+          la misma proporción 4:3 y el mismo encuadre centrado: así las fotos de
+          la fila se ven del mismo tamaño, aunque el original venga distinto. */}
       <div
-        className={`relative overflow-hidden ${
-          variante === "grande" ? "aspect-[4/3] sm:aspect-auto sm:w-1/2" : "aspect-[4/3]"
+        className={`relative shrink-0 overflow-hidden ${
+          variante === "grande" ? "aspect-[4/3] sm:aspect-auto sm:h-full sm:w-1/2" : "aspect-[4/3]"
         }`}
       >
         <img
           src={hotel.imagen}
           alt={hotel.nombre}
           loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-ink/10" />
 
@@ -87,27 +88,36 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
         </p>
       </div>
 
-      <div className={`flex-1 p-4 ${variante === "grande" ? "sm:flex sm:flex-col sm:justify-center sm:p-6" : ""}`}>
+      <div className={`flex flex-1 flex-col p-4 ${variante === "grande" ? "sm:justify-center sm:p-6" : ""}`}>
         <div className="flex items-start justify-between gap-3">
-          <h3 className="font-display text-[1.05rem] font-bold leading-snug text-ink transition-colors group-hover:text-primary">
+          {/* Dos líneas como tope: los títulos largos no empujan el resto de la
+              tarjeta y todas las de la fila quedan a la misma altura */}
+          <h3 className="line-clamp-2 font-display text-[1.05rem] font-bold leading-snug text-ink transition-colors group-hover:text-primary">
             {hotel.nombre}
           </h3>
-          <span className="flex shrink-0 items-center gap-1 rounded-md bg-primary-soft px-1.5 py-0.5 text-sm font-bold text-primary-dark">
-            {hotel.rating.toFixed(1)}
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="m12 3.4 2.5 5.2 5.7.7-4.2 4 1.1 5.6-5.1-2.8-5.1 2.8 1.1-5.6-4.2-4 5.7-.7L12 3.4Z" />
-            </svg>
-          </span>
+          {hotel.totalResenas > 0 && (
+            <span className="flex shrink-0 items-center gap-1 rounded-md bg-primary-soft px-1.5 py-0.5 text-sm font-bold text-primary-dark">
+              {hotel.rating.toFixed(1)}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="m12 3.4 2.5 5.2 5.7.7-4.2 4 1.1 5.6-5.1-2.8-5.1 2.8 1.1-5.6-4.2-4 5.7-.7L12 3.4Z" />
+              </svg>
+            </span>
+          )}
         </div>
 
         <p className="mt-1 flex items-center gap-1 text-xs text-muted">
           <IconoPin size={12} /> {hotel.direccion.split(",").slice(0, 2).join(",")}
         </p>
 
-        <div className="mt-2.5 flex items-center gap-2 text-xs text-muted">
-          <Estrellas valor={hotel.rating} size={13} />
-          <span>{hotel.totalResenas} reseñas</span>
-        </div>
+        {/* Sin reseñas no inventamos un promedio: lo decimos y ya */}
+        {hotel.totalResenas > 0 ? (
+          <div className="mt-2.5 flex items-center gap-2 text-xs text-muted">
+            <Estrellas valor={hotel.rating} size={13} />
+            <span>{hotel.totalResenas} reseña{hotel.totalResenas === 1 ? "" : "s"}</span>
+          </div>
+        ) : (
+          <p className="mt-2.5 text-xs font-medium text-muted">Todavía sin reseñas</p>
+        )}
 
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {hotel.amenidades.slice(0, 3).map((a) => (
@@ -144,7 +154,7 @@ export function TarjetaHotel({ hotel, navegar, retraso = 0, llegada, salida, hue
           </p>
         )}
 
-        <div className="mt-4 pt-3.5">
+        <div className="mt-auto pt-4">
           {/* Separador dibujado como trazo de hamaca, en vez de línea recta de 1px */}
           <svg viewBox="0 0 120 8" preserveAspectRatio="none" className="mb-3 h-2 w-full text-line" aria-hidden="true">
             <path d="M0 1 Q60 7 120 1" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />

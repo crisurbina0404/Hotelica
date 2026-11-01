@@ -75,7 +75,7 @@ function descargarDocumento(r: Reserva, hotelNombre: string, habitacionTipo: str
      los tokens de tipografía que el sitio declara en index.css */
   :root {
     --font-display: "Fraunces", "Georgia", serif;
-    --font-body: "Outfit", "Segoe UI", sans-serif;
+    --font-body: "Plus Jakarta Sans", "Segoe UI", sans-serif;
     --font-brand: "Libre Baskerville", "Georgia", serif;
   }
   body { font-family: var(--font-body); background: #F8F6F0; color: #1C2B30; margin: 0; padding: 40px 16px; }
@@ -474,7 +474,7 @@ export function ModalReserva({
         /* ===== Wizard de 3 pasos ===== */
         <div>
           {/* Barra de progreso */}
-          <div className="border-b border-line px-6 py-4 sm:px-7">
+          <div className="border-b border-line px-6 py-4 sm:px-8">
             <div className="flex items-center justify-between">
               {PASOS.map((p, i) => (
                 <div key={p.numero} className="flex items-center">
@@ -504,7 +504,7 @@ export function ModalReserva({
 
           <div className="grid md:grid-cols-[1.2fr_1fr]">
             {/* ===== Columna izquierda: contenido del paso ===== */}
-            <div className="p-6 sm:p-7">
+            <div className="p-6 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-wider text-primary">Paso {pasoActual} de 3</p>
               <h2 className="mt-1 font-display text-xl font-bold text-ink">{PASOS[pasoActual - 1].titulo}</h2>
 
@@ -691,7 +691,7 @@ export function ModalReserva({
             </div>
 
             {/* ===== Columna derecha: resumen de precio ===== */}
-            <div className="flex flex-col border-t border-line bg-primary-soft/60 p-6 sm:p-7 md:border-l md:border-t-0">
+            <div className="flex flex-col border-t border-line bg-primary-soft/60 p-6 sm:p-8 md:border-l md:border-t-0">
               <p className="font-display text-base font-bold text-ink">Resumen de precio</p>
               <div className="mt-4 grid gap-2.5 text-sm">
                 <p className="flex justify-between text-muted"><span>Precio por noche</span><b className="text-ink">{fmtDinero(habitacion.precio)}</b></p>

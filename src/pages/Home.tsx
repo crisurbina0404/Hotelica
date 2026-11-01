@@ -49,6 +49,18 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
       setCampoError("depto");
       return;
     }
+    // Un campo de fecha vacío (se borró a mano) no puede pasar: sin llegada
+    // no hay disponibilidad que calcular y la pantalla mostraría "Invalid Date"
+    if (!llegada || !salida) {
+      setError("Elegí tu fecha de llegada y la de salida para ver disponibilidad.");
+      setCampoError("fechas");
+      return;
+    }
+    if (llegada < hoyISO()) {
+      setError("La fecha de llegada no puede ser anterior a hoy.");
+      setCampoError("fechas");
+      return;
+    }
     if (salida <= llegada) {
       setError("La fecha de salida debe ser posterior a la fecha de llegada.");
       setCampoError("fechas");
@@ -115,7 +127,9 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
             <div className="mt-6 grid grid-cols-3 gap-2 text-sm text-pretty text-teal-50/95 sm:flex sm:flex-wrap sm:items-center sm:gap-x-7 sm:gap-y-2">
               <span className="flex items-center gap-2"><span className="text-accent"><IconoPalmera size={18} /></span><b>{aprobados.length}</b> {t(idioma, "heroDestinos")}</span>
               <span className="flex items-center gap-2"><span className="text-accent"><IconoPin size={18} /></span><b>{MUNICIPIOS.length}</b> {t(idioma, "heroMunicipios")}</span>
-              <span className="flex items-center gap-2"><span className="text-accent"><IconoComillas size={18} /></span><b>{resenas.length}</b> {t(idioma, "heroResenas")}</span>
+              {resenas.length > 0 && (
+                <span className="flex items-center gap-2"><span className="text-accent"><IconoComillas size={18} /></span><b>{resenas.length}</b> {t(idioma, "heroResenas")}</span>
+              )}
             </div>
           </Reveal>
         </div>
@@ -223,7 +237,12 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <TituloSeccion ceja="Destinos que enamoran" titulo="De la colonia al Caribe, un departamento a la vez" />
+            <div>
+              <TituloSeccion ceja="Destinos que enamoran" titulo="De la colonia al Caribe, un departamento a la vez" />
+              <p className="mt-2 max-w-xl text-[11px] leading-snug text-muted">
+                Cada tarjeta abre los hoteles aprobados de ese departamento; el número cuenta solo los que ya pasaron la revisión.
+              </p>
+            </div>
             <button onClick={() => navegar({ nombre: "destinos" })} className="nav-link text-sm font-bold text-primary">
               Ver todos los destinos
             </button>
@@ -314,9 +333,11 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         <Reveal>
           <div className="flex flex-wrap items-end justify-between gap-4">
             <TituloSeccion ceja="Los favoritos de los viajeros" titulo="Hoteles destacados de esta temporada" />
-            <p className="flex items-center gap-1.5 text-sm font-semibold text-muted">
-              <span className="text-danger">♥</span> {favoritos.length} en tu lista de favoritos
-            </p>
+            {favoritos.length > 0 && (
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-muted">
+                <span className="text-danger">♥</span> {favoritos.length} en tu lista de favoritos
+              </p>
+            )}
           </div>
         </Reveal>
         {/* Retícula rota a propósito: una tarjeta grande en horizontal y las
@@ -388,7 +409,10 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
         </div>
       </section>
 
-      {/* ============ TESTIMONIOS DE VIAJEROS ============ */}
+      {/* ============ TESTIMONIOS DE VIAJEROS ============
+          Solo aparece cuando hay reseñas de verdad: sin estadías calificadas
+          no hay nada que citar, y no inventamos testimonios. */}
+      {resenas.length > 0 && (
       <section className="mx-auto max-w-7xl px-4 pt-20 sm:px-6">
         <Reveal>
           <TituloSeccion ceja="Voces viajeras" titulo="Lo que dicen quienes ya reservaron" />
@@ -443,6 +467,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
           })}
         </div>
       </section>
+      )}
 
       {/* ============ INSCRIPCIÓN DE HOTELES (HU-021) ============
           El formulario vive en una ventana flotante abierta desde la tarjeta

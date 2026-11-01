@@ -1,13 +1,12 @@
 // ============================================================
 // Hotelica — Edge Function: enviar correo de confirmación de reserva
 // Usa la API de Brevo para enviar correos transaccionales
+// El HTML sale de la plantilla compartida de _shared/correo.ts, para
+// que los tres correos del proyecto tengan la misma retícula.
 // ============================================================
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-// El logo vive en el repositorio porque los clientes de correo no muestran
-// imágenes embebidas en data URI (por eso salía la imagen rota)
-const LOGO_URL = "https://raw.githubusercontent.com/crisurbina0404/Hotelica/main/public/logo-email.png";
+import { correoReserva, escaparHtml } from "../_shared/correo.ts";
 
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
 // Correo que verificaste como remitente en Brevo
@@ -15,22 +14,15 @@ const REMITENTE_CORREO = Deno.env.get("BREVO_SENDER_EMAIL") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
+// Adónde lleva el botón del correo: la app no tiene rutas por URL,
+// así que el botón abre el sitio y el turista entra a "Mis reservas"
+const ORIGEN_APP = Deno.env.get("ORIGEN_APP") ?? "https://hotelica.vercel.app";
+
 // Headers CORS
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-// Vacía los caracteres peligrosos para que un dato malvado no logre
-// meter HTML ni código dentro del correo
-function escaparHtml(texto: string): string {
-  return String(texto)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
 
 // Números que llegan del navegador: si no vienen numéricos, cambiamos a null
 function numeroLimpio(valor: unknown): number | null {
@@ -57,8 +49,12 @@ serve(async (req) => {
     // del correo llega limpio (sin HTML ni código entre medio), y los
     // montos solo cuentan si son números de verdad
     const body = await req.json();
-    const folio = escaparHtml(String(body.folio ?? "").trim());
-    const hotelNombre = escaparHtml(String(body.hotelNombre ?? "").trim());
+    // Guardamos el texto crudo para los asuntos y la versión en texto plano,
+    // y su versión escapada para el HTML del correo
+    const folioTexto = String(body.folio ?? "").trim();
+    const hotelTexto = String(body.hotelNombre ?? "").trim();
+    const folio = escaparHtml(folioTexto);
+    const hotelNombre = escaparHtml(hotelTexto);
     const turista = escaparHtml(String(body.turista ?? "").trim());
     const correo = String(body.correo ?? "").trim();
     const llegada = String(body.llegada ?? "").trim();
@@ -132,19 +128,15 @@ serve(async (req) => {
         ? `C$ ${n.toLocaleString("ni-NI", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
         : "";
 
-    // Colores de cada estado (paleta oficial de Hotelica)
-    const CHIP_ESTADO: Record<string, string> = {
-      pendiente: "#FEF3C7|#92400E",
-      confirmada: "#DBEAFE|#1D4ED8",
-      checkin: "#D9E9EC|#0B3540",
-      completada: "#DCFCE7|#166534",
-      cancelada: "#FEE2E2|#B91C1C",
-      pagado: "#DCFCE7|#166534",
-    };
-    const chip = (clave: string, texto: string) => {
-      const colores = CHIP_ESTADO[clave] ?? "#EFF5F6|#0B3540";
-      const [fondo, tinta] = colores.split("|");
-      return `<span style="display:inline-block;padding:4px 13px;border-radius:999px;background:${fondo};color:${tinta};font-size:12px;font-weight:700;letter-spacing:0.5px;">${texto}</span>`;
+    // Colores de cada estado (paleta oficial de Hotelica, §1.4 de la skill)
+    const CHIP_ESTADO: Record<string, [string, string]> = {
+      pendiente: ["#FEF3C7", "#92400E"],
+      confirmada: ["#DBEAFE", "#1D4ED8"],
+      checkin: ["#D9E9EC", "#0B3540"],
+      completada: ["#DCFCE7", "#166534"],
+      cancelada: ["#FEE2E2", "#B91C1C"],
+      pagado: ["#DCFCE7", "#166534"],
+      reembolsado: ["#EFF5F6", "#0B3540"],
     };
 
     // Etiqueta en español de cada estado de la reserva
@@ -158,131 +150,57 @@ serve(async (req) => {
       reembolsado: "Reembolsado",
     };
 
-    // Filas de la tabla de datos (se pintan con <table> para que el
-    // espaciado se respete en cualquier cliente de correo)
-    const fila = (etiqueta: string, valor: string) =>
-      `<tr>
-            <td class="etiqueta" align="left">${etiqueta}</td>
-            <td class="valor" align="right">${valor}</td>
-          </tr>`;
+    // Fondo y tinta de la pastilla, con su texto en español
+    const chipDe = (clave: string) => {
+      const [fondo, tinta] = CHIP_ESTADO[clave] ?? ["#EFF5F6", "#0B3540"];
+      return { texto: ETIQUETA_ESTADO[clave] ?? clave, fondo, tinta };
+    };
 
-    // HTML del correo de confirmación (comprobante de reserva)
-    const htmlCorreo = `
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Reserva ${folio} — Hotelica</title>
-        <style>
-          body { margin: 0; padding: 20px 12px; background-color: #F8F6F0; font-family: 'Outfit', 'Segoe UI', Arial, sans-serif; color: #1C2B30; }
-          .envoltura { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 18px rgba(11, 53, 64, 0.14); }
+    // Método de pago tal como lo lee una persona
+    const metodoPago = pago === "tarjeta"
+      ? "Tarjeta"
+      : pago === "efectivo"
+        ? "Efectivo en recepción"
+        : pago
+          ? "Transferencia bancaria"
+          : undefined;
 
-          /* Cabecera de marca: logo de Hotelica + lema (HU comprobantes) */
-          .cabecera { background: linear-gradient(135deg, #0B3540, #07242C); padding: 30px 24px 24px; text-align: center; border-bottom: 3px solid #F7A81B; }
-          .logo { display: block; width: 220px; height: auto; margin: 0 auto; border: 0; font-family: 'Libre Baskerville', Georgia, serif; font-size: 30px; font-weight: 700; letter-spacing: 4px; color: #F8F6F0; }
-          .lema { margin: 16px 0 0; font-size: 13px; letter-spacing: 2px; color: #8FD3DE; text-transform: uppercase; }
-          .guion { color: #E0A83C; }
+    // HTML del correo (comprobante de reserva) desde la plantilla común
+    const htmlCorreo = correoReserva({
+      folio,
+      hotel: hotelNombre,
+      turista,
+      llegada: llegadaFormateada,
+      salida: salidaFormateada,
+      habitacion: habitacion || undefined,
+      noches: noches !== null ? String(noches) : null,
+      huespedes: huespedes !== null ? String(huespedes) : null,
+      estado: estado ? chipDe(estado) : undefined,
+      metodoPago,
+      estadoPago: estadoPago ? chipDe(estadoPago) : undefined,
+      referencia: referencia || undefined,
+      subtotal: typeof subtotal === "number" ? money(subtotal) : undefined,
+      iva: typeof iva === "number" ? money(iva) : undefined,
+      total: money(total) || `C$ ${total}`,
+      urlApp: ORIGEN_APP,
+    });
 
-          .contenido { padding: 30px 28px 26px; }
-          .ceja { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #177E8C; }
-          .titulo { margin: 8px 0 8px; font-family: 'Fraunces', Georgia, serif; font-size: 27px; font-weight: 700; color: #0B3540; }
-          .saludo { margin: 12px 0 0; font-size: 15px; line-height: 1.65; color: #5D6E73; }
-
-          .folio { margin: 24px 0 6px; padding: 22px 20px; text-align: center; background: #FDF0D7; border: 2px dashed #F7A81B; border-radius: 12px; }
-          .folio-ceja { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #D98A0B; }
-          .folio-numero { margin: 8px 0 6px; font-family: 'Fraunces', Georgia, serif; font-size: 36px; font-weight: 800; color: #0B3540; }
-          .folio-nota { margin: 0; font-size: 13px; color: #5D6E73; }
-
-          .bloque { margin: 22px 0 0; padding: 6px 20px 14px; background: #F8F6F0; border: 1px solid #E4DFD2; border-radius: 12px; }
-          .bloque-titulo { margin: 16px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #0B3540; }
-          .datos { width: 100%; border-collapse: collapse; }
-          .datos td { padding: 11px 2px; font-size: 14px; border-bottom: 1px solid #E4DFD2; }
-          .datos tr:last-child td { border-bottom: none; }
-          .etiqueta { color: #5D6E73; font-weight: 500; }
-          .valor { text-align: right; font-weight: 700; color: #1C2B30; }
-
-          .total { margin: 24px 0 0; padding: 22px 20px; text-align: center; background: #0B3540; border-radius: 12px; }
-          .total-etiqueta { margin: 0; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #8FD3DE; }
-          .total-monto { margin: 8px 0 12px; font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 800; color: #F7A81B; }
-
-          .nota { margin: 22px 0 0; padding: 14px 16px; font-size: 13px; line-height: 1.65; color: #5D6E73; background: #EFF5F6; border-left: 3px solid #177E8C; border-radius: 8px; }
-
-          .pie { padding: 24px; text-align: center; background: #07242C; }
-          .pie-marca { margin: 0; font-family: 'Libre Baskerville', Georgia, serif; font-size: 15px; font-weight: 700; letter-spacing: 4px; color: #F8F6F0; }
-          .pie-texto { margin: 10px 0 0; font-size: 12px; line-height: 1.7; color: #8FD3DE; }
-        </style>
-      </head>
-      <body>
-        <div class="envoltura">
-          <div class="cabecera">
-            <img class="logo" src="${LOGO_URL}" width="220" height="75" alt="HOTELICA">
-            <p class="lema"><span class="guion">—</span>&nbsp;&nbsp;Tu destino en Nicaragua&nbsp;&nbsp;<span class="guion">—</span></p>
-          </div>
-
-          <div class="contenido">
-            <p class="ceja">Comprobante de reserva</p>
-            <h1 class="titulo">¡Reserva confirmada!</h1>
-            <p class="saludo">Hola <strong>${turista}</strong>, tu reserva fue registrada exitosamente. Guarda este comprobante: el folio es lo que necesitas para el check-in.</p>
-
-            <div class="folio">
-              <p class="folio-ceja">Tu folio</p>
-              <p class="folio-numero">${folio}</p>
-              <p class="folio-nota">Guárdalo para el check-in</p>
-            </div>
-
-            <div class="bloque">
-              <p class="bloque-titulo">Detalle de la reserva</p>
-              <table class="datos" role="presentation">
-                ${fila("Hotel", hotelNombre)}
-                ${habitacion ? fila("Habitación", habitacion) : ""}
-                ${fila("Llegada", llegadaFormateada)}
-                ${fila("Salida", salidaFormateada)}
-                ${noches !== null ? fila("Noches", String(noches)) : ""}
-                ${huespedes !== null ? fila("Huéspedes", String(huespedes)) : ""}
-                ${estado ? fila("Estado", chip(estado, ETIQUETA_ESTADO[estado] ?? estado)) : ""}
-              </table>
-            </div>
-
-            ${pago || estadoPago ? `
-            <div class="bloque">
-              <p class="bloque-titulo">Pago</p>
-              <table class="datos" role="presentation">
-                ${pago ? fila("Método", pago === "tarjeta" ? "Tarjeta" : pago === "efectivo" ? "Efectivo en recepción" : "Transferencia bancaria") : ""}
-                ${estadoPago ? fila("Estado del pago", chip(estadoPago, ETIQUETA_ESTADO[estadoPago] ?? estadoPago)) : ""}
-                ${referencia ? fila("Referencia", referencia) : ""}
-              </table>
-            </div>` : ""}
-
-            ${typeof subtotal === "number" || typeof iva === "number" ? `
-            <div class="bloque">
-              <p class="bloque-titulo">Resumen del pago</p>
-              <table class="datos" role="presentation">
-                ${typeof subtotal === "number" ? fila("Subtotal", money(subtotal)) : ""}
-                ${typeof iva === "number" ? fila("IVA (15%)", money(iva)) : ""}
-              </table>
-            </div>` : ""}
-
-            <div class="total">
-              <p class="total-etiqueta">Total a pagar (IVA incluido)</p>
-              <p class="total-monto">${money(total) || `C$ ${total}`}</p>
-              ${estado ? chip(estado, ETIQUETA_ESTADO[estado] ?? estado) : ""}
-            </div>
-
-            <p class="nota">Presenta tu folio en recepción junto con tu identificación para completar el check-in. Si necesitas cambiar o cancelar tu reserva, ingresa a tu cuenta y ve a <strong>Mis reservas</strong>.</p>
-          </div>
-
-          <div class="pie">
-            <p class="pie-marca">HOTELICA</p>
-            <p class="pie-texto">
-              Plataforma turística de Nicaragua · Donde Nicaragua te recibe<br>
-              Este es un correo automático, no respondas a este mensaje.
-            </p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // Versión en texto plano: ayuda a los filtros de spam y a quien lee sin HTML
+    const textoPlano = [
+      `Tu reserva en ${hotelTexto} quedó registrada.`,
+      "",
+      `Folio: ${folioTexto}`,
+      `Llegada: ${llegadaFormateada}`,
+      `Salida: ${salidaFormateada}`,
+      habitacion ? `Habitación: ${String(body.habitacion ?? "").trim()}` : "",
+      noches !== null ? `Noches: ${noches}` : "",
+      huespedes !== null ? `Huéspedes: ${huespedes}` : "",
+      `Total con IVA incluido: ${money(total) || `C$ ${total}`}`,
+      "",
+      "Llevá tu folio y tu identificación al check-in. Para cambiar o cancelar la reserva, entrá a Mis reservas desde tu cuenta.",
+      "",
+      `Hotelica · ${ORIGEN_APP}`,
+    ].filter((linea) => linea !== "").join("\n");
 
     // Enviar correo con la API de Brevo
     const res = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -294,8 +212,9 @@ serve(async (req) => {
       body: JSON.stringify({
         sender: { email: REMITENTE_CORREO, name: "Hotelica" },
         to: [{ email: correo, name: turista }],
-        subject: `Reserva ${folio} — Hotelica`,
+        subject: `Reserva ${folio} en ${hotelTexto}`,
         htmlContent: htmlCorreo,
+        textContent: textoPlano,
       }),
     });
 

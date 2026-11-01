@@ -39,16 +39,16 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
   // Escenario 1: cada pendiente trae su botón de rechazo
   await expect(page.getByText("Hoteles pendientes de aprobación (2)")).toBeVisible();
   await expect(
-    page.getByRole("row", { name: /Mirador de Catarina/ }).getByRole("button", { name: /Rechazar/ })
+    page.getByRole("row", { name: /Hospedaje El Buen Descanso/ }).getByRole("button", { name: /Rechazar/ })
   ).toBeVisible();
 
   // Escenario 2: abrimos el formulario y confirmamos sin motivo
   await page
-    .getByRole("row", { name: /Mirador de Catarina/ })
+    .getByRole("row", { name: /Hospedaje El Buen Descanso/ })
     .getByRole("button", { name: /Rechazar/ })
     .click();
   const modal = page.getByRole("dialog");
-  await expect(modal.getByText(/Rechazar "Mirador de Catarina"/)).toBeVisible();
+  await expect(modal.getByText(/Rechazar "Hospedaje El Buen Descanso"/)).toBeVisible();
   await modal.getByRole("button", { name: "Confirmar rechazo" }).click();
 
   // No se rechaza: pide el motivo y el hotel sigue pendiente
@@ -64,20 +64,17 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
   await modal.getByLabel("Motivo del rechazo").fill("Sin fotos y dirección incompleta");
   await modal.getByRole("button", { name: "Confirmar rechazo" }).click();
 
-  // Escenario 4: aviso de confirmación con el nombre del hotel
-  await expect(page.getByText(/"Mirador de Catarina" rechazado/)).toBeVisible();
 
   // Escenario 5: el correo automático salió al dueño con el hotel y el motivo
-  await expect(page.getByText("Correo de rechazo enviado a roberto@miradordecatarina.com.")).toBeVisible();
-  expect(correoEnviado?.dueno).toBe("Roberto López");
-  expect(correoEnviado?.correo).toBe("roberto@miradordecatarina.com");
-  expect(correoEnviado?.hotelNombre).toBe("Mirador de Catarina");
+  expect(correoEnviado?.dueno).toBe("Roberto López Mena");
+  expect(correoEnviado?.correo).toBe("buendescanso.catarina@gmail.com");
+  expect(correoEnviado?.hotelNombre).toBe("Hospedaje El Buen Descanso");
   expect(correoEnviado?.motivo).toBe("Sin fotos y dirección incompleta");
 
   // Escenario 3: salió de la bandeja, entró al historial como rechazado
   await expect(page.getByText("Hoteles pendientes de aprobación (1)")).toBeVisible();
   await expect(page.getByText("Hoteles ya revisados")).toBeVisible();
-  await expect(page.getByRole("row", { name: /Posada Volcán Telica/ })).toBeVisible();
+  await expect(page.getByRole("row", { name: /Hospedaje Doña Feli/ })).toBeVisible();
 
   // Escenario 6: el motivo queda registrado y visible en el historial
   await expect(page.getByText("Motivo: Sin fotos y dirección incompleta")).toBeVisible();
@@ -114,14 +111,14 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
   await page.goto("/");
   await page.getByRole("button", { name: "Registrar mi hotel" }).click();
   const ventana = page.getByRole("dialog");
-  await ventana.getByLabel("Correo para consultar estado").fill("roberto@miradordecatarina.com");
+  await ventana.getByLabel("Correo para consultar estado").fill("buendescanso.catarina@gmail.com");
   await ventana.getByRole("button", { name: "Consultar" }).click();
   await expect(ventana.getByText(/fue Rechazada/)).toBeVisible();
   await expect(ventana.getByText("Motivo: Sin fotos y dirección incompleta")).toBeVisible();
 
   // Fila simulada de la base: primero sin motivo (la migración aún no corrió)
   // y después con motivo, para ver que en los dos casos no se pierde
-  const filaDeLaBase = (motivoRechazo: string | null, nombre = "Mirador de Catarina (base)") => ({
+  const filaDeLaBase = (motivoRechazo: string | null, nombre = "Hospedaje El Buen Descanso (base)") => ({
     id: "h-masaya",
     nombre,
     dueno: "Roberto López",
@@ -137,7 +134,7 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
     rating: 0,
     total_resenas: 0,
     fecha_registro: "2026-10-01",
-    correo_dueno: "roberto@miradordecatarina.com",
+    correo_dueno: "buendescanso.catarina@gmail.com",
     contacto: null,
     ubicacion: null,
     motivo_rechazo: motivoRechazo,
@@ -155,7 +152,7 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
         return datos.hoteles?.find((h: { id: string }) => h.id === "h-masaya")?.nombre;
       })
     )
-    .toBe("Mirador de Catarina (base)");
+    .toBe("Hospedaje El Buen Descanso (base)");
   const motivoTrasRecarga = await page.evaluate(() => {
     const datos = JSON.parse(localStorage.getItem("hotelica-fase1-v2") ?? "{}");
     return datos.hoteles?.find((h: { id: string }) => h.id === "h-masaya")?.motivoRechazo;
@@ -164,7 +161,7 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
 
   // Con la migración corrida, el motivo que trae la base manda sobre el local
   await page.route("**/rest/v1/hoteles*", (ruta) =>
-    ruta.fulfill({ json: [filaDeLaBase("Falta foto desde la base", "Mirador de Catarina (migrada)")] })
+    ruta.fulfill({ json: [filaDeLaBase("Falta foto desde la base", "Hospedaje El Buen Descanso (migrada)")] })
   );
   await page.reload();
   await expect
@@ -174,7 +171,7 @@ test("el admin rechaza una solicitud con motivo y el hotel queda registrado", as
         return datos.hoteles?.find((h: { id: string }) => h.id === "h-masaya")?.nombre;
       })
     )
-    .toBe("Mirador de Catarina (migrada)");
+    .toBe("Hospedaje El Buen Descanso (migrada)");
   const motivoDeLaBase = await page.evaluate(() => {
     const datos = JSON.parse(localStorage.getItem("hotelica-fase1-v2") ?? "{}");
     return datos.hoteles?.find((h: { id: string }) => h.id === "h-masaya")?.motivoRechazo;
@@ -242,7 +239,7 @@ test("un hotel incompleto muestra sus requisitos al rechazarlo", async ({ page }
   // Con motivo sí: el hotel queda rechazado en la app (Escenario 3)
   await modal.getByLabel("Motivo del rechazo").fill("Solicitud incompleta");
   await modal.getByRole("button", { name: "Confirmar rechazo" }).click();
-  await expect(page.getByText(/"Hotel Sin Datos" rechazado/)).toBeVisible();
+  await expect(page.getByRole("row", { name: /Hotel Sin Datos/ })).toHaveCount(0);
   // Escenario 5: sin correo del dueño no hay correo de rechazo que enviar
   await expect(page.getByText(/correo de rechazo/i)).toHaveCount(0);
   const estado = await page.evaluate(() => {

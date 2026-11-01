@@ -85,7 +85,7 @@ test("la bitácora lista los eventos, los filtra y distingue rechazo de cancelac
   // Escenario 2: los eventos muestran folio, texto, hotel y hora
   const nueva = filaDe(page, "HC-1001");
   await expect(nueva).toContainText("Ana López reservó");
-  await expect(nueva).toContainText("Casa Colonial Los Patios");
+  await expect(nueva).toContainText("Hostal La Casona de Xalteva");
   await expect(page.locator("li[data-evento='nueva']")).toHaveCount(1);
 
   // Escenario 3: el rechazo trae su motivo y su pastilla propia

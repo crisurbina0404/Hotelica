@@ -21,20 +21,18 @@ test("el admin aprueba los hoteles pendientes y la bandeja queda al día", async
 
   // Escenario 1: la bandeja lista las solicitudes esperando aprobación
   await expect(page.getByText("Hoteles pendientes de aprobación (2)")).toBeVisible();
-  await expect(page.getByRole("row", { name: /Mirador de Catarina/ })).toBeVisible();
-  await expect(page.getByRole("row", { name: /Posada Volcán Telica/ })).toBeVisible();
+  await expect(page.getByRole("row", { name: /Hospedaje El Buen Descanso/ })).toBeVisible();
+  await expect(page.getByRole("row", { name: /Hospedaje Doña Feli/ })).toBeVisible();
 
   // Escenario 2: aprobamos la primera solicitud con su botón
   await page
-    .getByRole("row", { name: /Mirador de Catarina/ })
+    .getByRole("row", { name: /Hospedaje El Buen Descanso/ })
     .getByRole("button", { name: /Aprobar/ })
     .click();
 
-  // Escenario 5: aviso de la acción y modal con las credenciales nuevas
-  await expect(page.getByText(/"Mirador de Catarina" aprobado/)).toBeVisible();
   const modal = page.getByRole("dialog");
   await expect(modal.getByText("Cuenta de hotelero creada")).toBeVisible();
-  await expect(modal.getByText("roberto@miradordecatarina.com").first()).toBeVisible();
+  await expect(modal.getByText("buendescanso.catarina@gmail.com").first()).toBeVisible();
 
   // Escenario 6: sin Supabase el correo no se manda y avisa el error,
   // dejando las credenciales a la vista para copiarlas a mano
@@ -44,9 +42,10 @@ test("el admin aprueba los hoteles pendientes y la bandeja queda al día", async
   // Escenario 4: salió de la bandeja, entró al historial y quedó guardado
   await expect(page.getByText("Hoteles pendientes de aprobación (1)")).toBeVisible();
   await expect(page.getByText("Hoteles ya revisados")).toBeVisible();
-  // esperamos que se apaguen los avisos para buscar el hotel solo en el historial
-  await expect(page.getByRole("status")).toHaveCount(0);
-  await expect(page.locator("p").filter({ hasText: "Mirador de Catarina" })).toBeVisible();
+  // Los avisos de error duran unos segundos: esperamos que se apaguen para
+  // que el nombre del hotel solo pueda venir de la tarjeta del historial
+  await expect(page.getByRole("status")).toHaveCount(0, { timeout: 10000 });
+  await expect(page.locator("p").filter({ hasText: "Hospedaje El Buen Descanso" })).toBeVisible();
   const guardado = await page.evaluate(() => {
     const datos = JSON.parse(localStorage.getItem("hotelica-fase1-v2") ?? "{}");
     return datos.hoteles?.find((h: { id: string }) => h.id === "h-masaya")?.aprobado;
@@ -55,10 +54,9 @@ test("el admin aprueba los hoteles pendientes y la bandeja queda al día", async
 
   // Aprobamos el segundo y la bandeja se queda sin solicitudes
   await page
-    .getByRole("row", { name: /Posada Volcán Telica/ })
+    .getByRole("row", { name: /Hospedaje Doña Feli/ })
     .getByRole("button", { name: /Aprobar/ })
     .click();
-  await expect(page.getByText(/"Posada Volcán Telica" aprobado/)).toBeVisible();
   await page.getByRole("dialog").getByRole("button", { name: "Entendido" }).click();
 
   // Estado vacío: ya no hay nada por aprobar ni botón de aprobación

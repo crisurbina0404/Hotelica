@@ -167,19 +167,21 @@ export function MarcaFooter({ className = "" }: { className?: string }) {
 // ----- Estrellas de calificación (soporta fracciones) -----
 export function Estrellas({ valor, size = 15, className = "" }: { valor: number; size?: number; className?: string }) {
   const pct = Math.max(0, Math.min(100, (valor / 5) * 100));
+  const fila = (llena: boolean) =>
+    [0, 1, 2, 3, 4].map((i) => <IconoEstrella key={i} size={size} llena={llena} />);
   return (
-    <span className={`relative inline-flex ${className}`} aria-label={`Calificación ${valor} de 5`}>
-      <span className="flex gap-0.5 text-line">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <IconoEstrella key={i} size={size} />
-        ))}
-      </span>
-      <span className="absolute inset-0 overflow-hidden text-accent" style={{ width: `${pct}%` }}>
-        <span className="flex gap-0.5">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <IconoEstrella key={i} size={size} llena />
-          ))}
-        </span>
+    <span className={`relative inline-flex ${className}`} aria-label={`Calificación ${valor.toFixed(1)} de 5`}>
+      <span className="flex gap-0.5 text-line">{fila(false)}</span>
+      {/* La capa dorada es la misma fila de estrellas recortada por porcentaje:
+          el relleno cae donde toca (4,8 corta la quinta estrella) y las dos
+          capas miden igual, así que no se desalinean ni con el zoom. Antes se
+          recortaba por ancho, y los espacios entre estrellas corrían la cuenta. */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 flex gap-0.5 text-accent"
+        style={{ clipPath: `inset(0 ${100 - pct}% 0 0)` }}
+      >
+        {fila(true)}
       </span>
     </span>
   );

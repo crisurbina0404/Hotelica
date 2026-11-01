@@ -162,12 +162,11 @@ test("la calificación sube el promedio del hotel y el comentario no se pierde a
   await page.getByRole("button", { name: "Calificar con 5 estrellas" }).click();
   await page.getByPlaceholder("Cuéntanos").fill("La suite estaba impecable y el desayuno riquísimo.");
   await page.getByRole("button", { name: "Enviar calificación" }).click();
-  await expect(page.getByText(/Tu calificación ya cuenta para el promedio/)).toBeVisible();
 
   // El promedio del hotel en la tarjeta:0.0 → 5.0 con1 reseña
   await page.locator("header").getByRole("button", { name: "Explorar hoteles" }).click();
   await expect(page.getByText("El Continental")).toBeVisible();
-  await expect(page.getByText("1 reseñas")).toBeVisible();
+  await expect(page.getByText("1 reseña", { exact: true })).toBeVisible();
   await expect(page.getByText("5.0", { exact: true })).toBeVisible();
 
   // El comentario subió a la base como fila de resenas, no solo al navegador
@@ -179,6 +178,6 @@ test("la calificación sube el promedio del hotel y el comentario no se pierde a
   expect(subio()).toBe(true);
   await page.reload();
   await page.locator("header").getByRole("button", { name: "Explorar hoteles" }).click();
-  await expect(page.getByText("1 reseñas")).toBeVisible();
+  await expect(page.getByText("1 reseña", { exact: true })).toBeVisible();
   await expect(page.getByText("5.0", { exact: true })).toBeVisible();
 });

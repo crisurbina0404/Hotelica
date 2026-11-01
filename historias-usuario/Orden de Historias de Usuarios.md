@@ -45,3 +45,4 @@
 | 41 | HU-040 | Autenticación / Gestión Hotel | Contraseña segura del hotelero (48h y criterios) | Alta | ✅ Terminada |
 | 42 | HU-041 | Gestión Hotel / Búsqueda | Fotos de las habitaciones | Media | ✅ Terminada |
 | 43 | HU-042 | Administración | Acceso de administrador con cuenta real | Alta | ✅ Terminada |
+| 44 | HU-043 | Diseño (identidad tipográfica) | Cuerpo de letra en Plus Jakarta Sans | Media | ✅ Terminada |

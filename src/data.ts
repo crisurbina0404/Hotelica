@@ -3,6 +3,8 @@
 // Fase 1: maqueta funcional (sin backend todavía)
 // ============================================================
 
+import { fotosDeHabitacion, fotosDeHotel } from "./fotos";
+
 // ----- Tipos que reflejan las tablas de hotelica.sql -----
 
 export type Departamento = { id: string; nombre: string };
@@ -182,148 +184,161 @@ export const MUNICIPIOS: Municipio[] = [
 export const HOTELES_SEED: Hotel[] = [
   {
     id: "h-granada",
-    nombre: "Casa Colonial Los Patios",
-    dueno: "Familia Bermúdez",
+    nombre: "Hostal La Casona de Xalteva",
+    dueno: "Martha Rojas (doña Martha)",
     departamentoId: "granada",
     municipioId: "m-granada",
-    direccion: "Calle La Calzada, a media cuadra del Parque Central, Granada",
-    ubicacion: { lat: 11.9302, lng: -85.9553 }, // La Calzada, Granada
+    direccion: "De la iglesia de Xalteva dos cuadras al lago, Granada",
+    ubicacion: { lat: 11.9312, lng: -85.9535 },
     descripcion:
-      "Casona colonial de 1890 restaurada por la familia Bermúdez, con tres patios interiores llenos de flores, fuente de piedra y hamacas bajo los corredores. Desayuno nicaragüense incluido y terraza con vista a los techos de teja y al volcán Mombacho.",
-    imagen: IMG.granada,
-    galeria: [IMG.granada, IMG.ometepe, IMG.leon],
-    amenidades: ["wifi", "desayuno", "fuente", "terraza", "tours"],
+      "La casa tiene más de cien años y se nota: los pisos de barro están gastados en las esquinas y el patio huele a jazmín. Somos seis cuartos, así que casi siempre hay alguien en la hamaca. El wifi va bien en el patio; en los cuartos del fondo a veces se cae. El desayuno es gallo pinto, huevos y café de Dipilto, de 6:30 a 9.",
+    imagen: fotosDeHotel("h-granada")?.[0] ?? IMG.granada,
+    galeria: fotosDeHotel("h-granada") ?? [IMG.granada],
+    amenidades: ["wifi", "desayuno", "fuente", "terraza"],
     destacado: true,
     aprobado: "aprobado",
-    rating: 4.8,
-    totalResenas: 126,
-    fechaRegistro: "2025-11-02",
+    rating: 0,
+    totalResenas: 0,
+    fechaRegistro: "2025-11-14",
+    correoDueno: "casonaxalteva.granada@gmail.com",
+    contacto: "8512-6734",
   },
   {
     id: "h-sanjuan",
-    nombre: "Brisas del Pacífico",
-    dueno: "Rodolfo Quintana",
+    nombre: "Cabañas El Faro",
+    dueno: "Ernesto Chavarría",
     departamentoId: "rivas",
     municipioId: "m-sanjuan",
-    direccion: "Frente al malecón, costado sur de la bahía, San Juan del Sur",
-    ubicacion: { lat: 11.2505, lng: -85.8735 }, // malecón de la bahía
+    direccion: "Del muelle viejo 150 metros al sur, San Juan del Sur",
+    ubicacion: { lat: 11.2509, lng: -85.8728 },
     descripcion:
-      "Hotel familiar a 40 pasos de la arena. Terraza de madera frente al mar, tablas de surf de cortesía y los mejores atardeceres de la bahía. Ideal para parejas, surfistas y familias pequeñas que buscan el Pacífico sin multitudes.",
-    imagen: IMG.sanjuan,
-    galeria: [IMG.sanjuan, IMG.corn, IMG.granada],
-    amenidades: ["wifi", "playa", "surf", "bar", "aire"],
+      "Cuatro cabañas de madera frente a la bahía, cada una con su hamaca. No tenemos piscina ni restaurante: hay cocina compartida y una pulpería a media cuadra. Ernesto presta dos tablas de surf si se le pide con tiempo. El atardecer se ve desde la terraza, y los sábados la música del pueblo se oye hasta tarde.",
+    imagen: fotosDeHotel("h-sanjuan")?.[0] ?? IMG.sanjuan,
+    galeria: fotosDeHotel("h-sanjuan") ?? [IMG.sanjuan],
+    amenidades: ["playa", "surf", "wifi", "terraza"],
     destacado: true,
     aprobado: "aprobado",
-    rating: 4.6,
-    totalResenas: 98,
-    fechaRegistro: "2025-10-18",
+    rating: 0,
+    totalResenas: 0,
+    fechaRegistro: "2025-10-21",
+    correoDueno: "elfaro.sjs@hotmail.com",
+    contacto: "7845 1290",
   },
   {
     id: "h-ometepe",
-    nombre: "Eco Lodge Ometepe Verde",
-    dueno: "Cooperativa Ometepe",
+    nombre: "Finca El Zapote",
+    dueno: "Familia Mendoza López",
     departamentoId: "rivas",
     municipioId: "m-altagracia",
-    direccion: "Camino a la cascada San Ramón, Altagracia, Isla de Ometepe",
-    ubicacion: { lat: 11.4335, lng: -85.6482 }, // camino a la cascada San Ramón
+    direccion: "Comunidad Balgüe, 800 metros arriba de la playa, Ometepe",
+    ubicacion: { lat: 11.4361, lng: -85.6471 },
     descripcion:
-      "Cabañas de madera construidas por la cooperativa local entre plataneras y bosque, con el volcán Concepción de fondo. Senderismo guiado, kayak en el lago y cocina de leña. Energía solar y cero plásticos de un solo uso.",
-    imagen: IMG.ometepe,
-    galeria: [IMG.ometepe, IMG.matagalpa, IMG.granada],
-    amenidades: ["senderismo", "kayak", "organico", "mirador"],
+      "Tres cabañas entre plataneras que levantamos en familia el 2019. La luz es solar, así que a veces hay que esperar un rato; el agua caliente sale de un calentador negro en el techo. Doña Lucía cocina con lo que hay en la finca y el café se tuesta ahí mismo. Son 800 metros de tierra desde donde deja el bus.",
+    imagen: fotosDeHotel("h-ometepe")?.[0] ?? IMG.ometepe,
+    galeria: fotosDeHotel("h-ometepe") ?? [IMG.ometepe],
+    amenidades: ["senderismo", "organico", "mirador", "desayuno"],
     destacado: true,
     aprobado: "aprobado",
-    rating: 4.9,
-    totalResenas: 142,
-    fechaRegistro: "2025-09-30",
+    rating: 0,
+    totalResenas: 0,
+    fechaRegistro: "2025-09-08",
+    correoDueno: "fincaelzapote.ometepe@gmail.com",
+    contacto: "5768-4412",
   },
   {
     id: "h-leon",
-    nombre: "La Casona del Sol",
-    dueno: "María Elena Duarte",
+    nombre: "Posada Doña Chepita",
+    dueno: "Josefa Úbeda (doña Chepita)",
     departamentoId: "leon",
     municipioId: "m-leon",
-    direccion: "Del Parque Central 1 cuadra al este, León",
-    ubicacion: { lat: 12.4353, lng: -86.8745 }, // León centro
+    direccion: "Del Parque Central una cuadra al este, León",
+    ubicacion: { lat: 12.4354, lng: -86.8752 },
     descripcion:
-      "Hotel patrimonial en el corazón de León, a pasos de la catedral Patrimonio de la Humanidad. Azotea con vista a los domos naranjas y a la cadena de volcanes, biblioteca de poesía y café de la tarde incluido.",
-    imagen: IMG.leon,
-    galeria: [IMG.leon, IMG.granada, IMG.sanjuan],
+      "Casona de la familia Úbeda con cinco cuartos alrededor de un corredor fresco. Doña Chepita vive en el patio de atrás y atiende el desayuno ella misma. No hay ascensor y la escalera a la azotea es algo empinada, pero desde arriba se ven los domos de la catedral. En Semana Santa la calle es ruidosa hasta la madrugada.",
+    imagen: fotosDeHotel("h-leon")?.[0] ?? IMG.leon,
+    galeria: fotosDeHotel("h-leon") ?? [IMG.leon],
     amenidades: ["wifi", "terraza", "desayuno", "biblioteca"],
     destacado: false,
     aprobado: "aprobado",
-    rating: 4.4,
-    totalResenas: 61,
-    fechaRegistro: "2025-12-05",
+    rating: 0,
+    totalResenas: 0,
+    fechaRegistro: "2025-12-02",
+    correoDueno: "posadachepita@yahoo.com",
+    contacto: "2311 4587",
   },
   {
     id: "h-matagalpa",
-    nombre: "Finca Café & Montaña",
-    dueno: "Familia Rodríguez",
+    nombre: "Cabañas La Neblina",
+    dueno: "Ramón Zeledón",
     departamentoId: "matagalpa",
     municipioId: "m-sanramon",
-    direccion: "Km 4 carretera a San Ramón, Matagalpa",
-    ubicacion: { lat: 12.9083, lng: -85.8867 }, // Km 4 hacia San Ramón
+    direccion: "Km 5 carretera a San Ramón, Matagalpa",
+    ubicacion: { lat: 12.9106, lng: -85.8892 },
     descripcion:
-      "Finca cafetalera con cabañas de pino entre neblina y montañas. Recorrido del café de la semilla a la taza, cabalgatas y fogata nocturna. Abrigo incluido: aquí el clima es de suéter y chocolate caliente.",
-    imagen: IMG.matagalpa,
-    galeria: [IMG.matagalpa, IMG.ometepe, IMG.corn],
-    amenidades: ["tour_cafe", "fogata", "senderismo", "organico"],
+      "Cuatro cabañas de pino a 1.200 metros, con chimenea y cobijas gruesas porque el frío aquí no es broma. Ramón camina el cafetal con los huéspedes temprano y al final se prueba el café de la cosecha. Los últimos dos kilómetros son de tierra y con lluvia se ponen feos.",
+    imagen: fotosDeHotel("h-matagalpa")?.[0] ?? IMG.matagalpa,
+    galeria: fotosDeHotel("h-matagalpa") ?? [IMG.matagalpa],
+    amenidades: ["tour_cafe", "fogata", "senderismo", "desayuno"],
     destacado: false,
     aprobado: "aprobado",
-    rating: 4.5,
-    totalResenas: 74,
-    fechaRegistro: "2026-01-12",
+    rating: 0,
+    totalResenas: 0,
+    fechaRegistro: "2026-01-19",
+    correoDueno: "laneblina.matagalpa@gmail.com",
+    contacto: "8642-9071",
   },
   {
     id: "h-corn",
-    nombre: "Coco Loco Bungalows",
-    dueno: "Denzel Hodgson",
+    nombre: "Cabañas Miss Lula",
+    dueno: "Lula Hodgson",
     departamentoId: "caribe",
     municipioId: "m-corn",
-    direccion: "Playa South West Bay, Little Corn Island",
-    ubicacion: { lat: 11.9408, lng: -83.0478 }, // South West Bay, Little Corn
+    direccion: "South West Bay, Little Corn Island",
+    ubicacion: { lat: 11.9411, lng: -83.0482 },
     descripcion:
-      "Bungalows de madera y palma frente al mar Caribe, con arena blanca y agua turquesa a tres metros de tu puerta. Snorkel diario, rondón de los domingos y hamacas bajo los cocos. Se llega en lancha, se llega feliz.",
-    imagen: IMG.corn,
-    galeria: [IMG.corn, IMG.sanjuan, IMG.ometepe],
+      "Seis cabañas de palma a unos pasos del agua, con piso de arena. Lula lleva veinte años recibiendo gente y hace rondón los domingos. No hay agua caliente ni aire acondicionado, pero el mar queda a tres metros. Se llega en la lancha de las 10 desde Big Corn, y si hay marejada el viaje es movido.",
+    imagen: fotosDeHotel("h-corn")?.[0] ?? IMG.corn,
+    galeria: fotosDeHotel("h-corn") ?? [IMG.corn],
     amenidades: ["playa", "snorkel", "bar", "kayak"],
     destacado: true,
     aprobado: "aprobado",
-    rating: 4.7,
-    totalResenas: 110,
-    fechaRegistro: "2025-11-20",
+    rating: 0,
+    totalResenas: 0,
+    fechaRegistro: "2025-11-03",
+    correoDueno: "misslula.corn@hotmail.com",
+    contacto: "8253 6640",
   },
   {
     id: "h-masaya",
-    nombre: "Mirador de Catarina",
-    dueno: "Roberto López",
+    nombre: "Hospedaje El Buen Descanso",
+    dueno: "Roberto López Mena",
     departamentoId: "masaya",
     municipioId: "m-catarina",
-    direccion: "Cuesta de Catarina, junto al mirador de la laguna de Apoyo",
-    ubicacion: { lat: 11.914, lng: -86.281 }, // mirador de Catarina
+    direccion: "Cuesta de Catarina, 200 metros antes del mirador, Masaya",
+    ubicacion: { lat: 11.9146, lng: -86.2802 },
     descripcion:
-      "Posada con vista panorámica a la laguna de Apoyo, viveros de flores y cocina campesina. A 25 minutos de Granada y Masaya.",
-    imagen: IMG.matagalpa,
-    galeria: [IMG.matagalpa],
+      "Tres cuartos con vista a la laguna de Apoyo. Atendemos en familia y damos comida casera los fines de semana. Estamos terminando de arreglar el baño del cuarto 2.",
+    imagen: fotosDeHotel("h-masaya")?.[0] ?? IMG.matagalpa,
+    galeria: fotosDeHotel("h-masaya") ?? [IMG.matagalpa],
     amenidades: ["mirador", "jardin", "desayuno"],
     destacado: false,
     aprobado: "pendiente",
     rating: 0,
     totalResenas: 0,
-    fechaRegistro: "2026-07-21",
-    correoDueno: "roberto@miradordecatarina.com", // el admin necesita el correo para crearle la cuenta (HU-031)
+    fechaRegistro: "2026-10-18",
+    correoDueno: "buendescanso.catarina@gmail.com",
+    contacto: "8891 2245",
   },
   {
     id: "h-telica",
-    nombre: "Posada Volcán Telica",
-    dueno: "Ana Robleto",
+    nombre: "Hospedaje Doña Feli",
+    dueno: "Feliciana Úbeda",
     departamentoId: "leon",
     municipioId: "m-telica",
-    direccion: "Comunidad Los Portillos, falda del volcán Telica",
-    ubicacion: { lat: 12.5033, lng: -86.7047 }, // Los Portillas, falda del Telica
+    direccion: "Comunidad Los Portillos, falda del volcán Telica, León",
+    ubicacion: { lat: 12.5041, lng: -86.7039 },
     descripcion:
-      "Alojamiento rural para quienes quieren ver el volcán Telica rugir de noche. Caminatas guiadas y cocina de leña.",
+      "Dos cuartos sencillos para quien va a subir al Telica. Damos comida y guía para la caminata de noche. En el camino no hay señal de celular.",
     imagen: IMG.ometepe,
     galeria: [IMG.ometepe],
     amenidades: ["senderismo", "fogata"],
@@ -331,18 +346,19 @@ export const HOTELES_SEED: Hotel[] = [
     aprobado: "pendiente",
     rating: 0,
     totalResenas: 0,
-    fechaRegistro: "2026-07-28",
-    correoDueno: "ana@posadatelica.com", // el admin necesita el correo para crearle la cuenta (HU-031)
+    fechaRegistro: "2026-10-22",
+    correoDueno: "posadafelitelica@gmail.com",
+    contacto: "7765-3321",
   },
   {
     id: "h-ruta",
-    nombre: "Motel Ruta Norte",
-    dueno: "Sociedad HG S.A.",
+    nombre: "Hospedaje La Curva",
+    dueno: "Sociedad HG",
     departamentoId: "managua",
     municipioId: "m-managua",
     direccion: "Km 11 Carretera Norte, Managua",
-    ubicacion: { lat: 12.1673, lng: -86.2733 }, // Carretera Norte Km 11
-    descripcion: "Motel de carretera con habitaciones por hora.",
+    ubicacion: { lat: 12.1673, lng: -86.2733 },
+    descripcion: "Habitaciones por hora y por noche, con parqueo privado.",
     imagen: IMG.leon,
     galeria: [IMG.leon],
     amenidades: ["parqueo"],
@@ -350,38 +366,52 @@ export const HOTELES_SEED: Hotel[] = [
     aprobado: "rechazado",
     rating: 0,
     totalResenas: 0,
-    fechaRegistro: "2026-06-15",
+    fechaRegistro: "2026-09-30",
+    motivoRechazo: "No adjuntó fotos del establecimiento ni el número de registro turístico.",
   },
 ];
 
 // ----- Habitaciones por hotel -----
 
-export const HABITACIONES_SEED: Habitacion[] = [
-  // Casa Colonial Los Patios
-  { id: "g1", hotelId: "h-granada", tipo: "Estándar Doble", capacidad: 2, precio: 1200, unidades: 5, estado: "disponible", galeria: [], detalle: "Cama doble, baño privado y vista al patio de las buganvilias." },
-  { id: "g2", hotelId: "h-granada", tipo: "Superior Colonial", capacidad: 3, precio: 1500, unidades: 4, estado: "disponible", galeria: [], detalle: "Cama queen + sofá cama, pisos originales de barro cocido." },
-  { id: "g3", hotelId: "h-granada", tipo: "Suite del Mombacho", capacidad: 4, precio: 2400, unidades: 2, estado: "disponible", galeria: [], detalle: "Suite con terraza privada y vista al volcán Mombacho." },
-  { id: "g4", hotelId: "h-granada", tipo: "Familiar Los Patios", capacidad: 6, precio: 2900, unidades: 2, estado: "mantenimiento", galeria: [], detalle: "Dos ambientes conectados, ideal para familias grandes." },
-  // Brisas del Pacífico
-  { id: "s1", hotelId: "h-sanjuan", tipo: "Estándar Mar", capacidad: 2, precio: 1400, unidades: 6, estado: "disponible", galeria: [], detalle: "Cama queen y balcón con brisa directa del Pacífico." },
-  { id: "s2", hotelId: "h-sanjuan", tipo: "Superior Bahía", capacidad: 3, precio: 1900, unidades: 4, estado: "disponible", galeria: [], detalle: "Vista frontal a la bahía, hamaca privada en el balcón." },
-  { id: "s3", hotelId: "h-sanjuan", tipo: "Suite Surfista", capacidad: 4, precio: 2600, unidades: 2, estado: "disponible", galeria: [], detalle: "Ducha exterior, rack para tablas y mini refrigerador." },
-  // Eco Lodge Ometepe Verde
-  { id: "o1", hotelId: "h-ometepe", tipo: "Cabaña Bosque", capacidad: 2, precio: 1100, unidades: 6, estado: "disponible", galeria: [], detalle: "Cabaña de madera entre plataneras, baño con agua caliente solar." },
-  { id: "o2", hotelId: "h-ometepe", tipo: "Cabaña Volcán", capacidad: 3, precio: 1600, unidades: 4, estado: "disponible", galeria: [], detalle: "Vista directa al Concepción desde la cama." },
-  { id: "o3", hotelId: "h-ometepe", tipo: "Cabaña Familiar Ceiba", capacidad: 5, precio: 2200, unidades: 2, estado: "disponible", galeria: [], detalle: "Altillo para niños y corredor con mecedoras." },
-  // La Casona del Sol
-  { id: "l1", hotelId: "h-leon", tipo: "Estándar Colonial", capacidad: 2, precio: 950, unidades: 6, estado: "disponible", galeria: [], detalle: "Cama doble alrededor del patio de la casona." },
-  { id: "l2", hotelId: "h-leon", tipo: "Superior Catedral", capacidad: 3, precio: 1350, unidades: 3, estado: "disponible", galeria: [], detalle: "Balcón con vista a los domos de la catedral." },
-  { id: "l3", hotelId: "h-leon", tipo: "Suite Darío", capacidad: 2, precio: 1900, unidades: 2, estado: "no_disponible", galeria: [], detalle: "Suite homenaje con biblioteca de poesía incluida." },
-  // Finca Café & Montaña
-  { id: "c1", hotelId: "h-matagalpa", tipo: "Cabaña Pino", capacidad: 2, precio: 1050, unidades: 5, estado: "disponible", galeria: [], detalle: "Cabaña de pino con chimenea y olor a café recién tostado." },
-  { id: "c2", hotelId: "h-matagalpa", tipo: "Cabaña Niebla", capacidad: 4, precio: 1650, unidades: 3, estado: "disponible", galeria: [], detalle: "Dos cuartos, perfecta para familias de montaña." },
-  // Coco Loco Bungalows
-  { id: "k1", hotelId: "h-corn", tipo: "Bungalow Playa", capacidad: 2, precio: 1800, unidades: 5, estado: "disponible", galeria: [], detalle: "A tres metros del mar, techo de palma y ducha caribeña." },
-  { id: "k2", hotelId: "h-corn", tipo: "Bungalow Coco", capacidad: 3, precio: 2300, unidades: 3, estado: "disponible", galeria: [], detalle: "Bajo los cocoteros, con hamaca doble y vista turquesa." },
-  { id: "k3", hotelId: "h-corn", tipo: "Familiar Marea", capacidad: 6, precio: 3400, unidades: 1, estado: "disponible", galeria: [], detalle: "El más grande, con cocina básica y mesa frente al mar." },
+const HABITACIONES_BASE: Habitacion[] = [
+  // Hostal La Casona de Xalteva — Granada
+  { id: "g1", hotelId: "h-granada", tipo: "Cuarto doble", capacidad: 2, precio: 1150, unidades: 4, estado: "disponible", galeria: [], detalle: "Cama matrimonial, abanico de techo y baño privado. La ventana da al patio de las buganvillas." },
+  { id: "g2", hotelId: "h-granada", tipo: "Superior colonial", capacidad: 3, precio: 1480, unidades: 3, estado: "disponible", galeria: [], detalle: "Cama queen y un sofá cama algo duro, pero sirve. Piso original de barro cocido." },
+  { id: "g3", hotelId: "h-granada", tipo: "Suite del Mombacho", capacidad: 4, precio: 2350, unidades: 2, estado: "disponible", galeria: [], detalle: "Terraza privada con vista al volcán, la única con agua caliente todo el día." },
+  { id: "g4", hotelId: "h-granada", tipo: "Familiar", capacidad: 6, precio: 2850, unidades: 1, estado: "mantenimiento", galeria: [], detalle: "Dos ambientes conectados. Está en arreglo porque se filtró el techo con las lluvias." },
+  // Cabañas El Faro — San Juan del Sur
+  { id: "s1", hotelId: "h-sanjuan", tipo: "Estándar frente al mar", capacidad: 2, precio: 1450, unidades: 6, estado: "disponible", galeria: [], detalle: "Cama queen, hamaca en el corredor y brisa directa. El baño es compartido entre dos cabañas." },
+  { id: "s2", hotelId: "h-sanjuan", tipo: "Superior con balcón", capacidad: 3, precio: 1875, unidades: 4, estado: "disponible", galeria: [], detalle: "Vista frontal a la bahía, baño propio y una hamaca doble en el balcón." },
+  { id: "s3", hotelId: "h-sanjuan", tipo: "Suite surf", capacidad: 4, precio: 2600, unidades: 2, estado: "disponible", galeria: [], detalle: "Ducha exterior para enjuagar tablas, rack y mini refrigerador que hace ruido." },
+  // Finca El Zapote — Ometepe
+  { id: "o1", hotelId: "h-ometepe", tipo: "Cabaña de madera", capacidad: 2, precio: 1080, unidades: 5, estado: "disponible", galeria: [], detalle: "Cabaña entre plataneras con baño de agua solar. Si el día está nublado, el agua sale tibia." },
+  { id: "o2", hotelId: "h-ometepe", tipo: "Cabaña vista al volcán", capacidad: 3, precio: 1580, unidades: 4, estado: "disponible", galeria: [], detalle: "Se ve el Concepción desde la cama. Tiene mosquitero y una mecedora en el corredor." },
+  { id: "o3", hotelId: "h-ometepe", tipo: "Cabaña familiar", capacidad: 5, precio: 2150, unidades: 2, estado: "disponible", galeria: [], detalle: "Altillo para los niños y corredor con hamacas. Comparte el baño grande con la cabaña vecina." },
+  // Posada Doña Chepita — León
+  { id: "l1", hotelId: "h-leon", tipo: "Cuarto colonial", capacidad: 2, precio: 975, unidades: 5, estado: "disponible", galeria: [], detalle: "Cama doble alrededor del corredor. Ventila bien, aunque el cuarto del frente oye la calle." },
+  { id: "l2", hotelId: "h-leon", tipo: "Superior con balcón", capacidad: 3, precio: 1330, unidades: 3, estado: "disponible", galeria: [], detalle: "Balcón con vista a los domos de la catedral. Tercer piso, sin ascensor." },
+  { id: "l3", hotelId: "h-leon", tipo: "Suite Darío", capacidad: 2, precio: 1875, unidades: 2, estado: "no_disponible", galeria: [], detalle: "La biblioteca de poesía está en este cuarto. Cerrada por remodelación del piso." },
+  // Cabañas La Neblina — Matagalpa
+  { id: "c1", hotelId: "h-matagalpa", tipo: "Cabaña pino", capacidad: 2, precio: 1040, unidades: 4, estado: "disponible", galeria: [], detalle: "Chimenea de leña y cobijas gruesas. La ducha tarda en calentar, hay que dejarla correr." },
+  { id: "c2", hotelId: "h-matagalpa", tipo: "Cabaña para familia", capacidad: 4, precio: 1620, unidades: 3, estado: "disponible", galeria: [], detalle: "Dos cuartos y una mesa junto a la ventana con vista a la neblina del cerro." },
+  // Cabañas Miss Lula — Little Corn Island
+  { id: "k1", hotelId: "h-corn", tipo: "Bungalow de playa", capacidad: 2, precio: 1790, unidades: 4, estado: "disponible", galeria: [], detalle: "Techo de palma, piso de arena y el mar a tres metros. Sin agua caliente." },
+  { id: "k2", hotelId: "h-corn", tipo: "Bungalow bajo los cocos", capacidad: 3, precio: 2280, unidades: 3, estado: "disponible", galeria: [], detalle: "Hamaca doble y vista turquesa. De noche se oyen los cangrejos en el techo." },
+  { id: "k3", hotelId: "h-corn", tipo: "Bungalow familiar", capacidad: 6, precio: 3350, unidades: 1, estado: "disponible", galeria: [], detalle: "El más grande, con cocina básica y mesa frente al mar." },
+  // Hospedaje El Buen Descanso — Catarina (solicitud pendiente)
+  { id: "m1", hotelId: "h-masaya", tipo: "Cuarto doble", capacidad: 2, precio: 900, unidades: 2, estado: "disponible", galeria: [], detalle: "Cuarto con ventana al lago y baño compartido con el cuarto vecino." },
+  // Hospedaje Doña Feli — Telica (solicitud pendiente)
+  { id: "t1", hotelId: "h-telica", tipo: "Cuarto rústico", capacidad: 2, precio: 700, unidades: 2, estado: "disponible", galeria: [], detalle: "Dos camas individuales, cobijas de lana y baño afuera." },
+  // Hospedaje La Curva — Managua (solicitud rechazada)
+  { id: "r1", hotelId: "h-ruta", tipo: "Habitación por hora", capacidad: 2, precio: 500, unidades: 3, estado: "no_disponible", galeria: [], detalle: "Sin registro turístico al día." },
 ];
+
+// Cada tipo de habitación entra con su foto curada cuando no trae ninguna,
+// así las tarjetas de cuarto dejan de mostrar solo el ícono de cama
+export const HABITACIONES_SEED: Habitacion[] = HABITACIONES_BASE.map((h) => ({
+  ...h,
+  galeria: h.galeria.length > 0 ? h.galeria : fotosDeHabitacion(h.id) ?? [],
+}));
 
 // ----- Utilidades de fechas y dinero -----
 
@@ -1015,6 +1045,21 @@ export function soloDigitosTelefono(texto: string): string {
   return texto.replace(/\D/g, "").slice(0, 8);
 }
 
+// Lleva lo que se escribió en un campo numérico al rango permitido.
+// Se usa al tipear (adultos, niños, huéspedes): el campo no se queda con
+// 0 ni con 99 aunque el navegador solo avise al enviar el formulario
+export function acotarNumero(valor: string, minimo: number, maximo: number): number {
+  const n = Number.parseInt(valor, 10);
+  if (!Number.isFinite(n)) return minimo;
+  return Math.min(maximo, Math.max(minimo, n));
+}
+
+// Una fecha tipeada a mano puede quedar vacía o quedar antes de hoy;
+// esta la deja en el formato y devuelve si sirve para calcular disponibilidad
+export function fechasDeEstadiaValidas(llegada: string, salida: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(llegada) && /^\d{4}-\d{2}-\d{2}$/.test(salida) && salida > llegada;
+}
+
 // Dice si dos rangos de fechas se traslapan (para la disponibilidad)
 export function seTraslapan(aIni: string, aFin: string, bIni: string, bFin: string): boolean {
   return aIni < bFin && bIni < aFin;
@@ -1182,19 +1227,17 @@ export const RESERVAS_SEED: Reserva[] = [
   demo("HC-3048", "h-sanjuan", "s3", "Carlos García", sumarDias(HOY, 19), 2, 2, "efectivo", "confirmada"),
 ];
 
-// ----- Reseñas iniciales de los hoteles -----
+// ----- Reseñas iniciales -----
+// Ya no hay reseñas inventadas: una reseña solo existe si alguien calificó una
+// estadía (HU-019). El catálogo arranca sin comentarios y los hoteles sin
+// promedio hasta que se escriba la primera.
+export const RESENAS_SEED: Resena[] = [];
 
-export const RESENAS_SEED: Resena[] = [
-  { id: "r1", hotelId: "h-granada", autor: "María Fernández", origen: "Managua, Nicaragua", rating: 5, comentario: "El patio al atardecer es de otro mundo. El desayuno con gallo pinto y quesillo, espectacular. Volveremos en diciembre.", fecha: sumarDias(HOY, -10) },
-  { id: "r2", hotelId: "h-granada", autor: "Sophie Turner", origen: "Canadá", rating: 5, comentario: "Felt like staying in a museum, but with the warmest family hosting you. The rooftop view of Mombacho is unbeatable.", fecha: sumarDias(HOY, -32) },
-  { id: "r3", hotelId: "h-granada", autor: "José Luis Rivas", origen: "León, Nicaragua", rating: 4, comentario: "Hermosa la casona y muy bien ubicada. Solo faltó un poco de presión de agua en la ducha.", fecha: sumarDias(HOY, -51) },
-  { id: "r4", hotelId: "h-sanjuan", autor: "Marta Ruiz", origen: "Estelí, Nicaragua", rating: 5, comentario: "Nos atendieron como familia. Ver el atardecer desde la terraza con un toste de patacones no tiene precio.", fecha: sumarDias(HOY, -8) },
-  { id: "r5", hotelId: "h-sanjuan", autor: "Jake Miller", origen: "Estados Unidos", rating: 4, comentario: "Perfect surf location, boards included. Rooms are simple but clean and the sea breeze does the AC's job.", fecha: sumarDias(HOY, -27) },
-  { id: "r6", hotelId: "h-ometepe", autor: "Camila Ortega", origen: "Costa Rica", rating: 5, comentario: "Despertar con el volcán enfrente y el canto de los guardabarrancos... la cabaña huele a madera nueva. Experiencia 10/10.", fecha: sumarDias(HOY, -15) },
-  { id: "r7", hotelId: "h-ometepe", autor: "Lars Jensen", origen: "Dinamarca", rating: 5, comentario: "The guided hike to San Ramón waterfall was the highlight of our Nicaragua trip. Solar-powered and truly eco.", fecha: sumarDias(HOY, -40) },
-  { id: "r8", hotelId: "h-corn", autor: "Valeria Soto", origen: "Bluefields, Nicaragua", rating: 5, comentario: "El rondón del domingo es obligatorio. Agua tan clara que se ven los peces desde la hamaca.", fecha: sumarDias(HOY, -19) },
-  { id: "r9", hotelId: "h-matagalpa", autor: "Andrés Castellón", origen: "Jinotega, Nicaragua", rating: 4, comentario: "Frío rico, café de la misma finca y fogata con historias. La caminata al cerro Apante muy bien guiada.", fecha: sumarDias(HOY, -23) },
-  { id: "r10", hotelId: "h-leon", autor: "Paola Méndez", origen: "Chinandega, Nicaragua", rating: 4, comentario: "La azotea frente a la catedral al atardecer vale toda la estadía. Café de la tarde buenísimo.", fecha: sumarDias(HOY, -35) },
+// Reseñas de demostración que traían las versiones anteriores de la app.
+// Se descartan al cargar el navegador para que no revivan desde el guardado
+// viejo, aunque el archivo ya no las genere.
+export const RESENAS_RETIRADAS: string[] = [
+  "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10",
 ];
 
 // ----- Catálogos de apoyo para la interfaz -----
