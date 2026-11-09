@@ -262,7 +262,7 @@ export function Inicio({ navegar }: { navegar: Navegar }) {
                 >
                   {/* Fotografía real del departamento, de uso libre (HU-038) */}
                   <img
-                    src={`destinos/${d.id}.jpg`}
+                    src={`/destinos/${d.id}.jpg`}
                     alt={`Vista de ${d.nombre}, Nicaragua`}
                     loading="lazy"
                     className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

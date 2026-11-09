@@ -7,6 +7,7 @@ import { AppProvider, useApp } from "./store";
 import type { Usuario } from "./store";
 import { supabase } from "./lib/supabase";
 import type { Ruta } from "./rutas";
+import { rutaAUrl, urlARuta } from "./rutas";
 import type { Rol } from "./data";
 import { Navbar, Footer, Toasts } from "./layout";
 import { Marca } from "./ui";
@@ -47,10 +48,20 @@ function puedeVer(nombre: Ruta["nombre"], usuario: Usuario | null, rolActual: Ro
   return !RUTAS_PROTEGIDAS.includes(nombre) || !!usuario;
 }
 
+// Al abrir el sitio manda la dirección. El enlace de recuperación de contraseña
+// llega con el token en el hash o como ?code=, y eso siempre abre "restablecer"
+function rutaDeEntrada(): Ruta {
+  const hash = window.location.hash;
+  const params = new URLSearchParams(window.location.search);
+  const traeToken = hash.includes("access_token") && hash.includes("type=recovery");
+  if (traeToken || params.has("code")) return { nombre: "restablecer" };
+  return urlARuta(window.location.href);
+}
+
 function AppInner() {
   const { usuario, rol } = useApp();
-  // La pantalla actual se guarda en el estado (sin URL, es una maqueta)
-  const [ruta, setRuta] = useState<Ruta>({ nombre: "inicio" });
+  // La pantalla sale de la dirección del navegador, no de un estado suelto
+  const [ruta, setRuta] = useState<Ruta>(() => rutaDeEntrada());
   const movil = usePantallaMovil();
 
   // En celular la única experiencia es la del turista: el panel del hotel y la
@@ -64,36 +75,70 @@ function AppInner() {
   const rutaVisible: Ruta =
     !rutaSoloTurista && puedeVer(ruta.nombre, usuario, rolVisible) ? ruta : { nombre: "inicio" };
 
+  // Cambia de pantalla y deja una entrada nueva en el historial
+  const navegar = (r: Ruta) => {
+    const destino = rutaAUrl(r);
+    const actual = window.location.pathname + window.location.search;
+
+    // Antes de irnos anotamos en qué punto quedó la pantalla que dejamos
+    if (destino !== actual) {
+      window.history.replaceState({ ruta: rutaVisible, scroll: window.scrollY }, "", actual);
+      window.history.pushState({ ruta: r, scroll: 0 }, "", destino);
+    }
+    setRuta(r);
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  };
+
+  // Cambia de pantalla sin sumar una entrada (permisos y enlaces con token)
+  const reemplazarRuta = (r: Ruta) => {
+    setRuta(r);
+    window.history.replaceState({ ruta: r, scroll: 0 }, "", rutaAUrl(r));
+  };
+
+  // Las flechas del navegador avisan con popstate: leemos la ruta guardada
+  useEffect(() => {
+    const alVolver = (evento: PopStateEvent) => {
+      const estado = evento.state as { ruta?: Ruta; scroll?: number } | null;
+      const destino = estado?.ruta ?? urlARuta(window.location.href);
+      const scroll = estado?.scroll ?? 0;
+
+      setRuta(destino);
+      // Esperamos a que React pinte la pantalla antes de devolver el scroll
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: scroll, behavior: "instant" as ScrollBehavior });
+      });
+    };
+    window.addEventListener("popstate", alVolver);
+    return () => window.removeEventListener("popstate", alVolver);
+  }, []);
+
+  // La primera entrada del historial queda con la dirección ya limpia de tokens
+  useEffect(() => {
+    window.history.replaceState({ ruta, scroll: 0 }, "", rutaAUrl(ruta));
+    // Solo al abrir el sitio
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Dejamos la ruta válida en memoria: al cerrar sesión o cambiar de rol volvemos al inicio
   useEffect(() => {
     if (rutaVisible.nombre === ruta.nombre) return;
-    setRuta({ nombre: "inicio" });
+    reemplazarRuta({ nombre: "inicio" });
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    // La ruta visible es la que manda; el resto de dependencias no hace falta
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rutaVisible.nombre, ruta.nombre]);
-
-  // Detectar si Supabase redirigió con token de recuperación de contraseña
-  // Puede llegar en el hash (#access_token=...&type=recovery) o como código PKCE (?code=...)
-  useEffect(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(window.location.search);
-    const enHash = hash.includes("access_token") && hash.includes("type=recovery");
-    const enQuery = params.has("code");
-    if (enHash || enQuery) {
-      // Limpiar la URL y navegar a restablecer contraseña
-      window.history.replaceState(null, "", window.location.pathname);
-      setRuta({ nombre: "restablecer" });
-    }
-  }, []);
 
   // Supabase avisa con PASSWORD_RECOVERY cuando el enlace del correo es válido
   // (cubre el flujo PKCE, donde el token no queda visible en la URL)
   useEffect(() => {
     const { data: escucha } = supabase.auth.onAuthStateChange((evento) => {
       if (evento === "PASSWORD_RECOVERY") {
-        setRuta({ nombre: "restablecer" });
+        reemplazarRuta({ nombre: "restablecer" });
       }
     });
     return () => escucha.subscription.unsubscribe();
+    // Solo se registra una vez, al abrir el sitio
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Splash de entrada con la marca unificada (se desvanece al cargar)
@@ -104,12 +149,6 @@ function AppInner() {
     const retirar = setTimeout(() => setSplash(false), 1400);
     return () => { clearTimeout(desvanecer); clearTimeout(retirar); };
   }, []);
-
-  // Al navegar, volvemos al inicio de la página
-  const navegar = (r: Ruta) => {
-    setRuta(r);
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-  };
 
   // Renderiza la pantalla que corresponde a la ruta que se puede ver
   const pantalla = (actual: Ruta) => {

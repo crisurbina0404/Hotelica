@@ -40,6 +40,6 @@ src/
 - Variables/funciones: camelCase (ej: calcularTotal).
 - Tipos TypeScript: definilos cerca del componente o en un archivo types.ts si son compartidos.
 - Tailwind: usá clases utilitarias directamente en el JSX. Evitá CSS personalizado salvo en index.css para variables globales.
-- Rutas: definilas en src/rutas.ts y usalas en App.tsx.
+- Rutas: definilas en src/rutas.ts y usalas en App.tsx. Cada pantalla tiene su URL (`rutaAUrl`/`urlARuta`) y el historial del navegador la refleja.
 - Estado global: cualquier dato que necesiten varias páginas va en src/store.tsx.
 - Datos simulados: mientras estemos en Fase 1, los hoteles y destinos vienen de src/data.ts. NO hardcodees datos dentro de los componentes.

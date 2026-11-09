@@ -17,6 +17,7 @@ import {
   USUARIOS_SEED,
 } from "./data";
 import type { Hotel, Reserva, Resena, EstadoReserva, Rol, Pago, Calificacion, DatosRegistroHotel, ErroresRegistroHotel, CuentaHotelero, Habitacion, EstadoHabitacion, DatosHabitacion, ErroresHabitacion, UsuarioPlataforma } from "./data";
+import { urlFoto } from "./fotos";
 import type { Idioma } from "./i18n";
 import { supabase } from "./lib/supabase";
 import { cargarHabitaciones, cargarHoteles, cargarResenas, fusionarHoteles, fusionarHabitaciones, fusionarPorId, subirHabitacion, subirHabitaciones, subirHotel, subirCalificacion, subirResena, subirReserva, cargarReservas, cargarUsuarios, subirUsuario, fusionarUsuarios } from "./sync";
@@ -92,7 +93,16 @@ function cargar(): Persistido {
           // ahora una reseña solo existe si viene de una estadía calificada
           resenas: (d.resenas ?? []).filter((r) => !RESENAS_RETIRADAS.includes(r.id)),
           // Los guardados viejos no traían habitaciones: usamos las semillas (HU-023)
-          habitaciones: d.habitaciones ?? HABITACIONES_SEED,
+          habitaciones: (d.habitaciones ?? HABITACIONES_SEED).map((h) => ({
+            ...h,
+            galeria: (h.galeria ?? []).map(urlFoto),
+          })),
+          // Las fotos guardadas antes de navegar por URL venían relativas
+          hoteles: (d.hoteles ?? []).map((h) => ({
+            ...h,
+            imagen: urlFoto(h.imagen),
+            galeria: (h.galeria ?? []).map(urlFoto),
+          })),
           notificaciones: d.notificaciones ?? [],
           pagos: d.pagos ?? [],
           calificaciones: d.calificaciones ?? [],

@@ -6,6 +6,24 @@ Las versiones v0.1.0 – v0.3.0 (estructura de carpetas, plantilla de historias
 de usuario y base de datos `hotelica.sql`) quedaron registradas en la bitácora
 del proyecto.
 
+## [v0.83.0] — 2026-11-08 · Cada pantalla tiene su dirección y el historial funciona (HU-044)
+
+### Cambiado (navegación)
+- **Las flechas de atrás y adelante del navegador ya mueven la app** — la pantalla vivía solo en el estado de React y la barra de direcciones se quedaba en `/`; ahora `navegar()` hace `pushState` y un `useEffect` escucha `popstate` para reconstruir la pantalla anterior. El botón de retroceder del celular vuelve a los resultados en vez de cerrar la pestaña.
+- **Una dirección por pantalla** — `/`, `/hoteles`, `/hoteles/:id`, `/destinos`, `/mis-reservas`, `/favoritos`, `/perfil`, `/recuperar`, `/restablecer`, `/panel` y `/admin`. `rutaAUrl()` y `urlARuta()` en `src/rutas.ts` son el único lugar que traduce entre ruta interna y URL.
+- **Los filtros de búsqueda viajan en la dirección** — departamento, municipio, llegada, salida y huéspedes quedan como parámetros de `/hoteles`, así un enlace directo abre la misma búsqueda (`/hoteles?departamento=granada&huespedes=3`).
+- **El scroll vuelve donde estaba** — cada entrada del historial guarda la posición; al retroceder se restaura en el cuadro siguiente, cuando React ya pintó la pantalla.
+- **Las rutas protegidas no dejan la dirección colgada** — abrir `/perfil` o `/admin` sin sesión reescribe la URL a `/` con `replaceState`, en vez de dejar una entrada rota.
+- **Recuperación de contraseña intacta** — el token del correo se detecta antes de montar la pantalla, abre "Restablecer contraseña" y se limpia de la dirección; `PASSWORD_RECOVERY` también reescribe a `/restablecer`.
+- **Las fotos de la ficha del hotel ya no se rompen** — al abrir `/hoteles/:id`, las rutas relativas de `src/fotos.ts` (`hoteles/casona-fachada.jpg`) se resolvían como `/hoteles/hoteles/…` y las 10 fotos de la galería y de las habitaciones daban 404. Ahora las rutas se devuelven con barra inicial y `urlFoto()` normaliza también las que ya estaban guardadas en el navegador con el formato viejo.
+
+### Pruebas
+- `npx tsc --noEmit` sin errores; recorrido con Playwright de portada → resultados → detalle, atrás dos veces, adelante, enlace directo con filtros, `/perfil` sin sesión y `/destinos`, sin errores de consola.
+- Revisión de imágenes en `/`, `/hoteles`, `/destinos` y tres fichas de hotel: 0 fotos rotas, incluso simulando un guardado viejo con rutas relativas en `localStorage`.
+- Suite completa: 30 pruebas aprobadas. `CP-026-030` falla por una causa previa y ajena a esta historia: el test arma `hoy` con `toISOString()` (UTC) mientras la app usa la fecha local, así que pasada la medianoche la llegada sembrada queda un día en el futuro y el botón de check-in no aparece.
+
+---
+
 ## [v0.82.0] — 2026-11-01 · Mensajes de correo más claros y en texto plano
 
 ### Cambiado (copy de los correos)
